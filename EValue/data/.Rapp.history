@@ -1,0 +1,12 @@
+load("/Users/mmathur/Dropbox/Personal computer/Independent studies/EValue package/EValue/data/hsusmall.RData")
+lead
+load("/Users/mmathur/Dropbox/Personal computer/Independent studies/EValue package/EValue/data/hsusmall.RData")
+hsusmall
+fake = load("/Users/mmathur/Dropbox/Personal computer/Independent studies/EValue package/EValue/data/hsusmall.RData")
+fake
+load("/Users/mmathur/Dropbox/Personal computer/Independent studies/EValue package/EValue/lead.RData")
+load("/Users/mmathur/Dropbox/Personal computer/Independent studies/EValue package/EValue/data/lead.RData")
+lead
+lead= NA
+load("/Users/mmathur/Dropbox/Personal computer/Independent studies/EValue package/EValue/data/lead.RData")
+lead

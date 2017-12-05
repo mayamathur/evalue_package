@@ -1,0 +1,33 @@
+citHeader("To cite this package in publications, please use the first citation if analyzing a single observational study or the second citation if analyzing a meta-analysis:")
+
+citEntry(entry = "Article",
+  title        = "Sensitivity analysis in observational research: introducing the E-value",
+  author       = personList(as.person("Tyler J VanderWeele"),
+                   as.person("Peng Ding")),
+  journal      = "Annals of Internal Medicine",
+  year         = "2011",
+  volume       = "167",
+  number       = "4",
+  pages        = "268--274",
+
+  textVersion  =
+  paste("Tyler J VanderWeele, Peng Ding (2017).",
+        "Sensitivity analysis in observational research: introducing the E-value.",
+        "Annals of Internal Medicine, 167(4), 268-274.")
+)
+
+
+
+citEntry(entry = "Article",
+  title        = "Sensitivity analysis for unmeasured confounding in meta-analyses",
+  author       = personList(as.person("Maya B. Mathur"),
+                   as.person("Tyler J. VanderWeele")),
+  journal      = "Preprint available: <https://osf.io/jkhfg/>",
+  year         = "2017",
+
+  textVersion  =
+  paste("Maya B. Mathur, Tyler J. VanderWeele (2017).",
+        "Sensitivity analysis for unmeasured confounding in meta-analyses.",
+        "Preprint available: <https://osf.io/jkhfg/>.")
+)
+
