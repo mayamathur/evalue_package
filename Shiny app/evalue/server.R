@@ -1,0 +1,109 @@
+source("startup.R")
+
+function(input, output, session) {
+    
+    output$result.text = renderText({
+        
+        if ( input$outcomeType == "RR" ) {
+            
+            if ( is.na( input$est.RR )) return("Enter your point estimate")
+            if ( is.na( input$trueRR )) return("Enter a true value")
+            
+  
+            evals = round( evalues.RR( est = input$est.RR, lo = input$lo.RR, hi = input$hi.RR, true = input$trueRR )[2,], 2 )
+        
+#             # check for warning messages
+#             # https://stackoverflow.com/questions/44722408/r-shiny-output-warning-messages-to-ui/44722732#44722732
+#             x <- tryCatch( evalues.RR( est = input$est.RR, lo = input$lo.RR, hi = input$hi.RR, true = input$trueRR ),
+#                            warning=function(w) { w })
+#             #x <- tryCatch(1:3 * 1:2, warning=function(w) { w })
+#             if (inherits(x, "simpleWarning")) {
+#                 mess <- x$message
+#                 showNotification(mess)
+#             }
+        
+        }
+        
+        if ( input$outcomeType == "OR.rare" ) {
+            if ( is.na( input$est.OR.rare )) return("Enter your point estimate")
+            if ( is.na( input$trueORrare )) return("Enter a true value")
+            
+            evals = round( evalues.OR( est = input$est.OR.rare, lo = input$lo.OR.rare, hi = input$hi.OR.rare, rare = TRUE, true = input$trueORrare )[2,], 2 )
+        }
+        
+        if ( input$outcomeType == "OR.com" ) {
+            if ( is.na( input$est.OR.com )) return("Enter your point estimate")
+            if ( is.na( input$trueORcom )) return("Enter a true value")
+            
+            evals = round( evalues.OR( est = input$est.OR.com, lo = input$lo.OR.com, hi = input$hi.OR.com, rare = FALSE, true = input$trueORcom )[2,], 2 )
+        }
+        
+            
+        if ( input$outcomeType == "HR.rare" ) {
+            if ( is.na( input$est.HR.rare )) return("Enter your point estimate")
+            if ( is.na( input$trueHRrare )) return("Enter a true value")
+      
+            evals = round( evalues.HR( est = input$est.HR.rare, lo = input$lo.HR.rare, hi = input$hi.HR.rare, rare = TRUE, true = input$trueHRrare )[2,], 2 )
+        }
+        
+        if ( input$outcomeType == "HR.com" ) {
+            if ( is.na( input$est.HR.com )) return("Enter your point estimate")
+            if ( is.na( input$trueHRcom )) return("Enter a true value")
+   
+            evals = round( evalues.HR( est = input$est.HR.com, lo = input$lo.HR.com, hi = input$hi.HR.com, rare = FALSE, true = input$trueHRcom )[2,], 2 )
+        }
+        
+        if ( input$outcomeType == "MD" ) {  
+            if ( is.na( input$est.MD )) return("Enter your point estimate")
+            if ( is.na( input$trueMD )) return("Enter a true value")
+      
+            evals = round( evalues.MD( est = input$est.MD, se = input$se.MD, true = input$trueMD )[2,], 2 )
+        }  
+        
+#         if ( input$outcomeType == "RG" ) {  
+#             if ( is.na( input$beta.RG ) & is.na( input$pval.RG )) return("Enter your point estimate or p-value")
+#             evals = round( evalues.RG( beta = input$beta.RG, se = input$se.RG,
+#                                        pval = input$pval.RG, n = input$n.RG,
+#                                        true = input$true.RG )[2,], 2 )
+#         }  
+
+        if ( input$outcomeType == "RD" ) {  
+
+            if ( any( is.na( c( input$n11, input$n10, input$n01, input$n00, input$trueRD ) ) ) ) {
+                return("Enter all of the above information")
+            }
+            
+            evals =  round( as.numeric( evalues.RD( n11 = input$n11, n10 = input$n10, n01 = input$n01, n00 = input$n00,
+                                true = input$trueRD, alpha = input$alpha, grid = input$grid ) ), 2 )
+
+        }
+        
+        
+        ##### Create String for UI ##### 
+        
+        # if there is input for the CI (either lower or upper)
+        if ( !is.na(evals[2]) | !is.na(evals[3])  ) {
+            
+            eval.CI = min(evals, na.rm=TRUE)
+            
+            result.string = paste( "E-value for point estimate: ", evals[1],
+                                   " and for confidence interval: ", eval.CI,
+                                   sep="" )
+
+         # if user only gave point estimate   
+        } else {
+            result.string = paste( "E-value for point estimate: ", evals[1],
+                                   sep="" )
+        }
+        
+        return( result.string )
+          
+    })
+
+
+}
+
+
+
+
+
