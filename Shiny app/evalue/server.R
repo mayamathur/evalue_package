@@ -102,7 +102,11 @@ function(input, output, session) {
 
     #### Compute the bias factor ####
     bias.factor <- reactive({
-        input$RR_UD*input$RR_EU/(input$RR_UD + input$RR_EU - 1)  
+      
+        # MM: reject impossible inputs
+        if ( input$RR_UD < 1 | input$RR_EU < 1 ) stop("Both RR_EU and RR_UD must be at least 1.")
+
+        input$RR_UD*input$RR_EU / (input$RR_UD + input$RR_EU - 1)  
     })
     
     adjusted.effect <- reactive({
