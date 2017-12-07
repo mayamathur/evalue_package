@@ -97,10 +97,22 @@ function(input, output, session) {
         }
         
         return( result.string )
-          
+    
     })
 
-
+    #### Compute the bias factor ####
+    bias.factor <- reactive({
+        input$RR_UD*input$RR_EU/(input$RR_UD + input$RR_EU - 1)  
+    })
+    
+    adjusted.effect <- reactive({
+        adjust.effect <- ifelse(input$effect.estimate.page2 > 1, input$effect.estimate.page2/bias.factor(), input$effect.estimate.page2*bias.factor())
+    })
+    
+    output$Bias_Factor <- renderUI({
+         HTML(paste0("The bias factor is ", round(bias.factor(), 2), ". At most, this bias factor could alter the risk ratio to become ",
+                     round(adjusted.effect(), 2), "."))
+    })
 }
 
 

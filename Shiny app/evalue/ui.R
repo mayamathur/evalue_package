@@ -6,6 +6,7 @@ source("startup.R")
 
 
 library(shiny)
+library(plotly)
 
 # message to display if non-null true value
 nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value for the minimum
@@ -136,9 +137,33 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'HR.rare' & input.trueHRrare != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'HR.com' & input.trueHRcom != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
-                            conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess)
+                            conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
+                            hr(),
+                            plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") #for now, just a placeholder
                     )
-           )
+           ),
+
+           tabPanel("Compute a bias factor",
+                    HTML("<br>If you have substantive knowledge on the strength of the relationships between the unmeasured confounder",
+                         " and the exposure and outcome you can use these numbers to calculate the bias factor. As stated by VanderWeele and Ding,",
+                         " Let RR<sub>UD</sub> denote the maximum risk ratio for the outcome comparing any two categories of the unmeasured",
+                         " confounders, within either treatment group, conditional on the observed covariates. Let RR<sub>EU</sub> denote",
+                         " the maximum risk ratio for any specific level of the unmeasured confounders comparing those with and without treatment, with",
+                         " adjustment already made for the measured covariates.<br><br>"),
+                    fluidRow(
+                        column(4, 
+                               HTML("<b>Specify the effect estimate:</b>"),
+                               numericInput(inputId = "effect.estimate.page2", label = NULL, value = 3.9, min = 1.02, max = 999, width = '80px')),
+                        column(4, 
+                               HTML("<b>Specify RR<sub>EU</sub>:</b>"),
+                               numericInput(inputId = "RR_EU", label = NULL, value = 2, min = 1.02, max = 999, width = '80px')),
+                        column(4, 
+                               HTML("<b>Specify RR<sub>UD</sub>:</b>"),
+                               numericInput(inputId = "RR_UD", label = NULL, value = 4, min = 1.02, max = 999, width = '80px'))
+                    ),
+                    hr(),
+                    uiOutput("Bias_Factor")
+                    )
 
 )
 
