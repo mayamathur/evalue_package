@@ -103,20 +103,63 @@ function(input, output, session) {
     #### Compute the bias factor ####
     bias.factor <- reactive({
       
-        # MM: reject impossible inputs
         if ( input$RR_UD < 1 | input$RR_EU < 1 ) stop("Both RR_EU and RR_UD must be at least 1.")
 
         input$RR_UD*input$RR_EU / (input$RR_UD + input$RR_EU - 1)  
     })
     
     adjusted.effect <- reactive({
-        adjust.effect <- ifelse(input$effect.estimate.page2 > 1, input$effect.estimate.page2/bias.factor(), input$effect.estimate.page2*bias.factor())
+        adjust.effect <- ifelse(input$effect.estimate.page2 > 1, 
+                                input$effect.estimate.page2/bias.factor(), 
+                                input$effect.estimate.page2*bias.factor()
+                                )
     })
     
     output$Bias_Factor <- renderUI({
-         HTML(paste0("The bias factor is ", round(bias.factor(), 2), ". At most, this bias factor could alter the risk ratio to become ",
+         HTML(paste0("The bias factor is ", round(bias.factor(), 2), 
+                     ". At most, this bias factor could alter the risk ratio to become ",
                      round(adjusted.effect(), 2), "."))
     })
+    
+    output$curveOfExplainAway <- renderPlotly({
+      
+      rr.ud <- function(rr.eu) {
+        value4 <- input$est.effect
+        if(input$selected_measure == "Odds Ratio" & input$Rare.outcome == F){
+          value4 <- sqrt(input$est.effect)
+        }
+        
+        if(input$selected_measure == "Hazard Ratio" & input$Rare.outcome == F){
+          value4 <- (1 - (0.5^sqrt(input$est.effect)))/(1 - (0.5^sqrt(1/input$est.effect))) 
+        }
+        
+        if(value4 > 1){
+          (value4*(1 - rr.eu))/(value4 - rr.eu)
+        }else{
+          ((1/value4)*(1 - rr.eu))/((1/value4) - rr.eu)
+        }
+      }
+      
+      g <- ggplotly(
+        ggplot(data.frame(rr.eu = c(0, 20)), aes(rr.eu)) + 
+          stat_function(fun = rr.ud) + 
+          scale_y_continuous(limits = c(1, e.val()*3)) + 
+          scale_x_continuous(limits = c(1, e.val()*3)) +
+          xlab("Risk ratio for exposure-confounder relationship") + ylab("Risk ratio for confounder-disease relationship") + 
+          geom_point(dat = data.frame(rr.eu = e.val(), rr.ud = e.val()), aes(rr.eu, rr.ud)) +
+          geom_text(dat = data.frame(rr.eu = e.val(), rr.ud = e.val()), 
+                    aes(rr.eu, rr.ud), 
+                    label = paste0("E-value:\n (", round(e.val(), 2), ",", round(e.val(), 2),")"),
+                    nudge_x = e.val()*(3/5), size = 3) + 
+          theme_minimal()
+      )
+      
+      g$x$data[[2]]$text <- "E-value"
+      g$x$data[[1]]$text <- gsub("y", "RR_UD", g$x$data[[1]]$text)
+      g$x$data[[1]]$text <- gsub("rr.eu", "RR_EU", g$x$data[[1]]$text)
+      
+      g
+    }) 
 }
 
 

@@ -139,7 +139,7 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
                             hr(),
-                            plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") #for now, just a placeholder
+                            plotlyOutput("curveOfExplainAway", width = "400px", height = "400px")
                     )
            ),
 
