@@ -30,7 +30,7 @@ navbarPage( "",
                           
                           # INSERT CITATION FOR SOFTWARE LETTER WHEN PUBLISHED
 
-                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i>.", sep="<br/>")) )
+                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i>, or open a pull request on <a href='https://github.com/mayamathur/evalue/'>Github</a>.", sep="<br/>")) )
                           #wellPanel(  HTML(paste("hello", "world", sep="<br/>")) )
                       )
             ),
@@ -139,7 +139,11 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
                             hr(),
+                            HTML(paste("<b>What is the e-value?</b><br>The e-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
+                                       " If one of the two parameters is smaller than the e-value, the other must be larger, as defined by the curve below.",
+                                       " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve.")),
                             plotlyOutput("curveOfExplainAway", width = "400px", height = "400px")
+                            
                     )
            ),
 
