@@ -18,7 +18,7 @@ navbarPage( "",
             tabPanel( "Instructions",
                       mainPanel(
     
-                          wellPanel(  HTML(paste("This website computes the E-value, defined as the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the treatment and the outcome, conditional on the measured covariates, to fully explain away a specific treatment-outcome association.",
+                          wellPanel(  HTML(paste("This website computes the E-value, defined as the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome, conditional on the measured covariates, to fully explain away a specific exposure-outcome association.",
 
                                         "Alternatively, you can consider the confounding strength capable of moving the observed association to any other value (e.g. attenuating the observed association to a true causal effect that is no longer scientifically important, or alternatively increasing a near-null observed association to a value that is of scientific importance). For this purpose, simply type a non-null effect size into the box 'True causal effect to which to shift estimate' when computing the E-value.",
                                         
@@ -29,7 +29,7 @@ navbarPage( "",
                                                 "(2) VanderWeele TJ, & Ding P. (2017). Sensitivity analysis in observational research: introducing the E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.",
                                                 sep="<br/><br/>")) ),
                           
-                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open a pull request on <a href='https://github.com/mayamathur/evalue/'>Github</a>.", sep="<br/>")) )
+                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open an issue on <a href='https://github.com/mayamathur/evalue/issues'>Github</a>.", sep="<br/>")) )
               
                       )
             ),
@@ -173,11 +173,12 @@ navbarPage( "",
            ),
 
            tabPanel("Compute a bias factor",
-                    HTML("<br>If you have substantive knowledge on the strength of the relationships between the unmeasured confounder(s)",
-                         " and the exposure and outcome, you can use these numbers to calculate the bias factor. Per VanderWeele and Ding (2017),",
-                         " let RR<sub>UD</sub> denote the maximum risk ratio for the outcome, conditional on the observed covariates, comparing any two categories of the unmeasured",
-                         " confounders and taken within either treatment group. Let RR<sub>EU</sub> denote",
-                         " the maximum risk ratio for any specific level of the unmeasured confounders comparing those with and without treatment, with",
+                    HTML( "<br><b>WARNING:</b> This page calculates the maximum bias as a function of confounding strength, which is <b>not</b> the E-value. If you only want to compute an E-value, use the tab 'Compute an E-value'.<br>",
+                        "<br>If you have substantive knowledge on the strength of the relationships between the unmeasured confounder(s)",
+                         " and the exposure and outcome, you can use these numbers to calculate the bias factor.",
+                         " Let RR<sub>UD</sub> denote the maximum risk ratio for the outcome, conditional on the observed covariates, comparing any two categories of the unmeasured",
+                         " confounders and taken within either exposure group. Let RR<sub>EU</sub> denote",
+                         " the maximum risk ratio for any specific level of the unmeasured confounders comparing those with and without exposure, with",
                          " adjustment already made for the measured covariates.<br><br>"),
                     fluidRow(
                         column(4, 
