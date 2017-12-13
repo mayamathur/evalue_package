@@ -124,7 +124,8 @@ navbarPage( "",
                                 numericInput('grid', 'Spacing for grid search of E-value', 0.0001, min = 1, max = 9),
                                 numericInput('trueRD', 'True causal effect to which to shift estimate (default: null)', 0, min = 1, max = 9)
                             ),
- 
+
+                          # display results
                            wellPanel(  span( textOutput("result.text") ) ), 
                             
                             # warnings if computing non-null E-value
@@ -147,13 +148,27 @@ navbarPage( "",
           
                     #sidebarPanel( plotOutput("fakeplot") )
                     sidebarPanel(
-                      plotlyOutput("curveOfExplainAway", width = "400px", height = "400px"),
                       
-                      hr(),
-                      HTML(paste("<b>What is the e-value?</b><br>The e-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
-                                 " If one of the two parameters is smaller than the e-value, the other must be larger, as defined by the curve below.",
-                                 " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve.")),
+                      checkboxInput( 'makeplot', 'Show plot', FALSE ),
+                      
+                      # BOOKMARK: FIRST ROW WORKS BUT SECOND DOES NOT
+                      #conditionalPanel( condition =  "false", HTML("First version is YES!") ),  # WORKS WHEN YOU TOGGLE TRUE/FALSE
+                     #conditionalPanel( condition =  "true", span( textOutput("output.havepoint") ) ),  # DOESN'T WORK
+                     #wellPanel( span( textOutput("output.havepoint") ) ), 
+                      
+                      #conditionalPanel( condition =  "output.havepoint == true", HTML("Second version is YES!") ),
+
+                      conditionalPanel( condition = "input.makeplot == true",
+                                        plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") ),
+                      
+                      conditionalPanel( condition = "input.makeplot == true",
+                                        HTML(paste("<br><b>What is the E-value?</b><br>The E-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
+                                                   " If one of the two parameters is smaller than the E-value, the other must be larger, as defined by the curve below.",
+                                                   " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve."))
+                                         ),
+                                       
                       width = 6
+  
                       )
            ),
 

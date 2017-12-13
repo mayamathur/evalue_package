@@ -1,9 +1,6 @@
 source("startup.R")
 
 function(input, output, session) {
-  
-  # JUST FOR TESTING
-  output$fakeplot = renderPlot({ plot( rnorm(100), rnorm(100) ) })
     
     evals <- reactive({
         if ( input$outcomeType == "RR" ) {
@@ -83,6 +80,13 @@ function(input, output, session) {
         return( evals )
     })    
     
+    # BOOKMARK
+   output$havepoint = renderText({ "no" })
+    #output$havepoint = reactive( !is.na( evals()[1] ) )
+    #output$havepoint = reactive( FALSE )
+    #outputOptions(output, "havepoint", suspendWhenHidden = FALSE)
+    
+    
     output$result.text = renderText({
         
         ##### Create String for UI ##### 
@@ -131,6 +135,10 @@ function(input, output, session) {
     
     output$curveOfExplainAway <- renderPlotly({
         
+      #~~~~ MM ADDED THIS
+        #if( FALSE ) {
+        if( !is.na( effect.estimate() ) ) {
+      
         rr.ud <- function(rr.eu) {
             
             if(effect.estimate() > 1){
@@ -161,7 +169,20 @@ function(input, output, session) {
         g$x$data[[1]]$text <- gsub("y", "RR_UD", g$x$data[[1]]$text)
         g$x$data[[1]]$text <- gsub("rr.eu", "RR_EU", g$x$data[[1]]$text)
         
-        g
+        return(g)
+        
+        } else {
+          # show blank placeholder graph
+          df = data.frame()
+          g = ggplotly( ggplot(df) +
+                          geom_point() +
+                          xlim(0, 10) +
+                          ylim(0, 10) +
+                          theme_minimal() +
+                          xlab("Risk ratio for exposure-confounder relationship") + ylab("Risk ratio for confounder-disease relationship") + 
+                          annotate("text", x = 5, y = 5, label = "(Enter your point estimate)") )
+          return(g)
+        }
     }) 
     
     #### Compute the bias factor ####
