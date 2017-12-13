@@ -1,9 +1,6 @@
 
 
-
 source("startup.R")
-
-
 
 library(shiny)
 library(plotly)
