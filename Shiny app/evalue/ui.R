@@ -137,18 +137,24 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'HR.com' & input.trueHRcom != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
-                            hr(),
-                            HTML(paste("<b>What is the e-value?</b><br>The e-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
-                                       " If one of the two parameters is smaller than the e-value, the other must be larger, as defined by the curve below.",
-                                       " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve.")),
                             
                             # MOVE THIS TO BE TO THE RIGHT
-                            plotlyOutput("curveOfExplainAway", width = "400px", height = "400px")
+                            #plotlyOutput("curveOfExplainAway", width = "400px", height = "400px")
                             
-                    ),
-                    #sidebarPanel( HTML("asdfasdf") )
-                    sidebarPanel( plotOutput("fakeplot") )
-                    #sidebarPanel( plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") )
+                            width = 6
+                            
+                    ),  # ends mainPanel
+          
+                    #sidebarPanel( plotOutput("fakeplot") )
+                    sidebarPanel(
+                      plotlyOutput("curveOfExplainAway", width = "400px", height = "400px"),
+                      
+                      hr(),
+                      HTML(paste("<b>What is the e-value?</b><br>The e-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
+                                 " If one of the two parameters is smaller than the e-value, the other must be larger, as defined by the curve below.",
+                                 " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve.")),
+                      width = 6
+                      )
            ),
 
            tabPanel("Compute a bias factor",
