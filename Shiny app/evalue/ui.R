@@ -29,7 +29,7 @@ navbarPage( "",
                                                 "(2) VanderWeele TJ, & Ding P. (2017). Sensitivity analysis in observational research: introducing the E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.",
                                                 sep="<br/><br/>")) ),
                           
-                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i>, or open a pull request on <a href='https://github.com/mayamathur/evalue/'>Github</a>.", sep="<br/>")) )
+                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open a pull request on <a href='https://github.com/mayamathur/evalue/'>Github</a>.", sep="<br/>")) )
               
                       )
             ),
@@ -129,7 +129,7 @@ navbarPage( "",
                             
                             # warnings if computing non-null E-value
                             # note: because the condition is in Javascript, have to use period instead of dollar sign to 
-                            #  access arguments, so CANNOT have period in the variable names (e.g., "trueRR" doesn't work!)
+                            #  access arguments, so CANNOT have period in the variable names (e.g., "true.RR" doesn't work!)
                             conditionalPanel( condition = "input.outcomeType == 'RR' & input.trueRR != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'OR.rare' & input.trueORrare != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'OR.com' & input.trueORcom != 1", nonnull.mess),
@@ -141,9 +141,14 @@ navbarPage( "",
                             HTML(paste("<b>What is the e-value?</b><br>The e-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
                                        " If one of the two parameters is smaller than the e-value, the other must be larger, as defined by the curve below.",
                                        " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve.")),
+                            
+                            # MOVE THIS TO BE TO THE RIGHT
                             plotlyOutput("curveOfExplainAway", width = "400px", height = "400px")
                             
-                    )
+                    ),
+                    #sidebarPanel( HTML("asdfasdf") )
+                    sidebarPanel( plotOutput("fakeplot") )
+                    #sidebarPanel( plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") )
            ),
 
            tabPanel("Compute a bias factor",

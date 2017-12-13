@@ -1,6 +1,9 @@
 source("startup.R")
 
 function(input, output, session) {
+  
+  # JUST FOR TESTING
+  output$fakeplot = renderPlot({ plot( rnorm(100), rnorm(100) ) })
     
     evals <- reactive({
         if ( input$outcomeType == "RR" ) {
@@ -123,6 +126,8 @@ function(input, output, session) {
         
         return( est.effect )
     })
+  
+    
     
     output$curveOfExplainAway <- renderPlotly({
         
