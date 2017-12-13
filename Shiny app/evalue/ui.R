@@ -29,8 +29,8 @@ navbarPage( "",
                                                 "(2) VanderWeele TJ, & Ding P. (2017). Sensitivity analysis in observational research: introducing the E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.",
                                                 sep="<br/><br/>")) ),
                           
-                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i>.", sep="<br/>")) )
-                          #wellPanel(  HTML(paste("hello", "world", sep="<br/>")) )
+                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i>, or open a pull request on <a href='https://github.com/mayamathur/evalue/'>Github</a>.", sep="<br/>")) )
+              
                       )
             ),
            tabPanel( "Compute an E-value",
@@ -138,7 +138,11 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
                             hr(),
-                            plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") #for now, just a placeholder
+                            HTML(paste("<b>What is the e-value?</b><br>The e-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
+                                       " If one of the two parameters is smaller than the e-value, the other must be larger, as defined by the curve below.",
+                                       " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve.")),
+                            plotlyOutput("curveOfExplainAway", width = "400px", height = "400px")
+                            
                     )
            ),
 
