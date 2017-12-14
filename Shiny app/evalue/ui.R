@@ -15,11 +15,15 @@ navbarPage( "",
             tabPanel( "Instructions",
                       mainPanel(
     
-                          wellPanel(  HTML(paste("This website computes the E-value, defined as the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome, conditional on the measured covariates, to fully explain away a specific exposure-outcome association. Note that for outcome types other than relative risks, assumptions are involved with the approximate conversions used. See first citation below for details.",
+                          wellPanel(  HTML(paste("<b>Computing an E-value</b>",
+                            
+                                      "The tab 'Compute an E-value' computes the E-value, defined as the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome, conditional on the measured covariates, to fully explain away a specific exposure-outcome association. Note that for outcome types other than relative risks, assumptions are involved with the approximate conversions used. See first citation below for details.",
 
-                                        "Alternatively, you can consider the confounding strength capable of moving the observed association to any other value (e.g. attenuating the observed association to a true causal effect that is no longer scientifically important, or alternatively increasing a near-null observed association to a value that is of scientific importance). For this purpose, simply type a non-null effect size into the box 'True causal effect to which to shift estimate' when computing the E-value.",
+                                      "Alternatively, you can consider the confounding strength capable of moving the observed association to any other value (e.g. attenuating the observed association to a true causal effect that is no longer scientifically important, or alternatively increasing a near-null observed association to a value that is of scientific importance). For this purpose, simply type a non-null effect size into the box 'True causal effect to which to shift estimate' when computing the E-value.",
                                         
-                                                 "Additionally, if you have substantive knowledge on the strength of the relationships between the unmeasured confounder(s) and the exposure and outcome, you can use these numbers to calculate the bias factor using the tab 'Compute a bias factor'.", sep="<br/><br/>")) ),
+                                      "<b>Computing a bias factor</b>",                     
+                            
+                                      "Additionally, if you have substantive knowledge on the strength of the relationships between the unmeasured confounder(s) and the exposure and outcome, you can use these numbers to calculate the bias factor using the tab 'Compute a bias factor'.", sep="<br/><br/>")) ),
                           
                           wellPanel(  HTML(paste("Please use the following citations:",
                                                  "(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package for computing E-values. <i>Epidemiology</i>, in press.",
