@@ -12,6 +12,9 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
 
 
 navbarPage( "",
+            
+ 
+            
             tabPanel( "Instructions",
                       mainPanel(
     
@@ -31,9 +34,30 @@ navbarPage( "",
                                                 sep="<br/><br/>")) ),
                           
                           wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open an issue on <a href='https://github.com/mayamathur/evalue/issues'>Github</a>.", sep="<br/>")) )
-              
+                        
                       )
+                      
             ),
+            
+            sidebarPanel(
+              
+              HTML('<script type="text/javascript">
+                   amzn_assoc_placement = "adunit0";
+                   amzn_assoc_search_bar = "true";
+                   amzn_assoc_tracking_id = "evalue-20";
+                   amzn_assoc_ad_mode = "manual";
+                   amzn_assoc_ad_type = "smart";
+                   amzn_assoc_marketplace = "amazon";
+                   amzn_assoc_region = "US";
+                   amzn_assoc_title = "Amazon ads supporting our server costs";
+                   amzn_assoc_linkid = "cd775ac2352c26998b1123d681b4a179";
+                   amzn_assoc_asins = "0062279319,0142196754,1610397673,1472930339,0691147825,0312313926,0008276099,0465053947";
+                   </script>
+                   <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
+              
+              width = 6 ),
+            
+            
            tabPanel( "Compute an E-value",
 
                         mainPanel(
@@ -139,25 +163,15 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'HR.com' & input.trueHRcom != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
-                            
-                            # MOVE THIS TO BE TO THE RIGHT
-                            #plotlyOutput("curveOfExplainAway", width = "400px", height = "400px")
+
                             
                             width = 6
                             
                     ),  # ends mainPanel
           
-                    #sidebarPanel( plotOutput("fakeplot") )
                     sidebarPanel(
                       
                       checkboxInput( 'makeplot', 'Show plot', FALSE ),
-                      
-                      # BOOKMARK: FIRST ROW WORKS BUT SECOND DOES NOT
-                      #conditionalPanel( condition =  "false", HTML("First version is YES!") ),  # WORKS WHEN YOU TOGGLE TRUE/FALSE
-                     #conditionalPanel( condition =  "true", span( textOutput("output.havepoint") ) ),  # DOESN'T WORK
-                     #wellPanel( span( textOutput("output.havepoint") ) ), 
-                      
-                      #conditionalPanel( condition =  "output.havepoint == true", HTML("Second version is YES!") ),
 
                       conditionalPanel( condition = "input.makeplot == true",
                                         plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") ),
