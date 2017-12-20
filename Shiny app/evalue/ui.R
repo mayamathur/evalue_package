@@ -13,10 +13,13 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
 
 navbarPage( "",
             
- 
-            
             tabPanel( "Instructions",
                       mainPanel(
+                        
+                        wellPanel(  HTML(paste("<b>Please use the following citations:</b>",
+                                               "(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package for computing E-values. <i>Epidemiology</i>, in press.",
+                                               "(2) VanderWeele TJ, & Ding P. (2017). Sensitivity analysis in observational research: introducing the E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.",
+                                               sep="<br/><br/>")) ),
     
                           wellPanel(  HTML(paste("<b>Computing an E-value</b>",
                             
@@ -27,37 +30,53 @@ navbarPage( "",
                                       "<b>Computing a bias factor</b>",                     
                             
                                       "Additionally, if you have substantive knowledge on the strength of the relationships between the unmeasured confounder(s) and the exposure and outcome, you can use these numbers to calculate the bias factor using the tab 'Compute a bias factor'.", sep="<br/><br/>")) ),
-                          
-                          wellPanel(  HTML(paste("Please use the following citations:",
-                                                 "(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package for computing E-values. <i>Epidemiology</i>, in press.",
-                                                "(2) VanderWeele TJ, & Ding P. (2017). Sensitivity analysis in observational research: introducing the E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.",
-                                                sep="<br/><br/>")) ),
-                          
-                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open an issue on <a href='https://github.com/mayamathur/evalue/issues'>Github</a>.", sep="<br/>")) )
                         
-                      )
+                          
+                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open
+                                                 an issue on <a href='https://github.com/mayamathur/evalue/issues'>Github</a>.", sep="<br/>")) ),
+                          
+                          width=6
+                          
+                      ),
+                      
+                      # EXAMPLE OF JAVASCRIPT TROUBLE
+                      sidebarPanel(
+                          
+                          # BOOKMARK: MAKE REPRODUCIBLE EXAMPLE WITH THIS
+                          # OR TRY THIS: https://stackoverflow.com/questions/47844015/how-to-trigger-js-script-when-shiny-app-loads
+                          # only runs once, like the ads
+                          # HTML('<script type="text/javascript"> alert("Hello world"); </script>')
+                          
+                          # # runs every time
+                          HTML('<b> PLACEHOLDER FOR AMAZON AD </b>')
+                          
+                          
+                           , width=6 )
+                         
+                     
+                      # AMAZON ADS
+                      
+                   #    sidebarPanel(
+                   #      
+                   #      HTML('<script type="text/javascript">
+                   # amzn_assoc_placement = "adunit0";
+                   # amzn_assoc_search_bar = "true";
+                   # amzn_assoc_tracking_id = "evalue-20";
+                   # amzn_assoc_ad_mode = "manual";
+                   # amzn_assoc_ad_type = "smart";
+                   # amzn_assoc_marketplace = "amazon";
+                   # amzn_assoc_region = "US";
+                   # amzn_assoc_title = "Amazon ads supporting our server costs";
+                   # amzn_assoc_linkid = "cd775ac2352c26998b1123d681b4a179";
+                   # amzn_assoc_asins = "0062279319,0142196754,1610397673,1472930339,0691147825,0312313926,0008276099,0465053947";
+                   # </script>
+                   # <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
+                   #      
+                   #      width = 6 )
                       
             ),
             
-            sidebarPanel(
-              
-              HTML('<script type="text/javascript">
-                   amzn_assoc_placement = "adunit0";
-                   amzn_assoc_search_bar = "true";
-                   amzn_assoc_tracking_id = "evalue-20";
-                   amzn_assoc_ad_mode = "manual";
-                   amzn_assoc_ad_type = "smart";
-                   amzn_assoc_marketplace = "amazon";
-                   amzn_assoc_region = "US";
-                   amzn_assoc_title = "Amazon ads supporting our server costs";
-                   amzn_assoc_linkid = "cd775ac2352c26998b1123d681b4a179";
-                   amzn_assoc_asins = "0062279319,0142196754,1610397673,1472930339,0691147825,0312313926,0008276099,0465053947";
-                   </script>
-                   <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
-              
-              width = 6 ),
-            
-            
+
            tabPanel( "Compute an E-value",
 
                         mainPanel(
@@ -164,11 +183,15 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
 
+
+                            wellPanel( HTML('<b> PLACEHOLDER FOR AMAZON AD </b>') ),
+                  
                             
                             width = 6
                             
                     ),  # ends mainPanel
-          
+
+
                     sidebarPanel(
                       
                       checkboxInput( 'makeplot', 'Show plot', FALSE ),

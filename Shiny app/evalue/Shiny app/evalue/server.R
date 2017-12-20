@@ -135,11 +135,6 @@ function(input, output, session) {
     
     output$curveOfExplainAway <- renderPlotly({
         
-<<<<<<< HEAD
-=======
-      #~~~~ MM ADDED THIS
-        #if( FALSE ) {
->>>>>>> edb77ccc17220a729bdf6830cb6c72d9df3aa660
         if( !is.na( effect.estimate() ) ) {
       
         rr.ud <- function(rr.eu) {
@@ -175,12 +170,7 @@ function(input, output, session) {
         return(g)
         
         } else {
-<<<<<<< HEAD
-          # if we don't have point estimate, 
-          # then show blank placeholder graph
-=======
-          # show blank placeholder graph
->>>>>>> edb77ccc17220a729bdf6830cb6c72d9df3aa660
+
           df = data.frame()
           g = ggplotly( ggplot(df) +
                           geom_point() +
