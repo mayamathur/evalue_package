@@ -1,0 +1,13 @@
+name: bias_factor
+title: bias_factor
+username:
+account: mmathur
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 250682
+bundleId: 1144763
+url: https://mmathur.shinyapps.io/bias_factor/
+when: 1513788045.32279
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app.R
