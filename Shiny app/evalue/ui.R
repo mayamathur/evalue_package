@@ -37,21 +37,21 @@ navbarPage( "",
                           
                           width=6
                           
-                      ),
+                      )
                       
                       # EXAMPLE OF JAVASCRIPT TROUBLE
-                      sidebarPanel(
-                          
-                          # BOOKMARK: MAKE REPRODUCIBLE EXAMPLE WITH THIS
-                          # OR TRY THIS: https://stackoverflow.com/questions/47844015/how-to-trigger-js-script-when-shiny-app-loads
-                          # only runs once, like the ads
-                          # HTML('<script type="text/javascript"> alert("Hello world"); </script>')
-                          
-                          # # runs every time
-                          HTML('<b> PLACEHOLDER FOR AMAZON AD </b>')
-                          
-                          
-                           , width=6 )
+                      # sidebarPanel(
+                      #     
+                      #     # BOOKMARK: MAKE REPRODUCIBLE EXAMPLE WITH THIS
+                      #     # OR TRY THIS: https://stackoverflow.com/questions/47844015/how-to-trigger-js-script-when-shiny-app-loads
+                      #     # only runs once, like the ads
+                      #     # HTML('<script type="text/javascript"> alert("Hello world"); </script>')
+                      #     
+                      #     # # runs every time
+                      #     HTML('<b> PLACEHOLDER FOR AMAZON AD </b>')
+                      #     
+                      #     
+                      #      , width=6 )
                          
                      
                       # AMAZON ADS
@@ -184,7 +184,7 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
 
 
-                            wellPanel( HTML('<b> PLACEHOLDER FOR AMAZON AD </b>') ),
+                            #wellPanel( HTML('<b> PLACEHOLDER FOR AMAZON AD </b>') ),
                   
                             
                             width = 6
