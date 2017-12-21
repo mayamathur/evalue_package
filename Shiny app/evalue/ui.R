@@ -187,25 +187,25 @@ navbarPage( "",
                             
                             width = 6
                             
-                    )  # ends mainPanel
+                    ),  # ends mainPanel
 
-                    # # panel for contour plot
-                    # sidebarPanel(
-                    # 
-                    #   checkboxInput( 'makeplot', 'Show plot', FALSE ),
-                    # 
-                    #   conditionalPanel( condition = "input.makeplot == true",
-                    #                     plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") ),
-                    # 
-                    #   conditionalPanel( condition = "input.makeplot == true",
-                    #                     HTML(paste("<br><b>What is the E-value?</b><br>The E-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
-                    #                                " If one of the two parameters is smaller than the E-value, the other must be larger, as defined by the curve below.",
-                    #                                " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve."))
-                    #                      ),
-                    # 
-                    #   width = 6
-                    # 
-                    #   ) # end contour plot panel
+                     # panel for contour plot
+                     sidebarPanel(
+
+                      checkboxInput( 'makeplot', 'Show plot', FALSE ),
+
+                      conditionalPanel( condition = "input.makeplot == true",
+                                        plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") ),
+
+                      conditionalPanel( condition = "input.makeplot == true",
+                                        HTML(paste("<br><b>What is the E-value?</b><br>The E-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
+                                                   " If one of the two parameters is smaller than the E-value, the other must be larger, as defined by the curve below.",
+                                                   " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve."))
+                                         ),
+
+                      width = 6
+
+                       ) # end contour plot panel
            )
 )
 

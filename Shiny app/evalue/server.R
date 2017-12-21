@@ -113,19 +113,19 @@ function(input, output, session) {
     #### Make the plot ####
     effect.estimate <- reactive({
         
-        est.effect <- input$est.RR
+        est.effect <- input$est.RR/input$trueRR
         if( input$outcomeType == "OR.rare" ){
-            est.effect <- input$est.OR.rare
+            est.effect <- input$est.OR.rare/input$trueORrare
         }else if( input$outcomeType == "OR.com" ){
-            est.effect <- sqrt(input$est.OR.com)
+            est.effect <- sqrt(input$est.OR.com)/sqrt(input$trueORcom)
         }else if( input$outcomeType == "HR.rare" ){
-            est.effect <- input$est.HR.rare
+            est.effect <- input$est.HR.rare/input$trueHRrare
         }else if ( input$outcomeType == "HR.com" ){
-            est.effect <- ( 1 - 0.5^sqrt(input$est.HR.com) )/( 1 - 0.5^sqrt(1/input$est.HR.com) )
+            est.effect <- (  (( 1 - 0.5^sqrt(input$est.HR.com) )/( 1 - 0.5^sqrt(1/input$est.HR.com) ))  )/(  (( 1 - 0.5^sqrt(input$trueHRcom) )/( 1 - 0.5^sqrt(1/input$trueHRcom) ))  )
         }else if ( input$outcomeType == "MD" ){
-            est.effect <- exp(0.91*input$est.MD)
+            est.effect <- exp(0.91*input$est.MD)/exp(0.91*input$trueMD)
         }else if ( input$outcomeType == "RD" ){
-            est.effect <- ( input$n11/(input$n11 + input$n10) )/( input$n01/(input$n01 + input$n00) )
+            est.effect <- (( input$n11/(input$n11 + input$n10) )/( input$n01/(input$n01 + input$n00) ))/input$trueRD 
         }
         
         return( est.effect )
