@@ -111,24 +111,32 @@ function(input, output, session) {
     })
 
     #### Make the plot ####
-    effect.estimate <- reactive({
+    bias.factor <- reactive({
         
-        est.effect <- input$est.RR/input$trueRR
+        bf <- input$est.RR/input$trueRR
         if( input$outcomeType == "OR.rare" ){
-            est.effect <- input$est.OR.rare/input$trueORrare
+          bf <- input$est.OR.rare/input$trueORrare
         }else if( input$outcomeType == "OR.com" ){
-            est.effect <- sqrt(input$est.OR.com)/sqrt(input$trueORcom)
+          bf <- sqrt(input$est.OR.com)/sqrt(input$trueORcom)
         }else if( input$outcomeType == "HR.rare" ){
-            est.effect <- input$est.HR.rare/input$trueHRrare
+          bf <- input$est.HR.rare/input$trueHRrare
         }else if ( input$outcomeType == "HR.com" ){
-            est.effect <- (  (( 1 - 0.5^sqrt(input$est.HR.com) )/( 1 - 0.5^sqrt(1/input$est.HR.com) ))  )/(  (( 1 - 0.5^sqrt(input$trueHRcom) )/( 1 - 0.5^sqrt(1/input$trueHRcom) ))  )
+          bf <- (  (( 1 - 0.5^sqrt(input$est.HR.com) )/( 1 - 0.5^sqrt(1/input$est.HR.com) ))  )/(  (( 1 - 0.5^sqrt(input$trueHRcom) )/( 1 - 0.5^sqrt(1/input$trueHRcom) ))  )
         }else if ( input$outcomeType == "MD" ){
-            est.effect <- exp(0.91*input$est.MD)/exp(0.91*input$trueMD)
+          bf <- exp(0.91*input$est.MD)/exp(0.91*input$trueMD)
         }else if ( input$outcomeType == "RD" ){
-            est.effect <- (( input$n11/(input$n11 + input$n10) )/( input$n01/(input$n01 + input$n00) ))/input$trueRD 
+             N = input$n10 + input$n11 + input$n01 + input$n00
+             N1 = input$n10 + input$n11
+             N0 = input$n00 + input$n01
+             f = N1/N
+             p0 = input$n01/N0
+             p1 = input$n11/N1
+             bf <- (1/(2*p0*f) )*( sqrt( (input$trueRD + p0*(1-f) - p1*f)^2 + 
+                                                   4*p1*p0*f*(1-f) ) -
+                                             (input$trueRD + p0*(1-f) - p1*f)) #Note: I didn't include this last bit inside the sqrt()!
         }
         
-        return( est.effect )
+        return( bf )
     })
   
     
@@ -136,17 +144,17 @@ function(input, output, session) {
     output$curveOfExplainAway <- renderPlotly({
         
       # MM: do not attempt to make plot unless we have the point estimate
-        if( !is.na( effect.estimate() ) ) {
+        if( !is.na( bias.factor() ) ) {
       
         rr.ud <- function(rr.eu) {
             
-            if(effect.estimate() > 1){
+            if(bias.factor() > 1){
               
-                ( effect.estimate()*(1 - rr.eu) )/( effect.estimate() - rr.eu )
+                ( bias.factor()*(1 - rr.eu) )/( bias.factor() - rr.eu )
                 
             }else{
                 
-                ( (1/effect.estimate())*(1 - rr.eu) )/( (1/effect.estimate()) - rr.eu )
+                ( (1/bias.factor())*(1 - rr.eu) )/( (1/bias.factor()) - rr.eu )
             }
         }
         
