@@ -15,19 +15,34 @@ navbarPage( "",
                       mainPanel(
                         
                         wellPanel(  HTML(paste("<b>Please use the following citations:</b>",
-                                               "(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package for computing E-values. <i>Epidemiology</i>, in press.",
-                                               "(2) VanderWeele TJ, & Ding P. (2017). Sensitivity analysis in observational research: introducing the E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.",
+                                               "(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package
+                                               for computing E-values. <i>Epidemiology</i>, in press.",
+                                               "<a href='http://annals.org/aim/article-abstract/2643434/sensitivity-analysis-observational-research-introducing-e-value?doi=10.7326%2fM16-2607'>(2) VanderWeele TJ,
+                                               & Ding P. (2017). Sensitivity analysis in observational research: introducing the
+                                               E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.</a>",
                                                sep="<br/><br/>")) ),
     
                           wellPanel(  HTML(paste("<b>Computing an E-value</b>",
                             
-                                      "The tab 'Compute an E-value' computes the E-value, defined as the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome, conditional on the measured covariates, to fully explain away a specific exposure-outcome association. Note that for outcome types other than relative risks, assumptions are involved with the approximate conversions used. See first citation below for details.",
+                                      'The tab "Compute an E-value" computes the E-value, defined as the minimum strength of association
+                                      on the risk ratio scale that an unmeasured confounder would need to have with both the exposure
+                                      and the outcome, conditional on the measured covariates, to fully explain away a specific
+                                      exposure-outcome association. Note that for outcome types other than relative risks, assumptions
+                                      are involved with the approximate conversions used. See first citation below for details.',
 
-                                      "Alternatively, you can consider the confounding strength capable of moving the observed association to any other value (e.g. attenuating the observed association to a true causal effect that is no longer scientifically important, or alternatively increasing a near-null observed association to a value that is of scientific importance). For this purpose, simply type a non-null effect size into the box 'True causal effect to which to shift estimate' when computing the E-value.",
+                                      "Alternatively, you can consider the confounding strength capable of moving the observed
+                                      association to any other value (e.g. attenuating the observed association to a true causal
+                                      effect that is no longer scientifically important, or alternatively increasing a near-null
+                                      observed association to a value that is of scientific importance). For this purpose, simply
+                                      type a non-null effect size into the box 'True causal effect to which to shift estimate'
+                                      when computing the E-value.",
                                         
                                       "<b>Computing a bias factor</b>",                     
                             
-                                      "Additionally, if you have substantive knowledge on the strength of the relationships between the unmeasured confounder(s) and the exposure and outcome, you can use these numbers to <a href='https://mmathur.shinyapps.io/bias_factor/'>calculate the bias factor</a>.", sep="<br/><br/>")) ),
+                                      "Additionally, if you have substantive knowledge on the strength of the relationships
+                                      between the unmeasured confounder(s) and the exposure and outcome, you can use these
+                                      numbers to <a href='https://mmathur.shinyapps.io/bias_factor/'>calculate the bias factor</a>.",
+                                      sep="<br/><br/>")) ),
                         
                           
                           wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open
