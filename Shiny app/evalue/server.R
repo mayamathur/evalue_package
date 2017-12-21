@@ -131,9 +131,11 @@ function(input, output, session) {
              f = N1/N
              p0 = input$n01/N0
              p1 = input$n11/N1
+             
+             # Ding 2016, page 376 expression
              bf <- (1/(2*p0*f) )*( sqrt( (input$trueRD + p0*(1-f) - p1*f)^2 + 
                                                    4*p1*p0*f*(1-f) ) -
-                                             (input$trueRD + p0*(1-f) - p1*f)) #Note: I didn't include this last bit inside the sqrt()!
+                                             (input$trueRD + p0*(1-f) - p1*f) ) 
         }
         
         return( bf )
@@ -163,7 +165,7 @@ function(input, output, session) {
                 stat_function(fun = rr.ud) + 
                 scale_y_continuous(limits = c(1, evals()[1]*3)) + 
                 scale_x_continuous(limits = c(1, evals()[1]*3)) +
-                xlab("Risk ratio for exposure-confounder relationship") + ylab("Risk ratio for confounder-disease relationship") + 
+                xlab("Risk ratio for exposure-confounder relationship") + ylab("Risk ratio for confounder-outcome relationship") + 
                 geom_point(dat = data.frame(rr.eu = evals()[1], rr.ud = evals()[1]), aes(rr.eu, rr.ud)) +
                 geom_text(dat = data.frame(rr.eu = evals()[1], rr.ud = evals()[1]), 
                           aes(rr.eu, rr.ud), 
@@ -187,7 +189,7 @@ function(input, output, session) {
                           xlim(0, 10) +
                           ylim(0, 10) +
                           theme_minimal() +
-                          xlab("Risk ratio for exposure-confounder relationship") + ylab("Risk ratio for confounder-disease relationship") + 
+                          xlab("Risk ratio for exposure-confounder relationship") + ylab("Risk ratio for confounder-outcome relationship") + 
                           annotate("text", x = 5, y = 5, label = "(Enter your point estimate)") )
           return(g)
         }

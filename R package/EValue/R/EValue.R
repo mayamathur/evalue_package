@@ -461,7 +461,7 @@ evalues.RD = function(n11, n10, n01, n00,
   # bias factor and E-value for point estimate
   est.BF = ( sqrt( (true + diff)^2 + 4 * p1 * p0 * f * (1-f)  ) - (true + diff) ) / ( 2 * p0 * f )
   est.Evalue    = threshold(est.BF)   
-  if( p1 - p0 <= true ) stop("For risk difference, true value must be greater than or equal to point estimate.")
+  if( p1 - p0 <= true ) stop("For risk difference, true value must be less than or equal to point estimate.")
   
   # compute lower CI limit
   Zalpha        = qnorm(1-alpha/2)  # critical value
