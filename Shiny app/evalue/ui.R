@@ -50,43 +50,30 @@ navbarPage( "",
                           
                           width=6
                           
-                      )
-                      
-                      # EXAMPLE OF JAVASCRIPT TROUBLE
-                      # sidebarPanel(
-                      #     
-                      #     # BOOKMARK: MAKE REPRODUCIBLE EXAMPLE WITH THIS
-                      #     # OR TRY THIS: https://stackoverflow.com/questions/47844015/how-to-trigger-js-script-when-shiny-app-loads
-                      #     # only runs once, like the ads
-                      #     # HTML('<script type="text/javascript"> alert("Hello world"); </script>')
-                      #     
-                      #     # # runs every time
-                      #     HTML('<b> PLACEHOLDER FOR AMAZON AD </b>')
-                      #     
-                      #     
-                      #      , width=6 )
-                         
+                      ),
                      
                       # AMAZON ADS
-                      
-                   #    sidebarPanel(
-                   #      
-                   #      HTML('<script type="text/javascript">
-                   # amzn_assoc_placement = "adunit0";
-                   # amzn_assoc_search_bar = "true";
-                   # amzn_assoc_tracking_id = "evalue-20";
-                   # amzn_assoc_ad_mode = "manual";
-                   # amzn_assoc_ad_type = "smart";
-                   # amzn_assoc_marketplace = "amazon";
-                   # amzn_assoc_region = "US";
-                   # amzn_assoc_title = "Amazon ads supporting our server costs";
-                   # amzn_assoc_linkid = "cd775ac2352c26998b1123d681b4a179";
-                   # amzn_assoc_asins = "0062279319,0142196754,1610397673,1472930339,0691147825,0312313926,0008276099,0465053947";
-                   # </script>
-                   # <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
-                   #      
-                   #      width = 6 )
-                      
+                      sidebarPanel(
+
+                        HTML('<script type="text/javascript">
+                   amzn_assoc_placement = "adunit0";
+                   amzn_assoc_search_bar = "true";
+                   amzn_assoc_tracking_id = "evalue-20";
+                   amzn_assoc_ad_mode = "manual";
+                   amzn_assoc_ad_type = "smart";
+                   amzn_assoc_marketplace = "amazon";
+                   amzn_assoc_region = "US";
+                   amzn_assoc_title = "Amazon ads supporting our server costs";
+                   amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
+                   amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
+                  amzn_assoc_random_permute = "true";
+                   </script>
+                   <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
+
+                        width = 6 )
+
+                      # can add second panel here for more ads
+                   
             ),
             
 
