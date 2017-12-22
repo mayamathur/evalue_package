@@ -53,6 +53,9 @@ navbarPage( "",
                       ),
                      
                       # AMAZON ADS
+                      # to add new book: search it on Amazon and pull out its ASIN from the URL
+                      #  then add to the the amzn_assoc_asins argument
+                      #  I added the amzn_assoc_random_permute = "true" to get random sample of chosen products
                       sidebarPanel(
 
                         HTML('<script type="text/javascript">
@@ -183,8 +186,21 @@ navbarPage( "",
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
 
-
-                            #wellPanel( HTML('<b> PLACEHOLDER FOR AMAZON AD </b>') ),
+                          # SECOND AMAZON AD
+                   #          wellPanel( HTML('<script type="text/javascript">
+                   # amzn_assoc_placement = "adunit0";
+                   #                          amzn_assoc_search_bar = "true";
+                   #                          amzn_assoc_tracking_id = "evalue-20";
+                   #                          amzn_assoc_ad_mode = "manual";
+                   #                          amzn_assoc_ad_type = "smart";
+                   #                          amzn_assoc_marketplace = "amazon";
+                   #                          amzn_assoc_region = "US";
+                   #                          amzn_assoc_title = "Amazon ads supporting our server costs";
+                   #                          amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
+                   #                          amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
+                   #                          amzn_assoc_random_permute = "true";
+                   #                          </script>
+                   #                          <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>') ),
                   
                             
                             width = 6
@@ -208,7 +224,17 @@ navbarPage( "",
                       width = 6
 
                        ) # end contour plot panel
-           )
+           ),
+
+          tabPanel( "Donate",
+                    
+                    wellPanel("If you found this website useful, please consider making a small donation to support its ongoing server costs and maintenance. Any donations surpassing immediate costs for this website will be used to fund development of other open-source statistical tools. Thank you!",
+                              
+                              HTML("<br><br>"),
+                              
+                              HTML("<a href='https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=maya%2ez%2emathur%40gmail%2ecom&lc=US&item_name=E%2dvalue%20website%20and%20R%20package%20donation&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted'>Make a donation</a>")),
+                              width = 2
+                        )
 )
 
 
