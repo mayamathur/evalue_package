@@ -1,6 +1,86 @@
 source("startup.R")
 
 function(input, output, session) {
+  
+  
+  # BOOKMARK
+  # output$alert1 = renderUI({
+  #   req(input$navbar == "Instructions")
+  #   # WORKS
+  #   HTML('<script type="text/javascript"> alert("Tab 1 is talking"); </script>')
+  # })
+  
+  output$ad1 = renderUI({
+    req(input$navbar == "Instructions")
+    
+    # DOES NOT WORK
+    HTML('<script type="text/javascript">
+                          alert("Tab 1 is talking through amazon thing");
+                           amzn_assoc_placement = "adunit0";
+                           amzn_assoc_search_bar = "true";
+                           amzn_assoc_tracking_id = "evalue-20";
+                           amzn_assoc_ad_mode = "manual";
+                           amzn_assoc_ad_type = "smart";
+                           amzn_assoc_marketplace = "amazon";
+                           amzn_assoc_region = "US";
+                           amzn_assoc_title = "Amazon ads supporting our server costs";
+                           amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
+                           amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
+                          amzn_assoc_random_permute = "true";
+                          alert(amzn_assoc_placement);
+                           </script>
+                           <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>')
+  })
+  
+  
+  
+  # BOOKMARK
+  output$alert2 = renderUI({
+    req(input$navbar == "Compute an E-value")
+    
+    # DOES NOT WORK
+    # HTML('<script type="text/javascript">
+    #                amzn_assoc_placement = "adunit0";
+    #      amzn_assoc_search_bar = "true";
+    #      amzn_assoc_tracking_id = "evalue-20";
+    #      amzn_assoc_ad_mode = "manual";
+    #      amzn_assoc_ad_type = "smart";
+    #      amzn_assoc_marketplace = "amazon";
+    #      amzn_assoc_region = "US";
+    #      amzn_assoc_title = "Amazon ads supporting our server costs";
+    #      amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
+    #      amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
+    #      amzn_assoc_random_permute = "true";
+    #      </script>
+    #      <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>')
+    
+    # WORKS
+    HTML('<script type="text/javascript"> alert("Tab 2 is talking"); </script>')
+  })
+  
+  output$ad2 = renderUI({
+    req(input$navbar == "Compute an E-value")
+    
+    # DOES NOT WORK
+    HTML('<script type="text/javascript">
+                   amzn_assoc_placement = "adunit0";
+         amzn_assoc_search_bar = "true";
+         amzn_assoc_tracking_id = "evalue-20";
+         amzn_assoc_ad_mode = "manual";
+         amzn_assoc_ad_type = "smart";
+         amzn_assoc_marketplace = "amazon";
+         amzn_assoc_region = "US";
+         amzn_assoc_title = "Amazon ads supporting our server costs";
+         amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
+         amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
+         amzn_assoc_random_permute = "true";
+         </script>
+         <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>')
+  })
+  
+  
+  
+  
     
     evals <- reactive({
         if ( input$outcomeType == "RR" ) {
@@ -10,16 +90,6 @@ function(input, output, session) {
             
             
             evals = round( evalues.RR( est = input$est.RR, lo = input$lo.RR, hi = input$hi.RR, true = input$trueRR )[2,], 2 )
-            
-            #             # check for warning messages
-            #             # https://stackoverflow.com/questions/44722408/r-shiny-output-warning-messages-to-ui/44722732#44722732
-            #             x <- tryCatch( evalues.RR( est = input$est.RR, lo = input$lo.RR, hi = input$hi.RR, true = input$trueRR ),
-            #                            warning=function(w) { w })
-            #             #x <- tryCatch(1:3 * 1:2, warning=function(w) { w })
-            #             if (inherits(x, "simpleWarning")) {
-            #                 mess <- x$message
-            #                 showNotification(mess)
-            #             }
             
         }
         
@@ -80,12 +150,6 @@ function(input, output, session) {
         return( evals )
     })    
     
-    # BOOKMARK
-   output$havepoint = renderText({ "no" })
-    #output$havepoint = reactive( !is.na( evals()[1] ) )
-    #output$havepoint = reactive( FALSE )
-    #outputOptions(output, "havepoint", suspendWhenHidden = FALSE)
-    
     
     output$result.text = renderText({
         
@@ -109,6 +173,7 @@ function(input, output, session) {
         return( result.string )
     
     })
+  
 
     #### Make the plot ####
     bias.factor <- reactive({

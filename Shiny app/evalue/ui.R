@@ -9,7 +9,7 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
                 to your specified true value rather than to the null value.'
 
 
-navbarPage( "",
+navbarPage( "", id = "navbar",
             
             tabPanel( "Instructions",
                       mainPanel(
@@ -44,10 +44,16 @@ navbarPage( "",
                                       numbers to <a href='https://mmathur.shinyapps.io/bias_factor/'>calculate the bias factor</a>.",
                                       sep="<br/><br/>")) ),
                         
-                          
+                        wellPanel(  HTML(paste("<b>R package</b>", 
+                                               
+                                               "You can alternatively conduct these analyses using the R package <a href='https://cran.r-project.org/web/packages/EValue/index.html'>EValue</a>.",
+                                               sep="<br/>")) ),  
+                        
                           wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open
-                                                 an issue on <a href='https://github.com/mayamathur/evalue/issues'>Github</a>.", sep="<br/>")) ),
+                                                 an issue on <a href='https://github.com/mayamathur/evalue/issues'>Github</a>.", sep="<br/> <br/>")) ),
                           
+                     
+                        
                           width=6
                           
                       ),
@@ -56,24 +62,35 @@ navbarPage( "",
                       # to add new book: search it on Amazon and pull out its ASIN from the URL
                       #  then add to the the amzn_assoc_asins argument
                       #  I added the amzn_assoc_random_permute = "true" to get random sample of chosen products
-                      sidebarPanel(
+                       sidebarPanel(
 
-                        HTML('<script type="text/javascript">
-                   amzn_assoc_placement = "adunit0";
-                   amzn_assoc_search_bar = "true";
-                   amzn_assoc_tracking_id = "evalue-20";
-                   amzn_assoc_ad_mode = "manual";
-                   amzn_assoc_ad_type = "smart";
-                   amzn_assoc_marketplace = "amazon";
-                   amzn_assoc_region = "US";
-                   amzn_assoc_title = "Amazon ads supporting our server costs";
-                   amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
-                   amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
-                  amzn_assoc_random_permute = "true";
-                   </script>
-                   <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
+                                HTML('<script type="text/javascript">
+                           amzn_assoc_placement = "adunit0";
+                           amzn_assoc_search_bar = "true";
+                           amzn_assoc_tracking_id = "evalue-20";
+                           amzn_assoc_ad_mode = "manual";
+                           amzn_assoc_ad_type = "smart";
+                           amzn_assoc_marketplace = "amazon";
+                           amzn_assoc_region = "US";
+                           amzn_assoc_title = "Amazon ads supporting our server costs";
+                           amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
+                           amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
+                          amzn_assoc_random_permute = "true";
+                           </script>
+                           <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
 
-                        width = 6 )
+                                width = 6 )
+                      
+                      # BOOKMARK: debugging ads
+                      # sidebarPanel(
+                      #   uiOutput("alert1"),
+                      #   width = 6
+                      # ),
+                      # 
+                      # sidebarPanel(
+                      #   uiOutput("ad1"),
+                      #   width = 6
+                      # )
 
                       # can add second panel here for more ads
                    
@@ -202,6 +219,14 @@ navbarPage( "",
                    #                          </script>
                    #                          <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>') ),
                   
+                            # BOOKMARK: debugging ads
+                            # wellPanel(
+                            #   uiOutput("alert2")
+                            # ),
+                            # 
+                            # wellPanel(
+                            #   uiOutput("tab2")
+                            # ),
                             
                             width = 6
                             
