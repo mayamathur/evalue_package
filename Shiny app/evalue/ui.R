@@ -28,7 +28,7 @@ navbarPage( "", id = "navbar",
                                       on the risk ratio scale that an unmeasured confounder would need to have with both the exposure
                                       and the outcome, conditional on the measured covariates, to fully explain away a specific
                                       exposure-outcome association. Note that for outcome types other than relative risks, assumptions
-                                      are involved with the approximate conversions used. See first citation below for details.',
+                                      are involved with the approximate conversions used. See second citation above for details.',
 
                                       "Alternatively, you can consider the confounding strength capable of moving the observed
                                       association to any other value (e.g. attenuating the observed association to a true causal
