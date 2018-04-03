@@ -669,7 +669,8 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
       Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2) - q + yr ) )
       
       # min confounding strength
-      Gmin = Tmin + sqrt( Tmin^2 - Tmin )
+      # suppress warnings to avoid warnings about NaN when term inside sqrt is negative
+      Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
     } else {
       Tmin = Gmin = NA
     }
@@ -691,7 +692,7 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
       Tmin = exp( q - yr - qnorm(r) * sqrt(t2) )
       
       # min confounding strength
-      Gmin = Tmin + sqrt( Tmin^2 - Tmin )
+      Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
     } else {
       Tmin = Gmin = NA
     }
@@ -990,8 +991,8 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
     }
     
     # compute values of g for the dual X-axis
-    if ( is.na(breaks.x1) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
-    if ( is.na(breaks.x2) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
+    if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
+    if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
     
     # define transformation in a way that is monotonic over the effective range of B (>1)
     # to avoid ggplot errors
