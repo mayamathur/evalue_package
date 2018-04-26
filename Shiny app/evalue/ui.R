@@ -62,39 +62,27 @@ navbarPage( "", id = "navbar",
                       # to add new book: search it on Amazon and pull out its ASIN from the URL
                       #  then add to the the amzn_assoc_asins argument
                       #  I added the amzn_assoc_random_permute = "true" to get random sample of chosen products
-                       sidebarPanel(
-
-                                HTML('<script type="text/javascript">
-                           amzn_assoc_placement = "adunit0";
-                           amzn_assoc_search_bar = "true";
-                           amzn_assoc_tracking_id = "evalue-20";
-                           amzn_assoc_ad_mode = "manual";
-                           amzn_assoc_ad_type = "smart";
-                           amzn_assoc_marketplace = "amazon";
-                           amzn_assoc_region = "US";
-                           amzn_assoc_title = "Amazon ads supporting our server costs";
-                           amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
-                           amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
-                          amzn_assoc_random_permute = "true";
-                           </script>
-                           <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
-
-                                width = 6 )
-                      
-                      # BOOKMARK: debugging ads
-                      # sidebarPanel(
-                      #   uiOutput("alert1"),
-                      #   width = 6
-                      # ),
-                      # 
-                      # sidebarPanel(
-                      #   uiOutput("ad1"),
-                      #   width = 6
-                      # )
-
-                      # can add second panel here for more ads
+                       # sidebarPanel(
+                       # 
+                       #          HTML('<script type="text/javascript">
+                       #     amzn_assoc_placement = "adunit0";
+                       #     amzn_assoc_search_bar = "true";
+                       #     amzn_assoc_tracking_id = "evalue-20";
+                       #     amzn_assoc_ad_mode = "manual";
+                       #     amzn_assoc_ad_type = "smart";
+                       #     amzn_assoc_marketplace = "amazon";
+                       #     amzn_assoc_region = "US";
+                       #     amzn_assoc_title = "Amazon ads supporting our server costs";
+                       #     amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
+                       #     amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
+                       #    amzn_assoc_random_permute = "true";
+                       #     </script>
+                       #     <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
+                       # 
+                       #          width = 6 )
+         
                    
-            ),
+       #     ),
             
 
            tabPanel( "Compute an E-value",
