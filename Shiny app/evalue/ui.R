@@ -9,19 +9,11 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
                 to your specified true value rather than to the null value.'
 
 
-navbarPage( "", id = "navbar",
+navbarPage( "E-value calculator", id = "navbar",
             
             tabPanel( "Instructions",
                       mainPanel(
                         
-                        wellPanel(  HTML(paste("<b>Please use the following citations:</b>",
-                                               "(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package
-                                               for computing E-values. <i>Epidemiology</i>, in press.",
-                                               "<a href='http://annals.org/aim/article-abstract/2643434/sensitivity-analysis-observational-research-introducing-e-value?doi=10.7326%2fM16-2607'>(2) VanderWeele TJ,
-                                               & Ding P. (2017). Sensitivity analysis in observational research: introducing the
-                                               E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.</a>",
-                                               sep="<br/><br/>")) ),
-    
                           wellPanel(  HTML(paste("<b>Computing an E-value</b>",
                             
                                       'The tab "Compute an E-value" computes the E-value, defined as the minimum strength of association
@@ -43,46 +35,34 @@ navbarPage( "", id = "navbar",
                                       between the unmeasured confounder(s) and the exposure and outcome, you can use these
                                       numbers to <a href='https://mmathur.shinyapps.io/bias_factor/'>calculate the bias factor</a>.",
                                       sep="<br/><br/>")) ),
-                        
-                        wellPanel(  HTML(paste("<b>R package</b>", 
-                                               
-                                               "You can alternatively conduct these analyses using the R package <a href='https://cran.r-project.org/web/packages/EValue/index.html'>EValue</a>.",
-                                               sep="<br/>")) ),  
-                        
-                          wellPanel(  HTML(paste("Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open
-                                                 an issue on <a href='https://github.com/mayamathur/evalue/issues'>Github</a>.", sep="<br/> <br/>")) ),
-                          
-                     
-                        
+
                           width=6
                           
                       ),
+                      
+                      sidebarPanel(
+                        HTML(paste("<b>Please use the following citations:</b>",
+                                               "(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package
+                                               for computing E-values. <i>Epidemiology</i>, in press.",
+                                               "<a href='http://annals.org/aim/article-abstract/2643434/sensitivity-analysis-observational-research-introducing-e-value?doi=10.7326%2fM16-2607'>(2) VanderWeele TJ,
+                                               & Ding P. (2017). Sensitivity analysis in observational research: introducing the
+                                               E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.</a>",
+                                   
+                                                "<b>R package</b>",
+                                   
+                                                "You can alternatively conduct these analyses using the R package <a href='https://cran.r-project.org/web/packages/EValue/index.html'>EValue</a>.",
+                                   
+                                                "<b>Bug reports</b>",
+                                   
+                                                "Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open
+                                                    an issue on <a href='https://github.com/mayamathur/evalue/issues'>Github</a>.",
+                                  
+                                               sep="<br/><br/>") )
+
+                             )
+                      ),
                      
-                      # AMAZON ADS
-                      # to add new book: search it on Amazon and pull out its ASIN from the URL
-                      #  then add to the the amzn_assoc_asins argument
-                      #  I added the amzn_assoc_random_permute = "true" to get random sample of chosen products
-                       # sidebarPanel(
-                       # 
-                       #          HTML('<script type="text/javascript">
-                       #     amzn_assoc_placement = "adunit0";
-                       #     amzn_assoc_search_bar = "true";
-                       #     amzn_assoc_tracking_id = "evalue-20";
-                       #     amzn_assoc_ad_mode = "manual";
-                       #     amzn_assoc_ad_type = "smart";
-                       #     amzn_assoc_marketplace = "amazon";
-                       #     amzn_assoc_region = "US";
-                       #     amzn_assoc_title = "Amazon ads supporting our server costs";
-                       #     amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
-                       #     amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
-                       #    amzn_assoc_random_permute = "true";
-                       #     </script>
-                       #     <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>'),
-                       # 
-                       #          width = 6 )
-         
-                   
-       #     ),
+            #)
             
 
            tabPanel( "Compute an E-value",
@@ -190,32 +170,6 @@ navbarPage( "", id = "navbar",
                             conditionalPanel( condition = "input.outcomeType == 'HR.com' & input.trueHRcom != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
-
-                          # SECOND AMAZON AD
-                   #          wellPanel( HTML('<script type="text/javascript">
-                   # amzn_assoc_placement = "adunit0";
-                   #                          amzn_assoc_search_bar = "true";
-                   #                          amzn_assoc_tracking_id = "evalue-20";
-                   #                          amzn_assoc_ad_mode = "manual";
-                   #                          amzn_assoc_ad_type = "smart";
-                   #                          amzn_assoc_marketplace = "amazon";
-                   #                          amzn_assoc_region = "US";
-                   #                          amzn_assoc_title = "Amazon ads supporting our server costs";
-                   #                          amzn_assoc_linkid = "6290ec6bd962c8c2986da1855829adf7";
-                   #                          amzn_assoc_asins = "0143127799,0008276099,0743202414,0465053947,0062279319,159184651X,0375727205,0142196754,B004PYDBS0,B001CDZZHW,B00AQLFQIE,B007CI81IQ";
-                   #                          amzn_assoc_random_permute = "true";
-                   #                          </script>
-                   #                          <script src="//z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US"></script>') ),
-                  
-                            # BOOKMARK: debugging ads
-                            # wellPanel(
-                            #   uiOutput("alert2")
-                            # ),
-                            # 
-                            # wellPanel(
-                            #   uiOutput("tab2")
-                            # ),
-                            
                             width = 6
                             
                     ),  # ends mainPanel
@@ -237,17 +191,8 @@ navbarPage( "", id = "navbar",
                       width = 6
 
                        ) # end contour plot panel
-           ),
+           )
 
-          tabPanel( "Donate",
-                    
-                    wellPanel("If you found this website useful, please consider making a small donation to support its ongoing server costs and maintenance. Any donations surpassing immediate costs for this website will be used to fund development of other open-source statistical tools. Thank you!",
-                              
-                              HTML("<br><br>"),
-                              
-                              HTML("<a href='https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=maya%2ez%2emathur%40gmail%2ecom&lc=US&item_name=E%2dvalue%20website%20and%20R%20package%20donation&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted'>Make a donation</a>")),
-                              width = 2
-                        )
 )
 
 
