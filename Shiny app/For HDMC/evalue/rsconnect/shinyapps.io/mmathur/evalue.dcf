@@ -1,0 +1,12 @@
+name: evalue
+title:
+username:
+account: mmathur
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 224895
+bundleId: 1204425
+url: https://mmathur.shinyapps.io/evalue/
+when: 1517574255.40776
+asMultiple: FALSE
+asStatic: FALSE
