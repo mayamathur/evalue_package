@@ -42,8 +42,10 @@ navbarPage( "E-value calculator", id = "navbar",
                       
                       sidebarPanel(
                         HTML(paste("<b>Please use the following citations:</b>",
-                                               "(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package
+                                   
+                                               "<a href='https://journals.lww.com/epidem/Citation/publishahead/Website_and_R_Package_for_Computing_E_Values.98679.aspx'>(1) Mathur MB, Ding P, Riddell CA, VanderWeele TJ. (2018). Website and R package
                                                for computing E-values. <i>Epidemiology</i>, in press.",
+                                   
                                                "<a href='http://annals.org/aim/article-abstract/2643434/sensitivity-analysis-observational-research-introducing-e-value?doi=10.7326%2fM16-2607'>(2) VanderWeele TJ,
                                                & Ding P. (2017). Sensitivity analysis in observational research: introducing the
                                                E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.</a>",
