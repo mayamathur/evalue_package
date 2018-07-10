@@ -5,8 +5,8 @@ account: mmathur
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 224895
-bundleId: 1147282
+bundleId: 1344228
 url: https://mmathur.shinyapps.io/evalue/
-when: 1513916138.91393
+when: 1524872526.21704
 asMultiple: FALSE
 asStatic: FALSE
