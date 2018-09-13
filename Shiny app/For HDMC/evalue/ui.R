@@ -12,12 +12,13 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
 
 navbarPage( "E-value calculator", id = "navbar",
             
-
+            theme = shinytheme("flatly"),
             
             tabPanel( "Instructions",
                       mainPanel(
                         
                         # ~~~~~ GOOGLE ANALYTICS
+                        # this JS is from the "tracking code" available on the Google Analytics website
                                     tags$head( HTML( '<script async src="https://www.googletagmanager.com/gtag/js?id=UA-125815848-1"></script>
                         <script>
                                                        window.dataLayer = window.dataLayer || [];

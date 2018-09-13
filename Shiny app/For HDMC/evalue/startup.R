@@ -7,6 +7,9 @@ library(plotly)
 library(purrr)
 library(plogr)
 
+# ~~~ NEW
+library(shinythemes)
+
 # keeps original error messages
 options(shiny.sanitize.errors = FALSE)
 
