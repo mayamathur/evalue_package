@@ -9,10 +9,24 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
                 to your specified true value rather than to the null value.'
 
 
+
 navbarPage( "E-value calculator", id = "navbar",
+            
+
             
             tabPanel( "Instructions",
                       mainPanel(
+                        
+                        # ~~~~~ GOOGLE ANALYTICS
+                                    tags$head( HTML( '<script async src="https://www.googletagmanager.com/gtag/js?id=UA-125815848-1"></script>
+                        <script>
+                                                       window.dataLayer = window.dataLayer || [];
+                                                       function gtag(){dataLayer.push(arguments);}
+                                                       gtag("js", new Date());
+
+                                                       gtag("config", "UA-125815848-1");
+                                                       </script>' ) ),
+                        # ~~~~~ END GA
                         
                           wellPanel(  HTML(paste("<b>Computing an E-value</b>",
                             
