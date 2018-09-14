@@ -1,5 +1,7 @@
 
 fluidPage(
+  
+  theme = shinytheme("flatly"),
 
 HTML( "<br><b>WARNING:</b> This page calculates the maximum bias as a function of confounding strength, which is <b>not</b> the E-value.<br>
       To compute an E-value, <a href='https://mmathur.shinyapps.io/evalue/'>click here.</a><br>",

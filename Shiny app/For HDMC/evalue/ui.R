@@ -11,11 +11,15 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
 
 
 navbarPage( "E-value calculator", id = "navbar",
+          
             
             theme = shinytheme("flatly"),
             
             tabPanel( "Instructions",
+                    
+                      
                       mainPanel(
+                        
                         
                         # ~~~~~ GOOGLE ANALYTICS
                         # this JS is from the "tracking code" available on the Google Analytics website
@@ -49,9 +53,13 @@ navbarPage( "E-value calculator", id = "navbar",
                                       "Additionally, if you have substantive knowledge on the strength of the relationships
                                       between the unmeasured confounder(s) and the exposure and outcome, you can use these
                                       numbers to <a href='https://bias-factor.hmdc.harvard.edu/app/'>calculate the bias factor</a>.",
-                                      sep="<br/><br/>")) ),
+                                      sep="<br/><br/>"))
+                                      
+                                    
+                                      ),
 
                           width=6
+                    
                           
                       ),
                       
@@ -104,8 +112,14 @@ navbarPage( "E-value calculator", id = "navbar",
                                 numericInput('est.RR', 'Point estimate', NA, min = 1, max = 9),
                                 numericInput('lo.RR', 'Confidence interval lower limit', NA, min = 1, max = 9),
                                 numericInput('hi.RR', 'Confidence interval upper limit', NA, min = 1, max = 9),
-                                numericInput('trueRR', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9)
-                            ),
+                                numericInput('trueRR', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9) %>%
+                                  shinyInput_label_embed(
+                                    shiny_iconlink() %>%
+                                      bs_embed_popover(
+                                        title = "TBA", content = "TBA", placement = "left"
+                                      )
+                                  )
+                            ) ,
                             
                             conditionalPanel(
                                 
@@ -208,9 +222,34 @@ navbarPage( "E-value calculator", id = "navbar",
                       width = 6
 
                        ) # end contour plot panel
-           )
+           ),
+
+
+    tabPanel("About",
+             
+             mainPanel(      HTML(paste( "This website was created by <a href='https://profiles.stanford.edu/maya-mathur'>Maya Mathur</a>,
+                                            Peng Ding, Corinne Riddell, and <a href='https://www.hsph.harvard.edu/tyler-vanderweele/tools-and-tutorials/'>Tyler VanderWeele</a>.
+                                         Click our names for more causal inference software resources."
+               
+                                      ) ) )
+             )
+
+
 
 )
+
+
+# tags$footer(title="Your footer here", align = "right", style = "
+# position:absolute;
+#             bottom:0;
+#             width:100%;
+#             height:50px; /* Height of the footer */
+#             color: white;
+#             padding: 10px;
+#             background-color: black;
+#             z-index: 1000;"
+# )
+
 
 
 
