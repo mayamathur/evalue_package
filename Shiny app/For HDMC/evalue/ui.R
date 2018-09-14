@@ -112,13 +112,7 @@ navbarPage( "E-value calculator", id = "navbar",
                                 numericInput('est.RR', 'Point estimate', NA, min = 1, max = 9),
                                 numericInput('lo.RR', 'Confidence interval lower limit', NA, min = 1, max = 9),
                                 numericInput('hi.RR', 'Confidence interval upper limit', NA, min = 1, max = 9),
-                                numericInput('trueRR', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9) %>%
-                                  shinyInput_label_embed(
-                                    shiny_iconlink() %>%
-                                      bs_embed_popover(
-                                        title = "TBA", content = "TBA", placement = "left"
-                                      )
-                                  )
+                                numericInput('trueRR', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9) 
                             ) ,
                             
                             conditionalPanel(
