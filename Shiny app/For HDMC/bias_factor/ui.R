@@ -4,7 +4,7 @@ fluidPage(
   theme = shinytheme("flatly"),
 
 HTML( "<br><b>WARNING:</b> This page calculates the maximum bias as a function of confounding strength, which is <b>not</b> the E-value.<br>
-      To compute an E-value, <a href='https://mmathur.shinyapps.io/evalue/'>click here.</a><br>",
+      To compute an E-value, <a href='https://evalue.hmdc.harvard.edu/app/'>click here.</a><br>",
       "<br>If you have substantive knowledge on the strength of the relationships between the unmeasured confounder(s)",
       " and the exposure and outcome, you can use these numbers to calculate the bias factor.",
       " Let RR<sub>UD</sub> denote the maximum risk ratio for the outcome, conditional on the observed covariates, comparing any two categories of the unmeasured",

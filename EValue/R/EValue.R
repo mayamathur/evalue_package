@@ -7,58 +7,6 @@
 "lead"
 
 
-
-# #' Compute E-value from a linear regression z-score
-# #' 
-# #' Given an estimated coefficient with its standard error from a linear
-# #' regression model, or alternatively the associated two-sided p-value, 
-# #' computes an approximate E-value through conversion to the Fisher's scale
-# #' and then to the standardized mean difference (Cohen's d) scale.
-# #' Assumes that the independent and dependent variables are bivariate normal. 
-# #' @param beta The estimated regression coefficient.
-# #' Can be left empty if providing both a p-value and a sample size.
-# #' @param se The standard error of the regression coefficient.
-# #' Can be left empty if providing both a p-value and a sample size. 
-# #' @param pval The two-sided p-value of the estimated regression coefficient. 
-# #' Can be left empty if providing both an estimated coefficient and 
-# #' the associated standard error. 
-# #' @param n The total sample size in the regression model. 
-# #' Can be left empty if providing both an estimated coefficient and 
-# #' the associated standard error. 
-# #' @param true The true standardized mean difference to which to shift the observed point estimate. Typically set to 1 to consider a null true effect. 
-# #' @export
-# #' @examples
-# #' # using estimated coefficient and SE
-# #' evaluesrG( beta = 1.4, se = .5, n = 100 )
-# #' 
-# #' # using p-value
-# #' evaluesrG( pval = 0.03, n = 100 )
-# 
-# evaluesrG = function( beta=NA, se = NA, pval = NA, n = NA, true = 0 ) {
-#   
-#   if ( is.na(n) ) stop("Must provide n.")
-#   
-#   # if user didn't pass 
-#   if ( ( is.na(beta) | is.na(se) ) & is.na(pval) ) {
-#     stop("Must provide either: 1) beta and se; or 2) pval.")
-#   }
-#   
-#   # get z-score and sample size from provided information
-#   if ( ! is.na(beta) ) z = beta / se
-#   else if ( ! is.na(pval) ) z = abs( qnorm( pval / 2 ) )
-#   
-#   # convert to mean difference
-#   SMD = sinh( 2 * z / sqrt( n - 3 ) )
-#   SE.SMD = 2 * sqrt( ( cosh( z / sqrt(n-3) ) )^4 / (n-2) )
-#   
-#   # to match the use of absolute value in z-score above
-#   true = abs(true)
-# 
-#   return( evalues.MD( est = SMD, se = SE.SMD, true = true ) )
-# }
-
-
-
 #' Compute E-value for a difference of means and its confidence interval limits
 #' 
 #' Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
