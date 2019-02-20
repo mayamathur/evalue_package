@@ -21,7 +21,7 @@ navbarPage( "E-value calculator", id = "navbar",
                       mainPanel(
                         
                         
-                        # ~~~~~ GOOGLE ANALYTICS
+                        # Google Analytics
                         # this JS is from the "tracking code" available on the Google Analytics website
                                     tags$head( HTML( '<script async src="https://www.googletagmanager.com/gtag/js?id=UA-125815848-1"></script>
                         <script>
@@ -31,7 +31,7 @@ navbarPage( "E-value calculator", id = "navbar",
 
                                                        gtag("config", "UA-125815848-1");
                                                        </script>' ) ),
-                        # ~~~~~ END GA
+                        # END Google Analytics
                         
                           wellPanel(  HTML(paste("<b>Computing an E-value</b>",
                             
@@ -99,7 +99,7 @@ navbarPage( "E-value calculator", id = "navbar",
                                                       "Odds ratio (outcome prevalence >15%)" = "OR.com",
                                                       "Hazard ratio (outcome prevalence <15%)" = "HR.rare",
                                                       "Hazard ratio (outcome prevalence >15%)" = "HR.com",
-                                                     # "Linear regression coefficient" = "RG",
+                                                      "Linear regression coefficient" = "OLS",
                                                       "Standardized mean difference (d)" = "MD", 
                                                       "Risk difference" = "RD" ) ),
                               
@@ -152,15 +152,15 @@ navbarPage( "E-value calculator", id = "navbar",
                                 numericInput('trueHRcom', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9)
                             ),
             
-#                             conditionalPanel(
-#                                 condition = "input.outcomeType == 'RG' ",
-#                                 
-#                                 numericInput('beta.RG', 'Regression coefficient estimate', NA, min = 1, max = 9),
-#                                 numericInput('se.RG', 'Standard error of coefficient', NA, min = 1, max = 9),
-#                                 numericInput('pval.RG', 'P-value of regression coefficient', NA, min = 1, max = 9),
-#                                 numericInput('n.RG', 'Total sample size in regression', NA, min = 1, max = 9),
-#                                 numericInput('true.RG', 'True causal effect to which to shift estimate (on standard mean difference scale; default: null)', 0, min = 1, max = 9)
-#                             ),
+                            conditionalPanel(
+                                condition = "input.outcomeType == 'OLS' ",
+
+                                numericInput('est.OLS', 'Regression coefficient estimate', NA, min = 1, max = 9),
+                                numericInput('se.OLS', 'Standard error of coefficient', NA, min = 1, max = 9),
+                                numericInput('sd.OLS', 'Standard deviation of outcome', NA, min = 1, max = 9),
+                                numericInput('delta.OLS', 'Contrast of interest in exposure', 1, min = 1, max = 9),
+                                numericInput('true.OLS', 'True causal effect to which to shift estimate (on standard mean difference scale; default: null)', 0, min = 1, max = 9)
+                            ),
                             
                             conditionalPanel(
                                 condition = "input.outcomeType == 'MD' ",
