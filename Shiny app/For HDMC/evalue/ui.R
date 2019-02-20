@@ -158,7 +158,11 @@ navbarPage( "E-value calculator", id = "navbar",
                                 numericInput('est.OLS', 'Regression coefficient estimate', NA, min = 1, max = 9),
                                 numericInput('se.OLS', 'Standard error of coefficient', NA, min = 1, max = 9),
                                 numericInput('sd.OLS', 'Standard deviation of outcome', NA, min = 1, max = 9),
+<<<<<<< HEAD
                                 numericInput('delta.OLS', 'Contrast of interest in exposure', 1, min = 1, max = 9),
+=======
+                                numericInput('delta.OLS', 'Contrast of interest in exposure', NA, min = 1, max = 9),
+>>>>>>> d26b0b94b7ef5f3ff4b62b97d1f1c9bcb651a23c
                                 numericInput('true.OLS', 'True causal effect to which to shift estimate (on standard mean difference scale; default: null)', 0, min = 1, max = 9)
                             ),
                             
