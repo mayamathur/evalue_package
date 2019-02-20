@@ -4,7 +4,8 @@
 \alias{sens_table}
 \title{Tables for sensitivity analyses}
 \usage{
-sens_table(meas, q, r = seq(0.1, 0.9, 0.1), muB = NA, sigB = NA, yr, t2)
+sens_table(meas, q, r = seq(0.1, 0.9, 0.1), muB = NA, sigB = NA, yr,
+  t2)
 }
 \arguments{
 \item{meas}{\code{prop}, \code{Tmin}, or \code{Gmin}}

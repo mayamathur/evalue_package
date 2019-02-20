@@ -7,6 +7,60 @@
 "lead"
 
 
+
+#' Compute E-value for a linear regression coefficient estimate
+#' 
+#' Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
+#' on the risk ratio scale (through an approximate conversion) as well as E-values for the point estimate and the confidence interval
+#' limit closer to the null.  
+#' @param est The linear regression coefficient estimate (standardized or unstandardized)
+#' @param se The standard error of the point estimate
+#' @param delta The contrast of interest in the exposure
+#' @param sd The standard deviation of the outcome (or residual standard deviation); see Details
+#' @param true The true standardized mean difference to which to shift the observed point estimate. Typically set to 0 to consider a null true effect. 
+#' @export
+#' @details 
+#' An exact standardized mean difference for linear regression would use \code{sd} = SD(Y | X, C), where Y is
+#' the outcome, X is the exposure of interest, and C are any adjusted covariates. See Examples for how to extract 
+#' this from \code{lm}. A conservative approximation would instead use \code{sd} = SD(Y). Regardless, the reported E-value
+#' for the confidence interval treats `sd` as known, not estimated.  
+#' @examples
+#' # first standardizing conservatively by SD(Y)
+#' data(lead)
+#' ols = lm(age ~ income, data = lead)
+#' 
+#' # for a 1-unit increase in income
+#' evalues.OLS(est = ols$coefficients[2],
+#'             se = summary(ols)$coefficients['income', 'Std. Error'],
+#'             sd = sd(lead$age) )
+#'             
+#' # for a 0.5-unit increase in income
+#' evalues.OLS(est = ols$coefficients[2],
+#'             se = summary(ols)$coefficients['income', 'Std. Error'],
+#'             sd = sd(lead$age),
+#'             delta = 0.5 )
+#'             
+#' # now use residual SD to avoid conservatism
+#' # here makes very little difference because income and age are
+#' # not highly correlated
+#' evalues.OLS(est = ols$coefficients[2],
+#'             se = summary(ols)$coefficients['income', 'Std. Error'],
+#'             sd = summary(ols)$sigma )
+
+evalues.OLS = function( est, se = NA, sd, delta = 1, true = 0 ) {
+  
+  if ( !is.na(se) ) {
+    if ( se < 0 ) stop("Standard error cannot be negative")
+  }
+  
+  # rescale to reflect a contrast of size delta
+  est = est * delta
+  se = se * delta
+  
+  return( evalues.MD( est = est / sd, se = se / sd, true = true ) )
+}
+
+
 #' Compute E-value for a difference of means and its confidence interval limits
 #' 
 #' Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit

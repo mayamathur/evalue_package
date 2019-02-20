@@ -4,9 +4,9 @@
 \alias{sens_plot}
 \title{Plots for sensitivity analyses}
 \usage{
-sens_plot(type, q, muB = NA, Bmin = log(1), Bmax = log(5), sigB = 0, yr,
-  vyr = NA, t2, vt2 = NA, breaks.x1 = NA, breaks.x2 = NA,
-  CI.level = 0.95)
+sens_plot(type, q, muB = NA, Bmin = log(1), Bmax = log(5),
+  sigB = 0, yr, vyr = NA, t2, vt2 = NA, breaks.x1 = NA,
+  breaks.x2 = NA, CI.level = 0.95)
 }
 \arguments{
 \item{type}{\code{dist} for distribution plot; \code{line} for line plot (see Details)}
