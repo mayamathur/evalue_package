@@ -23,7 +23,7 @@
 #' An exact standardized mean difference for linear regression would use \code{sd} = SD(Y | X, C), where Y is
 #' the outcome, X is the exposure of interest, and C are any adjusted covariates. See Examples for how to extract 
 #' this from \code{lm}. A conservative approximation would instead use \code{sd} = SD(Y). Regardless, the reported E-value
-#' for the confidence interval treats `sd` as known, not estimated.  
+#' for the confidence interval treats \code{sd} as known, not estimated.  
 #' @examples
 #' # first standardizing conservatively by SD(Y)
 #' data(lead)

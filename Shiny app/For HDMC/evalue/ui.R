@@ -8,6 +8,12 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
                 amount of unmeasured confounding needed to move the estimate and confidence interval
                 to your specified true value rather than to the null value.'
 
+# message to display for OLS
+OLS.mess = 'Note: Setting the standard deviation equal to the standard deviation of the outcome yields a conservative approximation
+of the standardized mean difference. For a non-conservative estimate, you could instead use the estimated residual standard deviation from your linear
+regression model. Regardless, the reported E-value for the confidence interval treats the 
+standard deviation as known, not estimated.'
+
 
 
 navbarPage( "E-value calculator", id = "navbar",
@@ -73,10 +79,7 @@ navbarPage( "E-value calculator", id = "navbar",
                                                & Ding P. (2017). Sensitivity analysis in observational research: introducing the
                                                E-value. <i>Annals of Internal Medicine</i>, 167(4), 268-274.</a>",
                                    
-                                                "<b>R package</b>",
-                                   
-                                                "You can alternatively conduct these analyses using the R package <a href='https://cran.r-project.org/web/packages/EValue/index.html'>EValue</a>.",
-                                   
+  
                                                 "<b>Bug reports</b>",
                                    
                                                 "Submit any bug reports to: <i>mmathur [AT] stanford [DOT] edu</i> or open
@@ -154,12 +157,11 @@ navbarPage( "E-value calculator", id = "navbar",
             
                             conditionalPanel(
                                 condition = "input.outcomeType == 'OLS' ",
-
-                                numericInput('est.OLS', 'Regression coefficient estimate', NA, min = 1, max = 9),
-                                numericInput('se.OLS', 'Standard error of coefficient', NA, min = 1, max = 9),
-                                numericInput('sd.OLS', 'Standard deviation of outcome', NA, min = 1, max = 9),
-                                numericInput('delta.OLS', 'Contrast of interest in exposure', 1, min = 1, max = 9),
-                                numericInput('true.OLS', 'True causal effect to which to shift estimate (on standard mean difference scale; default: null)', 0, min = 1, max = 9)
+                                numericInput('estOLS', 'Regression coefficient estimate', NA, min = 1, max = 9),
+                                numericInput('seOLS', 'Standard error of coefficient', NA, min = 1, max = 9),
+                                numericInput('sdOLS', 'Standard deviation of outcome', NA, min = 1, max = 9),
+                                numericInput('deltaOLS', 'Contrast of interest in exposure', 1, min = 1, max = 9),
+                                numericInput('trueOLS', 'True causal effect to which to shift estimate (on standard mean difference scale; default: null)', 0, min = 1, max = 9)
                             ),
                             
                             conditionalPanel(
@@ -193,8 +195,13 @@ navbarPage( "E-value calculator", id = "navbar",
                             conditionalPanel( condition = "input.outcomeType == 'OR.com' & input.trueORcom != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'HR.rare' & input.trueHRrare != 1", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'HR.com' & input.trueHRcom != 1", nonnull.mess),
+                            conditionalPanel( condition = "input.outcomeType == 'OLS' & input.trueOLS != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'MD' & input.trueMD != 0", nonnull.mess),
                             conditionalPanel( condition = "input.outcomeType == 'RD' & input.trueRD != 0", nonnull.mess),
+                          
+                            # conservatism message for OLS      
+                            conditionalPanel( condition = "input.outcomeType == 'OLS'", OLS.mess),
+                          
                             width = 6
                             
                     ),  # ends mainPanel
@@ -208,9 +215,8 @@ navbarPage( "E-value calculator", id = "navbar",
                                         plotlyOutput("curveOfExplainAway", width = "400px", height = "400px") ),
 
                       conditionalPanel( condition = "input.makeplot == true",
-                                        HTML(paste("<br><b>What is the E-value?</b><br>The E-value is the minimum strength required for both the exposure-confounder and exposure-disease relationships that is required to 'explain away' the estimated relationship between exposure and disease.",
-                                                   " If one of the two parameters is smaller than the E-value, the other must be larger, as defined by the curve below.",
-                                                   " All points along the curve define joint relationships that explain away the estimated effect, including points to the right of the curve."))
+                                        HTML(paste("<br>Each point along the curve defines a joint relationship between the two sensitivity parameters that could potentially explain away the estimated effect.",
+                                                   " If one of the two parameters is smaller than the E-value, the other must be larger, as defined by the plotted curve."))
                                          ),
 
                       width = 6
@@ -218,15 +224,18 @@ navbarPage( "E-value calculator", id = "navbar",
                        ) # end contour plot panel
            ),
 
-
-    tabPanel("About",
-             
-             mainPanel(      HTML(paste( "This website was created by <a href='https://profiles.stanford.edu/maya-mathur'>Maya Mathur</a>,
-                                            Peng Ding, Corinne Riddell, and <a href='https://www.hsph.harvard.edu/tyler-vanderweele/tools-and-tutorials/'>Tyler VanderWeele</a>.
-                                         Click our names for more causal inference software resources."
-               
-                                      ) ) )
-             )
+  tabPanel("More resources",
+           
+           mainPanel(      HTML(paste( "This website was created by <a href='https://profiles.stanford.edu/maya-mathur'>Maya Mathur</a>,
+                                            <a href='https://sites.google.com/site/pengdingpku/'>Peng Ding</a>, <a href='https://sph.berkeley.edu/corinne-riddell-phd'>Corinne Riddell</a>, and <a href='https://www.hsph.harvard.edu/tyler-vanderweele/tools-and-tutorials/'>Tyler VanderWeele</a>.
+                                         Click our names for more causal inference software resources.",
+                                       
+                                       "<br><br>You can alternatively compute E-values
+                                        using the R package <a href='https://cran.r-project.org/web/packages/EValue/index.html'>EValue</a> or 
+                                       the Stata module <a href='https://ideas.repec.org/c/boc/bocode/s458592.html'>EVALUE</a>."
+                                       
+           ) ) )
+  )
 
 
 

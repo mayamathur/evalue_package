@@ -50,14 +50,14 @@ function(input, output, session) {
         }  
         
         if ( input$outcomeType == "OLS" ) {
-          if ( is.na( input$est.OLS ) ) return("Enter your point estimate")
-          if ( is.na( input$sd.OLS ) ) return("Enter your standard deviation")
-          if ( is.na( input$true.OLS )) return("Enter a true value")
-          evals = round( evalues.OLS( est = input$est.OLS,
-                                      se = input$se.OLS,
-                                      sd = input$sd.OLS,
-                                      delta = input$delta.OLS,
-                                     true = input$true.OLS )[2,], 2 )
+          if ( is.na( input$estOLS ) ) return("Enter your point estimate")
+          if ( is.na( input$sdOLS ) ) return("Enter your standard deviation")
+          if ( is.na( input$trueOLS )) return("Enter a true value")
+          evals = round( evalues.OLS( est = input$estOLS,
+                                      se = input$seOLS,
+                                      sd = input$sdOLS,
+                                      delta = input$deltaOLS,
+                                     true = input$trueOLS )[2,], 2 )
         }
         
    
@@ -104,6 +104,7 @@ function(input, output, session) {
     bias.factor <- reactive({
         
         bf <- input$est.RR/input$trueRR
+        
         if( input$outcomeType == "OR.rare" ){
           bf <- input$est.OR.rare/input$trueORrare
         }else if( input$outcomeType == "OR.com" ){
@@ -112,7 +113,9 @@ function(input, output, session) {
           bf <- input$est.HR.rare/input$trueHRrare
         }else if ( input$outcomeType == "HR.com" ){
           bf <- (  (( 1 - 0.5^sqrt(input$est.HR.com) )/( 1 - 0.5^sqrt(1/input$est.HR.com) ))  )/(  (( 1 - 0.5^sqrt(input$trueHRcom) )/( 1 - 0.5^sqrt(1/input$trueHRcom) ))  )
-        }else if ( input$outcomeType == "MD" ){
+        } else if ( input$outcomeType == "OLS" ){
+          bf <- exp( 0.91 * (input$estOLS / input$sdOLS) ) / exp( 0.91*input$trueOLS )
+        } else if ( input$outcomeType == "MD" ){
           bf <- exp(0.91*input$est.MD)/exp(0.91*input$trueMD)
         }else if ( input$outcomeType == "RD" ){
              N = input$n10 + input$n11 + input$n01 + input$n00
