@@ -49,13 +49,18 @@ function(input, output, session) {
             evals = round( evalues.MD( est = input$est.MD, se = input$se.MD, true = input$trueMD )[2,], 2 )
         }  
         
-        #         if ( input$outcomeType == "RG" ) {  
-        #             if ( is.na( input$beta.RG ) & is.na( input$pval.RG )) return("Enter your point estimate or p-value")
-        #             evals = round( evalues.RG( beta = input$beta.RG, se = input$se.RG,
-        #                                        pval = input$pval.RG, n = input$n.RG,
-        #                                        true = input$true.RG )[2,], 2 )
-        #         }  
+        if ( input$outcomeType == "OLS" ) {
+          if ( is.na( input$est.OLS ) ) return("Enter your point estimate")
+          if ( is.na( input$sd.OLS ) ) return("Enter your standard deviation")
+          if ( is.na( input$true.OLS )) return("Enter a true value")
+          evals = round( evalues.OLS( est = input$est.OLS,
+                                      se = input$se.OLS,
+                                      sd = input$sd.OLS,
+                                      delta = input$delta.OLS,
+                                     true = input$true.RG )[2,], 2 )
+        }
         
+   
         if ( input$outcomeType == "RD" ) {  
             
             if ( any( is.na( c( input$n11, input$n10, input$n01, input$n00, input$trueRD ) ) ) ) {
