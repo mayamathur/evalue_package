@@ -20,7 +20,7 @@
 #' @param true The true standardized mean difference to which to shift the observed point estimate. Typically set to 0 to consider a null true effect. 
 #' @export
 #' @details 
-#' An exact standardized mean difference for linear regression would use \code{sd} = SD(Y | X, C), where Y is
+#' A true standardized mean difference for linear regression would use \code{sd} = SD(Y | X, C), where Y is
 #' the outcome, X is the exposure of interest, and C are any adjusted covariates. See Examples for how to extract 
 #' this from \code{lm}. A conservative approximation would instead use \code{sd} = SD(Y). Regardless, the reported E-value
 #' for the confidence interval treats \code{sd} as known, not estimated.  

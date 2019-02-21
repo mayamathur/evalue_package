@@ -9,7 +9,7 @@ nonnull.mess = 'Note: You are calculating a "non-null" E-value, i.e., an E-value
                 to your specified true value rather than to the null value.'
 
 # message to display for OLS
-OLS.mess = 'Note: Setting the standard deviation equal to the standard deviation of the outcome yields a conservative approximation
+OLS.mess = 'Note: Using the standard deviation of the outcome yields a conservative approximation
 of the standardized mean difference. For a non-conservative estimate, you could instead use the estimated residual standard deviation from your linear
 regression model. Regardless, the reported E-value for the confidence interval treats the 
 standard deviation as known, not estimated.'
