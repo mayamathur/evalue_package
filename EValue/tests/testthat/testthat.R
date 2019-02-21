@@ -84,6 +84,98 @@ test_that("SMD #3", {
 
 
 
+test_that("Regression coefficient, causative", {
+  
+  est = 0.5
+  sd = 0.8
+  se.b = 0.2
+  true = 0.1
+  
+  # calculate SMD
+  d = est/sd
+  se = se.b/sd
+  
+  RR = exp(0.91 * d)
+  RR.true = exp(0.91 * true)
+  E = ( RR + sqrt( RR * (RR - RR.true) ) ) / RR.true
+  
+  RR.lo = exp( 0.91 * d - 1.78 * se )
+  E.lo = ( RR.lo + sqrt( RR.lo * (RR.lo - RR.true) ) ) / RR.true
+  
+  package = evalues.OLS( est = est,
+                         se = se.b,
+                         sd = sd,
+                         true = true )
+  
+  expect_equal( E, package[2,"point"] ) 
+  expect_equal( E.lo, package[2,"lower"] )
+  expect_identical( TRUE, is.na( package[2,"upper"] ) )
+})
+
+
+test_that("Regression coefficient, preventive", {
+  
+  est = -10
+  sd = 12
+  se.b = 1.5
+  true = 0.8
+  
+  # calculate SMD
+  d = est/sd
+  se = se.b/sd
+  
+  RR = 1/exp(0.91 * d)
+  RR.true = 1/exp(0.91 * true)
+  E = ( RR + sqrt( RR * (RR - RR.true) ) ) / RR.true
+  
+  RR.hi = 1/exp( 0.91 * d + 1.78 * se )
+  E.hi = ( RR.hi + sqrt( RR.hi * (RR.hi - RR.true) ) ) / RR.true
+  
+  package = evalues.OLS( est = est,
+                         se = se.b,
+                         sd = sd,
+                         true = true )
+  
+  expect_equal( E, package[2,"point"] ) 
+  expect_equal( E.hi, package[2,"upper"] )
+  expect_identical( TRUE, is.na( package[2,"lower"] ) )
+})
+
+
+test_that("Regression coefficient, preventive, different delta", {
+  
+  est = -10
+  sd = 12
+  se.b = 1.5
+  true = 0.8
+  delta = -2
+  
+  # calculate SMD
+  d = (delta*est)/sd
+  se = (delta*se.b)/sd
+  
+  RR = 1/exp(0.91 * d)
+  RR.true = 1/exp(0.91 * true)
+  E = ( RR + sqrt( RR * (RR - RR.true) ) ) / RR.true
+  
+  RR.hi = 1/exp( 0.91 * d + 1.78 * se )
+  E.hi = ( RR.hi + sqrt( RR.hi * (RR.hi - RR.true) ) ) / RR.true
+  
+  package = evalues.OLS( est = est,
+                         se = se.b,
+                         sd = sd,
+                         delta = delta,
+                         true = true )
+  
+  expect_equal( E, package[2,"point"] ) 
+  expect_equal( E.hi, package[2,"upper"] )
+  expect_identical( TRUE, is.na( package[2,"lower"] ) )
+})
+
+
+
+
+
 test_that("Peng's risk difference example", {
   f = (397+78557) / (51+108778+397+78557)
   p1 = 397 / (397+78557)

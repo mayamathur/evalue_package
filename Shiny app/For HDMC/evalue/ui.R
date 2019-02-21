@@ -224,19 +224,34 @@ navbarPage( "E-value calculator", id = "navbar",
                        ) # end contour plot panel
            ),
 
-  tabPanel("More resources",
-           
-           mainPanel(      HTML(paste( "This website was created by <a href='https://profiles.stanford.edu/maya-mathur'>Maya Mathur</a>,
-                                            <a href='https://sites.google.com/site/pengdingpku/'>Peng Ding</a>, <a href='https://sph.berkeley.edu/corinne-riddell-phd'>Corinne Riddell</a>, and <a href='https://www.hsph.harvard.edu/tyler-vanderweele/tools-and-tutorials/'>Tyler VanderWeele</a>.
-                                         Click our names for more causal inference software resources.",
-                                       
-                                       "<br><br>You can alternatively compute E-values
+           tabPanel("More resources",
+                    
+                    mainPanel(      HTML(paste( "<b>Developers</b>",
+                                                
+                                                
+                                                "<br><br>This website was created by <a href='https://profiles.stanford.edu/maya-mathur'>Maya Mathur</a>,
+                                            <a href='https://sites.google.com/site/pengdingpku/'>Peng Ding</a>, <a href='https://sph.berkeley.edu/corinne-riddell-phd'>Corinne Riddell</a>, and <a href='https://www.hsph.harvard.edu/tyler-vanderweele/tools-and-tutorials/'>Tyler VanderWeele</a>.",
+                                                
+                                                "<br><br><b>Other software</b>",
+                                                
+                                                "<br><br>You can alternatively compute E-values
                                         using the R package <a href='https://cran.r-project.org/web/packages/EValue/index.html'>EValue</a> or 
-                                       the Stata module <a href='https://ideas.repec.org/c/boc/bocode/s458592.html'>EVALUE</a>."
-                                       
-           ) ) )
-  )
-
+                                       the Stata module <a href='https://ideas.repec.org/c/boc/bocode/s458592.html'>EVALUE</a>.",
+                                                
+                                                "<br><br><b>Additional references</b>",
+                                                
+                                                "<br><br>For more on the technical details and the interpretation of the E-value, see:",
+                                                
+                                                "<br><br><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4820664/'>(1) Ding P & VanderWeele TJ. (2017). Sensitivity analysis without assumptions. <i>Epidemiology</i>, 27(3): 368–377.</a>",
+                                                
+                                                "<br><br><a href='https://biostats.bepress.com/harvardbiostat/paper215/'>(2) VanderWeele TJ, Ding P, Mathur MB. (2019). Technical considerations in the use of the E-value. Harvard University Technical Report.",
+                                                
+                                                "<br><br><a href='https://annals.org/aim/article-abstract/2719984/correcting-misinterpretations-e-value'>(3) VanderWeele TJ, Mathur MB, Ding P. (2019). Correcting misinterpretations of the E-value. <i>Annals of Internal Medicine</i>, 170(2):131-132."
+               
+                                                
+                    ) ) )
+           )
+           
 
 
 )
