@@ -115,7 +115,7 @@ function(input, output, session) {
         }else if ( input$outcomeType == "HR.com" ){
           bf <- (  (( 1 - 0.5^sqrt(input$est.HR.com) )/( 1 - 0.5^sqrt(1/input$est.HR.com) ))  )/(  (( 1 - 0.5^sqrt(input$trueHRcom) )/( 1 - 0.5^sqrt(1/input$trueHRcom) ))  )
         } else if ( input$outcomeType == "OLS" ){
-          bf <- exp( 0.91 * (input$estOLS / input$sdOLS) ) / exp( 0.91*input$trueOLS )
+          bf <- exp( 0.91 * (input$deltaOLS * input$estOLS / input$sdOLS) ) / exp( 0.91*input$trueOLS )
         } else if ( input$outcomeType == "MD" ){
           bf <- exp(0.91*input$est.MD)/exp(0.91*input$trueMD)
         }else if ( input$outcomeType == "RD" ){
