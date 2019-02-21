@@ -53,6 +53,11 @@ evalues.OLS = function( est, se = NA, sd, delta = 1, true = 0 ) {
     if ( se < 0 ) stop("Standard error cannot be negative")
   }
   
+  if ( delta < 0 ) {
+    delta = -delta
+    message("Recoding delta to be positive")
+  }
+  
   # rescale to reflect a contrast of size delta
   est = est * delta
   se = se * delta
