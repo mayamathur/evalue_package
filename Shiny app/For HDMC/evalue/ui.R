@@ -102,9 +102,9 @@ navbarPage( "E-value calculator", id = "navbar",
                                                       "Odds ratio (outcome prevalence >15%)" = "OR.com",
                                                       "Hazard ratio (outcome prevalence <15%)" = "HR.rare",
                                                       "Hazard ratio (outcome prevalence >15%)" = "HR.com",
-                                                      "Linear regression coefficient" = "OLS",
                                                       "Standardized mean difference (d)" = "MD", 
-                                                      "Risk difference" = "RD" ) ),
+                                                      "Risk difference" = "RD",
+                                                      "Linear regression coefficient" = "OLS" ) ),
                               
                             
                             # conditional panels that appear depending on selected outcome type
