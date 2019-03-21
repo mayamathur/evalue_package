@@ -794,4 +794,3 @@ test_that("stronger_than #2", {
 })
 
 
-
