@@ -187,8 +187,202 @@ function(input, output, session) {
                           annotate("text", x = 5, y = 5, label = "(Enter your point estimate)") )
           return(g)
         }
-    }) 
+    })
+    # message for selection bias
+    mess_S <- reactive({
+      
+      if ( input$outcomeType_S == "RR" ) {
+        
+        if ( is.na( input$est.RR_S )) return("This selection bias E-value refers to")
 
+        mess = tryCatch( svalues.RR( est = input$est.RR_S, 
+                                   lo = input$lo.RR_S, 
+                                   hi = input$hi.RR_S, 
+                                   true = input$trueRR_S,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 
+                         message = function(m) {m})$message
+        
+      }
+      
+      if ( input$outcomeType_S == "OR.rare" ) {
+        if ( is.na( input$est.OR.rare_S )) return("This selection bias E-value refers to")
+        
+        
+        mess = tryCatch( svalues.OR( est = input$est.OR.rare_S, 
+                                   lo = input$lo.OR.rare_S, 
+                                   hi = input$hi.OR.rare_S, 
+                                   true = input$trueORrare_S,
+                                   rare = TRUE,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 
+                      message = function(m) {m})$message
+      }
+      
+      if ( input$outcomeType_S == "OR.com" ) {
+        if ( is.na( input$est.OR.com_S )) return("This selection bias E-value refers to")
+        
+        
+        mess = tryCatch( svalues.OR( est = input$est.OR.com_S, 
+                                   lo = input$lo.OR.com_S, 
+                                   hi = input$hi.OR.com_S, 
+                                   true = input$trueORcom_S,
+                                   rare = FALSE,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 
+                      message = function(m) {m})$message  
+      }
+      
+      if ( input$outcomeType_S == "HR.rare" ) {
+        if ( is.na( input$est.HR.rare_S )) return("This selection bias E-value refers to")
+        
+        mess = tryCatch( svalues.HR( est = input$est.HR.rare_S, 
+                                   lo = input$lo.HR.rare_S, 
+                                   hi = input$hi.HR.rare_S, 
+                                   true = input$trueHRrare_S,
+                                   rare = TRUE,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 
+                         message = function(m) {m})$message     
+      }
+      
+      if ( input$outcomeType_S == "HR.com" ) {
+        if ( is.na( input$est.HR.com_S )) return("This selection bias E-value refers to")
+        
+        mess = tryCatch( svalues.HR( est = input$est.HR.com_S, 
+                                   lo = input$lo.HR.com_S, 
+                                   hi = input$hi.HR.com_S, 
+                                   true = input$trueHRcom_S,
+                                   rare = FALSE,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 
+                         message = function(m) {m})$message      
+      }
+      if(is.na(mess)) mess <- " "
+      if(is.null(mess)) mess <- " "
+      return( mess )
+    })
+
+    svals <- reactive({
+
+      if ( input$outcomeType_S == "RR" ) {
+        
+        if ( is.na( input$est.RR_S )) return("Enter your point estimate")
+        if ( is.na( input$trueRR_S )) return("Enter a true value")
+        
+        svals = round( svalues.RR( est = input$est.RR_S, 
+                                   lo = input$lo.RR_S, 
+                                   hi = input$hi.RR_S, 
+                                   true = input$trueRR_S,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 2 )
+        
+      }
+      
+      if ( input$outcomeType_S == "OR.rare" ) {
+        if ( is.na( input$est.OR.rare_S )) return("Enter your point estimate")
+        if ( is.na( input$trueORrare_S )) return("Enter a true value")
+      
+        svals = round( svalues.OR( est = input$est.OR_S, 
+                                   lo = input$lo.OR_S, 
+                                   hi = input$hi.OR_S, 
+                                   true = input$trueOR_S,
+                                   rare = TRUE,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 2 )
+      }
+      
+      if ( input$outcomeType_S == "OR.com" ) {
+        if ( is.na( input$est.OR.com_S )) return("Enter your point estimate")
+        if ( is.na( input$trueORcom_S )) return("Enter a true value")
+        
+        svals = round( svalues.OR( est = input$est.OR.com_S, 
+                                   lo = input$lo.OR.com_S, 
+                                   hi = input$hi.OR.com_S, 
+                                   true = input$trueORcom_S,
+                                   rare = FALSE,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 2 )      
+        }
+      
+      if ( input$outcomeType_S == "HR.rare" ) {
+        if ( is.na( input$est.HR.rare_S )) return("Enter your point estimate")
+        if ( is.na( input$trueHRrare_S )) return("Enter a true value")
+
+        svals = round( svalues.HR( est = input$est.HR_S, 
+                                   lo = input$lo.HR_S, 
+                                   hi = input$hi.HR_S, 
+                                   true = input$trueHR_S,
+                                   rare = TRUE,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 2 )      
+        }
+      
+      if ( input$outcomeType_S == "HR.com" ) {
+        if ( is.na( input$est.HR.com_S )) return("Enter your point estimate")
+        if ( is.na( input$trueHRcom_S )) return("Enter a true value")
+        
+        svals = round( svalues.HR( est = input$est.HR.com_S, 
+                                   lo = input$lo.HR.com_S, 
+                                   hi = input$hi.HR.com_S, 
+                                   true = input$trueHRcom_S,
+                                   rare = FALSE,
+                                   sel_pop = ("sel_pop" %in% input$assump_S),
+                                   S_eq_U = ("S_eq_U" %in% input$assump_S),
+                                   risk_inc = ("risk_inc" %in% input$assump_S),
+                                   risk_dec = ("risk_dec" %in% input$assump_S))[2,], 2 )      
+        }
+
+      return( svals )
+    })
+    
+    output$result.text_S = renderText({
+      
+      
+      ##### Create String for UI ##### 
+      #if there is input for the CI (either lower or upper)
+      if ( !is.na(svals()[2]) | !is.na(svals()[3])  ) {
+        
+        sval.CI = min(svals(), na.rm=TRUE)
+        
+        result.string_S = paste( "Selection bias E-value for point estimate: ", svals()[1],
+                               ", and for confidence interval: ", sval.CI, 
+                               sep="" )
+        
+        #if user only gave point estimate
+      } else {
+        result.string_S = paste( "Selection bias E-value for point estimate: ", svals()[1],
+                               sep="" )
+      }
+      
+      return( result.string_S )
+      
+    })
+    #change message slightly from package
+    output$message.text_S = renderText({
+      mess <- mess_S()
+      nmess <- nchar(mess)
+      if(nmess < 40) return(mess)
+      paste0(substr(mess, 0,nmess - 20), "(see linked article for details)")
+    })
 }
 
 
