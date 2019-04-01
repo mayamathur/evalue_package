@@ -22,13 +22,13 @@ citEntry(entry = "Article",
   title        = "Sensitivity analysis for unmeasured confounding in meta-analyses",
   author       = personList(as.person("Maya B. Mathur"),
                    as.person("Tyler J. VanderWeele")),
-  journal      = "Preprint available: <https://osf.io/jkhfg/>",
-  year         = "2017",
+  journal      = "Journal of the American Statistical Association>",
+  year         = "2019",
 
   textVersion  =
-  paste("Maya B. Mathur, Tyler J. VanderWeele (2017).",
+  paste("Maya B. Mathur, Tyler J. VanderWeele (2019).",
         "Sensitivity analysis for unmeasured confounding in meta-analyses.",
-        "Preprint available: <https://osf.io/jkhfg/>.")
+        "Journal of the American Statistical Association.")
 )
 
 citEntry(entry = "Article",

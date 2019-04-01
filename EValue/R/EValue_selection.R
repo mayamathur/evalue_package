@@ -222,8 +222,6 @@ svalues.RR = function( est, lo = NA, hi = NA, true = 1,
 #' Computes selection bias E-value for a single value of the risk ratio. Users should typically call the 
 #' relevant \code{svalues.XX()} function rather than this internal function.  
 #' @param x The risk ratio
-#' @param lo The lower limit of the confidence interval
-#' @param hi The upper limit of the confidence interval
 #' @param true The true RR to which to shift the observed point estimate. Typically set to 1 to consider a null true effect. 
 #' @param sel_pop Whether inference is specific to selected population (TRUE) or entire population (FALSE). Defaults to FALSE.
 #' @param S_eq_U Whether the unmeasured factor is assumed to be a defining characteristic of the selected population. Defaults to FALSE.

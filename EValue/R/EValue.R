@@ -7,7 +7,6 @@
 "lead"
 
 
-
 #' Compute E-value for a linear regression coefficient estimate
 #' 
 #' Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit

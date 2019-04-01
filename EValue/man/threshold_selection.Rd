@@ -19,10 +19,6 @@ threshold_selection(x, true = 1, sel_pop = FALSE, S_eq_U = FALSE,
 \item{risk_inc}{Whether selection is assumed to be associated with increased risk of the outcome in both exposure groups. Defaults to FALSE.}
 
 \item{risk_dec}{Whether selection is assumed to be associated with decreased risk of the outcome in both exposure groups. Defaults to FALSE.}
-
-\item{lo}{The lower limit of the confidence interval}
-
-\item{hi}{The upper limit of the confidence interval}
 }
 \description{
 Computes selection bias E-value for a single value of the risk ratio. Users should typically call the 
