@@ -724,6 +724,9 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
     lo.phat = max( 0, phat + qnorm( tail.prob )*SE )
     hi.phat = min( 1, phat - qnorm( tail.prob )*SE )
     
+    # warn if bootstrapping needed
+    if ( phat < 0.15 | phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
+    
   } else {
     SE = lo.phat = hi.phat = NA
   }
