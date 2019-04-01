@@ -53,6 +53,11 @@ navbarPage( "E-value calculator", id = "navbar",
                                       observed association to a value that is of scientific importance). For this purpose, simply
                                       type a non-null effect size into the box "True causal effect to which to shift estimate"
                                       when computing the E-value.',
+                                      
+                                      "<b>E-values for selection bias</b>",  
+                                      "When you are concerned about selection bias, you can calculate values similar to the E-value
+                                      that describe the strength of the factors related to selection that would suffice to 
+                                      explain away an observed association. More information is available on that page.",
                                         
                                       "<b>Computing a bias factor</b>",                     
                             
@@ -223,6 +228,118 @@ navbarPage( "E-value calculator", id = "navbar",
 
                        ) # end contour plot panel
            ),
+           
+           tabPanel( "E-values for selection bias",
+                     
+                     mainPanel(
+                       
+                       
+                       selectInput( "outcomeType_S", label = "Outcome type",
+                                    choices = c( "Relative risk / rate ratio" = "RR", 
+                                                 "Odds ratio (outcome prevalence <15%)" = "OR.rare",
+                                                 "Odds ratio (outcome prevalence >15%)" = "OR.com",
+                                                 "Hazard ratio (outcome prevalence <15%)" = "HR.rare",
+                                                 "Hazard ratio (outcome prevalence >15%)" = "HR.com" ) ),
+                       
+                       
+                       # conditional panels that appear depending on selected outcome type
+                       
+                       conditionalPanel(
+                         condition = "input.outcomeType_S == 'RR' ",
+                         
+                         numericInput('est.RR_S', 'Point estimate', NA, min = 1, max = 9),
+                         numericInput('lo.RR_S', 'Confidence interval lower limit', NA, min = 1, max = 9),
+                         numericInput('hi.RR_S', 'Confidence interval upper limit', NA, min = 1, max = 9),
+                         numericInput('trueRR_S', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9) 
+                       ) ,
+                       
+                       conditionalPanel(
+                         
+                         condition = "input.outcomeType_S == 'OR.rare' ",
+                         
+                         numericInput('est.OR.rare_S', 'Point estimate', NA, min = 1, max = 9),
+                         numericInput('lo.OR.rare_S', 'Confidence interval lower limit', NA, min = 1, max = 9),
+                         numericInput('hi.OR.rare_S', 'Confidence interval upper limit', NA, min = 1, max = 9),
+                         numericInput('trueORrare_S', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9)
+                       ),
+                       
+                       conditionalPanel(
+                         condition = "input.outcomeType_S == 'OR.com' ",
+                         
+                         numericInput('est.OR.com_S', 'Point estimate', NA, min = 1, max = 9),
+                         numericInput('lo.OR.com_S', 'Confidence interval lower limit', NA, min = 1, max = 9),
+                         numericInput('hi.OR.com_S', 'Confidence interval upper limit', NA, min = 1, max = 9),
+                         numericInput('trueORcom_S', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9)
+                       ),
+                       
+                       conditionalPanel(
+                         condition = "input.outcomeType_S == 'HR.rare' ",
+                         
+                         numericInput('est.HR.rare_S', 'Point estimate', NA, min = 1, max = 9),
+                         numericInput('lo.HR.rare_S', 'Confidence interval lower limit', NA, min = 1, max = 9),
+                         numericInput('hi.HR.rare_S', 'Confidence interval upper limit', NA, min = 1, max = 9),
+                         numericInput('trueHRrare_S', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9)
+                       ),
+                       
+                       conditionalPanel(
+                         condition = "input.outcomeType_S == 'HR.com' ",
+                         
+                         numericInput('est.HR.com_S', 'Point estimate', NA, min = 1, max = 9),
+                         numericInput('lo.HR.com_S', 'Confidence interval lower limit', NA, min = 1, max = 9),
+                         numericInput('hi.HR.com_S', 'Confidence interval upper limit', NA, min = 1, max = 9),
+                         numericInput('trueHRcom_S', 'True causal effect to which to shift estimate (default: null)', 1, min = 1, max = 9)
+                       ),
+                       
+                       checkboxGroupInput("assump_S", "Additional assumptions (see linked article for details):",
+                                          c("Inference only in selected population" = "sel_pop",
+                                            "Unmeasured factor a defining characteristic of selection" = "S_eq_U",
+                                            "Selection associated with increased risk of outcome" = "risk_inc",
+                                            "Selection associated with decreased risk of outcome" = "risk_inc")),
+                       
+                       
+                       # display results
+                       wellPanel(  span( textOutput(("result.text_S") ))) , 
+                       wellPanel(  span( textOutput(("message.text_S") ))) , 
+                       
+                       # warnings if computing non-null E-value
+                       # note: because the condition is in Javascript, have to use period instead of dollar sign to 
+                       #  access arguments, so CANNOT have period in the variable names (e.g., "true.RR" doesn't work!)
+                       conditionalPanel( condition = "input.outcomeType == 'RR' & input.trueRR != 1", nonnull.mess),
+                       conditionalPanel( condition = "input.outcomeType == 'OR.rare' & input.trueORrare != 1", nonnull.mess),
+                       conditionalPanel( condition = "input.outcomeType == 'OR.com' & input.trueORcom != 1", nonnull.mess),
+                       conditionalPanel( condition = "input.outcomeType == 'HR.rare' & input.trueHRrare != 1", nonnull.mess),
+                       conditionalPanel( condition = "input.outcomeType == 'HR.com' & input.trueHRcom != 1", nonnull.mess),
+                       
+                    
+                       width = 6
+                       
+                     ),  # ends mainPanel
+                     
+                     # panel for info
+                     sidebarPanel(
+                       
+                       wellPanel(  HTML(paste("<b>Computing an E-value for selection bias</b>",
+                                              
+                                              'Like the E-value for unmeasured confounding, the selection bias E-value describes 
+                                              the minimum strength of association between several (possibly unmeasured) factors that would be 
+                                              sufficient to have created enough selection bias to explain away an observed exposure-outcome association.
+                                              The parameters that the E-value refers to depends on what assumptions an investigator is willing to make,
+                                              and are printed with the results. See the cited article for exact definitions and for more details.',
+                                              
+                                             "<b>Please use the following citation:</b>",
+                                              
+                                              "Smith LH & VanderWeele TJ. (2019). Bounding bias due to selection. 
+                                             <i>Epidemiology</i>, forthcoming. <a href='https://arxiv.org/abs/1810.13402'>(Pre-print available).</a>",
+                      
+                                              sep="<br/><br/>"))
+                                   
+                                   
+                       ),
+                       
+                       width = 6
+                       
+                     ) # end explanation sidebar
+           ), # end selection bias panel
 
            tabPanel("More resources",
                     
