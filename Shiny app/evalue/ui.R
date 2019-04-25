@@ -15,7 +15,7 @@ fluidPage( title = "E-value calculator",
                         
                           wellPanel(  HTML(paste("<b>We've moved!</b>",
                         
-                                      "The E-value calculator <a href='https://evalue.hmdc.harvard.edu/app/'>has moved</a>.",
+                                      "The E-value calculator <a href='https://evalue.hmdc.harvard.edu'>has moved</a>.",
                                       sep="<br/><br/>")) ),
 
                           width=6
