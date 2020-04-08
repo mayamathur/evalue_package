@@ -7,7 +7,6 @@
 "lead"
 
 
-
 #' Compute E-value for a linear regression coefficient estimate
 #' 
 #' Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
@@ -725,6 +724,9 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
     lo.phat = max( 0, phat + qnorm( tail.prob )*SE )
     hi.phat = min( 1, phat - qnorm( tail.prob )*SE )
     
+    # warn if bootstrapping needed
+    if ( phat < 0.15 | phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
+    
   } else {
     SE = lo.phat = hi.phat = NA
   }
@@ -1033,13 +1035,7 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
 
 #' Convert forest plot or summary table to meta-analytic dataset
 #'
-#' Given relative risks (RR) and upper bounds of 95\% confidence intervals (CI)
-#' from a forest plot or summary table, returns a dataframe ready for meta-analysis
-#' (e.g., via the \code{metafor} package) with the log-RRs and their variances.
-#' Optionally, the user may indicate studies for which the point estimate is to be
-#' interpreted as an odds ratios of a common outcome rather than a relative risk;
-#' for such studies, the function applies VanderWeele (2017)'s square-root transformation to convert
-#' the odds ratio to an approximate risk ratio. 
+#' This function is now deprecated. You should use the improved version \code{MetaUtility::scrape_meta} instead.
 #' @param type \code{RR} if point estimates are RRs or ORs (to be handled on log scale); \code{raw} if point estimates are raw differences, standardized mean differences, etc. (such that they can be handled with no transformations)
 #' @param est Vector of study point estimates on RR or OR scale
 #' @param hi Vector of upper bounds of 95\% CIs on RRs
@@ -1049,26 +1045,26 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
 
 scrape_meta = function( type="RR", est, hi, sqrt=FALSE ){
   
-  if ( type == "RR" ) {
-    # take square root for certain elements
-    RR = est
-    RR[sqrt] = sqrt( RR[sqrt] )
-    
-    # same for upper CI limit
-    hi.RR = hi
-    hi.RR[sqrt] = sqrt( hi.RR[sqrt] )
-    
-    sei = ( log(hi.RR) - log(RR) ) / qnorm(.975)
-    
-    return( data.frame( yi = log(RR), vyi = sei^2 ) )
-    
-  } else if ( type == "raw" ) {
-    
-    sei = ( hi - est ) / qnorm(.975)
-    return( data.frame( yi = est, vyi = sei^2 ) )
-  }
+  .Deprecated("MetaUtility::scrape_meta")
   
-  
+  # if ( type == "RR" ) {
+  #   # take square root for certain elements
+  #   RR = est
+  #   RR[sqrt] = sqrt( RR[sqrt] )
+  #   
+  #   # same for upper CI limit
+  #   hi.RR = hi
+  #   hi.RR[sqrt] = sqrt( hi.RR[sqrt] )
+  #   
+  #   sei = ( log(hi.RR) - log(RR) ) / qnorm(.975)
+  #   
+  #   return( data.frame( yi = log(RR), vyi = sei^2 ) )
+  #   
+  # } else if ( type == "raw" ) {
+  #   
+  #   sei = ( hi - est ) / qnorm(.975)
+  #   return( data.frame( yi = est, vyi = sei^2 ) )
+  # }
 }
 
 

@@ -16,11 +16,5 @@ scrape_meta(type = "RR", est, hi, sqrt = FALSE)
 \item{sqrt}{Vector of booleans (TRUE/FALSE) for whether each study measured an odds ratio of a common outcome that should be approximated as a risk ratio via the square-root transformation}
 }
 \description{
-Given relative risks (RR) and upper bounds of 95\% confidence intervals (CI)
-from a forest plot or summary table, returns a dataframe ready for meta-analysis
-(e.g., via the \code{metafor} package) with the log-RRs and their variances.
-Optionally, the user may indicate studies for which the point estimate is to be
-interpreted as an odds ratios of a common outcome rather than a relative risk;
-for such studies, the function applies VanderWeele (2017)'s square-root transformation to convert
-the odds ratio to an approximate risk ratio.
+This function is now deprecated. You should use the improved version \code{MetaUtility::scrape_meta} instead.
 }

@@ -1,4 +1,4 @@
-citHeader("To cite this package in publications, please use the first citation if analyzing a single observational study or the second citation if analyzing a meta-analysis:")
+citHeader("To cite this package in publications, please use the first citation if analyzing unmeasured confounding in a single observational study or the second citation if analyzing a meta-analysis, and the third citation if assessing selection bias:")
 
 citEntry(entry = "Article",
   title        = "Sensitivity analysis in observational research: introducing the E-value",
@@ -22,12 +22,24 @@ citEntry(entry = "Article",
   title        = "Sensitivity analysis for unmeasured confounding in meta-analyses",
   author       = personList(as.person("Maya B. Mathur"),
                    as.person("Tyler J. VanderWeele")),
-  journal      = "Preprint available: <https://osf.io/jkhfg/>",
-  year         = "2017",
+  journal      = "Journal of the American Statistical Association>",
+  year         = "2019",
 
   textVersion  =
-  paste("Maya B. Mathur, Tyler J. VanderWeele (2017).",
+  paste("Maya B. Mathur, Tyler J. VanderWeele (2019).",
         "Sensitivity analysis for unmeasured confounding in meta-analyses.",
-        "Preprint available: <https://osf.io/jkhfg/>.")
+        "Journal of the American Statistical Association.")
 )
 
+citEntry(entry = "Article",
+  title        = "Bounding bias due to selection",
+  author       = personList(as.person("Louisa H. Smith"),
+                   as.person("Tyler J. VanderWeele")),
+  journal      = "Epidemiology",
+  year         = "2019",
+
+  textVersion  =
+  paste("Louisa H. Smith, Tyler J. VanderWeele (2019).",
+        "Bounding bias due to selection.",
+        "Epidemiology.")
+)

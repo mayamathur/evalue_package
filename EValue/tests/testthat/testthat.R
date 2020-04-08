@@ -539,6 +539,11 @@ test_that("Case #1, causative", {
                         yr=yr, vyr=vyr,
                         t2=t2, vt2=vt2 )
   
+  # make q more extreme to trigger bootstrap warning
+  expect_warning( confounded_meta( q=log(1.5), r=r, muB=muB, sigB=sigB,
+                        yr=yr, vyr=vyr,
+                        t2=t2, vt2=vt2 ) )
+  
   
   ##### Prop Above ######
   # point estimate
@@ -706,31 +711,6 @@ test_that("True = est, no CI, preventive", {
 })
 
 
-
-##### scrape_meta function #####
-
-
-test_that("scrape_meta tests", {
-  
-  # test point estimates from scrape_meta with and without square-root transformation
-  expect_equal( c( log(1.2), log( sqrt(0.8) ) ),
-                scrape_meta( est = c(1.2, 0.8), hi = c(1.3, 1.1), sqrt = c(FALSE, TRUE) )$yi )
-  
-  # test CI limits from scrape_meta with and without square-root transformation
-  expect_equal( c( ( ( log(1.3) - log(1.2) ) / 1.96 )^2,
-                   ( ( log( sqrt(1.1) ) - log( sqrt(0.8) ) ) / 1.96 )^2 ),
-                scrape_meta( est = c(1.2, 0.8), hi = c(1.3, 1.1), sqrt = c(FALSE, TRUE) )$vyi, tol = 0.0001 )
-  
-  # test raw input (not RR)
-  expect_equal( c( -0.5, 2 ),
-                scrape_meta( type = "raw", est = c(-0.5, 2), hi = c(0, 2.1), sqrt = c(FALSE, TRUE) )$yi )
-  
-  expect_equal( c( ( ( 0 - (-0.5) ) / 1.96 )^2,
-                   ( ( 2.1 - 2 ) / 1.96 )^2 ),
-                scrape_meta( type = "raw", est = c(-0.5, 2), hi = c(0, 2.1), sqrt = c(FALSE, TRUE) )$vyi, tol = 0.0001 )
-})
-
-
 ##### stronger_than function #####
 
 test_that("stronger_than #1", {
@@ -792,6 +772,5 @@ test_that("stronger_than #2", {
   expect_equal( max( 0, st$Est - st$SE * crit ), st$CI.lo )
   
 })
-
 
 
