@@ -1011,8 +1011,11 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
     } )
     
     p = ggplot2::ggplot( t, aes(x=t$eB, y=t$phat ) ) + theme_bw() +
-      scale_y_continuous( limits=c(0,1), breaks=seq(0, 1, .1)) +
-      scale_x_continuous(  breaks = breaks.x1,
+      scale_y_continuous( limits=c(0,1),
+                          breaks=seq(0, 1, .1) ) +
+      scale_x_continuous(  limits = c(min(breaks.x1), 
+                                      max(breaks.x1)),
+                           breaks = breaks.x1,
                            sec.axis = sec_axis( ~ g(.),  # confounding strength axis
                                                 name = "Minimum strength of both confounding RRs",
                                                 breaks=breaks.x2 ) ) +
