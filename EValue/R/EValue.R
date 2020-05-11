@@ -657,11 +657,15 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
   # if tail isn't provided, assume user wants the more extreme one (away from the null)
   if ( is.na(tail) ) tail = ifelse( yr > log(1), "above", "below" )
   
+  # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
+  if ( yr > log(1) ) yr.corr = yr - muB
+  else yr.corr = yr + muB
+  
   if ( tail == "above" ) {
     
     if ( !is.na(muB) ) {
       # prop above
-      Z = ( q + muB - yr ) / sqrt( t2 - sigB^2 )
+      Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
       phat = 1 - pnorm(Z) 
     } else {
       phat = NA
@@ -687,7 +691,7 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
     
     if ( !is.na(muB) ) {
       # prop below
-      Z = ( q - muB - yr ) / sqrt( t2 - sigB^2 )
+      Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
       phat = pnorm(Z) 
     } else {
       phat = NA
