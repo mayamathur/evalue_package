@@ -18,7 +18,22 @@ Returns a data frame containing point estimates, the lower confidence limit, and
 on the risk ratio scale (through an approximate conversion) as well as E-values for the point estimate and the confidence interval
 limit closer to the null.
 }
+\details{
+Regarding the continuous outcome, the function uses the effect-size conversions in Chinn (2000)
+and VanderWeele (2017) to approximately convert the mean difference between the exposed versus unexposed groups
+to the odds ratio that would arise from dichotomizing the continuous outcome.
+
+For example, if resulting E-value is 2, this means that unmeasured confounder(s) would need to double
+the probability of a subject's being exposed versus not being exposed, and would also need to
+double the probability of being high versus low on the outcome, in which the cutoff for "high" versus
+"low" is arbitrary subject to some distributional assumptions (Chinn, 2000).
+}
 \examples{
 # compute E-value if Cohen's d = 0.5 with SE = 0.25
 evalues.MD( .5, .25 )
+}
+\references{
+Chinn, S (2000). A simple method for converting an odds ratio to effect size for use in meta-analysis. \emph{Statistics in Medicine}, 19(22), 3127-3131.
+
+VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for a common outcome. \emph{Epidemiology}, 28(6), e58.
 }
