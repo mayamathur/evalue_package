@@ -242,9 +242,20 @@ includes as an attribute its conversion history.</p>
     <p>Uses the conversions listed in Table 2 of VanderWeele TJ, Ding P.
 <em>Sensitivity Analysis in Observational Research: Introducing the E-Value.</em>
 Annals of Internal Medicine. 2017;167(4):268–75.</p>
-<p>See also VanderWeele TJ. <em>Optimal approximate conversions of odds ratios
-and hazard ratios to risk ratios.</em> Biometrics. 2019 Jan 6;(September
-2018):1–7.</p>
+<p>See references.</p>
+<p>Regarding the continuous outcome, the function uses the effect-size
+conversions in Chinn (2000) and VanderWeele (2017) to approximately convert
+the mean difference between these exposure "groups" to the odds ratio that
+would arise from dichotomizing the continuous outcome.</p>
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Chinn, S (2000). A simple method for converting an odds ratio to
+effect size for use in meta-analysis. <em>Statistics in Medicine</em>, 19(22),
+3127-3131.</p>
+<p>VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for
+a common outcome. <em>Epidemiology</em>, 28(6), e58.</p>
+<p>VanderWeele TJ (2020). <em>Optimal approximate conversions of odds ratios and
+hazard ratios to risk ratios.</em> Biometrics.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># Both odds ratios are 3, but will be treated differently</span>

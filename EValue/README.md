@@ -7,14 +7,13 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/EValue)](https://CRAN.R-project.org/package=EValue)
-[![](http://cranlogs.r-pkg.org/badges/grand-total/EValue?color=blue)](https://cran.r-project.org/package=EValue)
 <!-- badges: end -->
 
 The EValue package allows users to calculate bounds and E-values for
 unmeasured confounding in observational studies and meta-analyses. The
 package also includes functions for the assessment of selection bias and
-differential misclassification and the join impact of all three types of
-bias.
+differential misclassification and the joint impact of all three types
+of bias.
 
 ## Installation
 

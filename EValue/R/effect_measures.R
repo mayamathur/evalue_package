@@ -142,10 +142,22 @@ summary.estimate <- function(object, ...) {
 #'   *Sensitivity Analysis in Observational Research: Introducing the E-Value.*
 #'   Annals of Internal Medicine. 2017;167(4):268–75.
 #'
-#'   See also VanderWeele TJ. *Optimal approximate conversions of odds ratios
-#'   and hazard ratios to risk ratios.* Biometrics. 2019 Jan 6;(September
-#'   2018):1–7.
+#'   See references.
 #'
+#'   Regarding the continuous outcome, the function uses the effect-size
+#'   conversions in Chinn (2000) and VanderWeele (2017) to approximately convert
+#'   the mean difference between these exposure "groups" to the odds ratio that
+#'   would arise from dichotomizing the continuous outcome.
+#'
+#' @references Chinn, S (2000). A simple method for converting an odds ratio to
+#' effect size for use in meta-analysis. \emph{Statistics in Medicine}, 19(22),
+#' 3127-3131.
+#'
+#' VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for
+#' a common outcome. \emph{Epidemiology}, 28(6), e58.
+#'
+#' VanderWeele TJ (2020). *Optimal approximate conversions of odds ratios and
+#' hazard ratios to risk ratios.* Biometrics.
 #' @examples
 #' # Both odds ratios are 3, but will be treated differently
 #' # depending on whether rare outcome assumption is reasonable

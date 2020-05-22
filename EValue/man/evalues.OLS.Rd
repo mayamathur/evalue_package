@@ -29,12 +29,29 @@ approximate conversion) as well as E-values for the point estimate and the
 confidence interval limit closer to the null.
 }
 \details{
-A true standardized mean difference for linear regression would use
-\code{sd} = SD( Y | X, C ), where Y is the outcome, X is the exposure of
-interest, and C are any adjusted covariates. See Examples for how to extract
-this from \code{lm}. A conservative approximation would instead use \code{sd}
-= SD( Y ). Regardless, the reported E-value for the confidence interval
-treats \code{sd} as known, not estimated.
+This function is for linear regression with a continuous exposure
+and outcome. Regarding the continuous exposure, the choice of \code{delta}
+defines essentially a dichotomization in the exposure between hypothetical
+groups of subjects with exposures equal to an arbitrary value \emph{c} versus
+to another hypothetical group with exposures equal to \emph{c} +
+\code{delta}. Regarding the continuous outcome, the function uses the
+effect-size conversions in Chinn (2000) and VanderWeele (2017) to
+approximately convert the mean difference between these exposure "groups" to
+the odds ratio that would arise from dichotomizing the continuous outcome.
+
+For example, if resulting E-value is 2, this means that unmeasured
+confounder(s) would need to double the probability of a subject's having
+exposure equal to \emph{c} + \code{delta} instead of \emph{c}, and would also
+need to double the probability of being high versus low on the outcome, in
+which the cutoff for "high" versus "low" is arbitrary subject to some
+distributional assumptions (Chinn, 2000).
+
+A true standardized mean difference for linear regression would use \code{sd}
+= SD(Y | X, C), where Y is the outcome, X is the exposure of interest, and C
+are any adjusted covariates. See Examples for how to extract this from
+\code{lm}. A conservative approximation would instead use \code{sd} = SD(Y).
+Regardless, the reported E-value for the confidence interval treats \code{sd}
+as known, not estimated.
 }
 \examples{
 # first standardizing conservatively by SD(Y)
@@ -58,5 +75,13 @@ evalues.OLS(est = ols$coefficients[2],
 evalues.OLS(est = ols$coefficients[2],
             se = summary(ols)$coefficients['income', 'Std. Error'],
             sd = summary(ols)$sigma)
+}
+\references{
+Chinn, S (2000). A simple method for converting an odds ratio to
+effect size for use in meta-analysis. \emph{Statistics in Medicine}, 19(22),
+3127-3131.
+
+VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for
+a common outcome. \emph{Epidemiology}, 28(6), e58.
 }
 \keyword{e-value}

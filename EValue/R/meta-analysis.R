@@ -84,7 +84,6 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
   
   if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
   
-  
   ##### Messages When Not All Output Can Be Computed #####
   if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
   if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
@@ -94,11 +93,15 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
   # if tail isn't provided, assume user wants the more extreme one (away from the null)
   if ( is.na(tail) ) tail = ifelse( yr > log(1), "above", "below" )
   
+  # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
+  if ( yr > log(1) ) yr.corr = yr - muB
+  else yr.corr = yr + muB
+  
   if ( tail == "above" ) {
     
     if ( !is.na(muB) ) {
       # prop above
-      Z = ( q + muB - yr ) / sqrt( t2 - sigB^2 )
+      Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
       phat = 1 - pnorm(Z) 
     } else {
       phat = NA
@@ -124,7 +127,7 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
     
     if ( !is.na(muB) ) {
       # prop below
-      Z = ( q - muB - yr ) / sqrt( t2 - sigB^2 )
+      Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
       phat = pnorm(Z) 
     } else {
       phat = NA
@@ -140,7 +143,6 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
       Tmin = Gmin = NA
     }
   }
-  
   
   ##### Delta Method Inference: P-Hat #####
   # do inference only if given needed SEs
@@ -448,8 +450,11 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
     } )
     
     p = ggplot2::ggplot( t, aes(x=t$eB, y=t$phat ) ) + theme_bw() +
-      scale_y_continuous( limits=c(0,1), breaks=seq(0, 1, .1)) +
-      scale_x_continuous(  breaks = breaks.x1,
+      scale_y_continuous( limits=c(0,1),
+                          breaks=seq(0, 1, .1) ) +
+      scale_x_continuous(  limits = c(min(breaks.x1), 
+                                      max(breaks.x1)),
+                           breaks = breaks.x1,
                            sec.axis = sec_axis( ~ g(.),  # confounding strength axis
                                                 name = "Minimum strength of both confounding RRs",
                                                 breaks=breaks.x2 ) ) +
