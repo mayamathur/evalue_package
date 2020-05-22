@@ -1,0 +1,79 @@
+---
+title: "Multiple-bias sensitivity analysis examples"
+description: "Examples of multiple-bias sensitivity analysis using bounds."
+vignette: >
+  %\VignetteIndexEntry{Examples of multiple-bias sensitivity analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  class.output = "output",
+  class.message = "message"
+)
+```
+
+```{r setup, include = FALSE}
+library(EValue)
+```
+
+Two examples of multiple-bias sensitivity analysis are given in [Smith, Mathur, and VanderWeele 2020](https://arxiv.org/pdf/2005.02908.pdf). The research questions concern whether HIV infection in utero causes wasting (low weight-for-length), and whether vitamin consumption during pregnancy protects against childhood leukemia.
+
+## HIV infection in utero
+
+A study by Omoni et al. found that compared to children who were unexposed to HIV, those who had been infected with HIV in utero were significantly more likely to be below a weight-for-length Z-score of -2 as toddlers.^[Omoni AO, Ntozini R, Evans C, et al. Child growth according to maternal and child HIV status in Zimbabwe. Pediatr Infect Dis J. 2017;36:869–876.] The odds ratio comparing the two groups was 6.75 (95% CI 2.79, 16.31) at 2 years. The study sample was of participants in a vitamin supplementation trial, but this was an observational study with respect to HIV infection. We may be interested in the sensitivity of this unadjusted result to confounding and to selection bias, since the choice of whether to participate could have been affected by HIV status as well as other factors.
+
+We can declare these biases. The `"increased risk"` means that we are willing to make the assumption that the outcome is more likely in the selected portion of both exposure groups. The `"general"` argument is in contrast to `"selected"`, the latter meaning that we are only interested in inference in the selected population. Since `"general"` is the default, we could leave it out.
+
+```{r}
+HIV_biases <- multi_bias(confounding(), 
+                         selection("general", "increased risk"))
+```
+
+Printing the biases prints out the arguments that are required for the `multi_bound()` function, making for easy copying and pasting into that function.
+
+```{r}
+HIV_biases
+```
+```{r}
+multi_bound(biases = HIV_biases, 
+            RRAUc = 2.3, RRUcY = 2.5, RRUsYA1 = 3, RRSUsA1 = 2)
+```
+
+To calculate a multi-bias E-value, we must provide the observed effect estimate along with the set of biases. The authors reported an odds ratio but we will assume the outcome of extreme wasting is rare enough for it to approximate a risk ratio.
+
+```{r}
+multi_evalue(biases = HIV_biases, 
+             est = OR(6.75, rare = TRUE), 
+             lo = 2.79, hi = 16.31)
+```
+
+## Vitamins during pregnancy
+
+A study by Ross et al. examined the risk of leukemia in children whos mothers did and did not report consuming vitamin supplements during pregnancy.^[Ross JA, Blair CK, Olshan AF, et al. Periconceptional vitamin use and leukemia risk in children with down syndrome: A children’s oncology group study. Ann Ny Acad Sci. 2005;104:405– 410.] They reported an odds ratio of 0.51 (95% CI 0.30, 0.89) for acute lymphoblastic leukemia, conditional on maternal age, race, and a binary indicator of education. We may worry about additional, unmeasured confounding, as well as possible recall bias, as mothers of children with a cancer diagnosis might be more likely to report *not* taking vitamins even if they did do so.
+
+When assessing exposure misclassification, we have to specify whether the outcome and exposure are rare (irrespective of the actual scale of the effect estimate).
+```{r}
+leuk_biases <- multi_bias(confounding(), 
+                          misclassification("exposure", 
+                                            rare_outcome = TRUE, 
+                                            rare_exposure = FALSE))
+```
+
+```{r}
+leuk_biases
+```
+
+Again we can calculate the bound and multi-bias E-value as in the text.
+```{r}
+multi_bound(biases = leuk_biases, RRAUc = 2, RRUcY = 1.22, ORYAa = 1.59) 
+```
+
+```{r}
+multi_evalue(biases = leuk_biases, 
+             est = OR(0.51, rare = TRUE), 
+             lo = 0.3, hi = 0.89)
+```

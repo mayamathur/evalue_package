@@ -1,0 +1,20 @@
+---
+title: "E-values for meta-analysis"
+vignette: >
+  %\VignetteIndexEntry{E-values for meta-analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  class.output = "output",
+  class.message = "message"
+)
+```
+
+```{r setup}
+library(EValue)
+```
