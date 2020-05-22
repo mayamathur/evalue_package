@@ -4,21 +4,26 @@
 \alias{evalues.MD}
 \title{Compute E-value for a difference of means and its confidence interval limits}
 \usage{
-evalues.MD(est, se = NA, true = 0)
+evalues.MD(est, se = NA, true = 0, ...)
 }
 \arguments{
 \item{est}{The point estimate as a standardized difference (i.e., Cohen's d)}
 
 \item{se}{The standard error of the point estimate}
 
-\item{true}{The true standardized mean difference to which to shift the observed point estimate. Typically set to 0 to consider a null true effect.}
+\item{true}{The true standardized mean difference to which to shift the
+observed point estimate. Typically set to 0 to consider a null true effect.}
+
+\item{...}{Arguments passed to other methods.}
 }
 \description{
-Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
-on the risk ratio scale (through an approximate conversion) as well as E-values for the point estimate and the confidence interval
-limit closer to the null.
+Returns a data frame containing point estimates, the lower confidence limit,
+and the upper confidence limit on the risk ratio scale (through an
+approximate conversion) as well as E-values for the point estimate and the
+confidence interval limit closer to the null.
 }
 \examples{
 # compute E-value if Cohen's d = 0.5 with SE = 0.25
-evalues.MD( .5, .25 )
+evalues.MD(.5, .25)
 }
+\keyword{e-value}

@@ -334,15 +334,15 @@ evalues.RR = function( est, lo = NA, hi = NA, true = 1, ... ) {
 #'
 #'Given counts in a two-by-two table, computes risk ratio and confidence
 #'interval limits.
-#'@param n11 Number exposed (X=1() and diseased (D=1()
-#'@param n10 Number exposed (X=1() and not diseased (D=0()
-#'@param n01 Number unexposed (X=0() and diseased (D=1()
-#'@param n00 Number unexposed (X=0() and not diseased (D=0()
+#'@param n11 Number exposed (X=1) and diseased (D=1)
+#'@param n10 Number exposed (X=1) and not diseased (D=0)
+#'@param n01 Number unexposed (X=0) and diseased (D=1)
+#'@param n00 Number unexposed (X=0) and not diseased (D=0)
 #'@param alpha Alpha level associated with confidence interval
 #'@export
 #'@import stats
 #' @examples
-#' # Hammond and Holl (1958 JAMA() Data
+#' # Hammond and Holl (1958 JAMA) Data
 #' # Two by Two Table
 #' #          Lung Cancer    No Lung Cancer
 #'# Smoker    397            78557
