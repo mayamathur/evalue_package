@@ -241,12 +241,34 @@ observed point estimate. Typically set to 0 to consider a null true effect.</p><
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>A true standardized mean difference for linear regression would use
-<code>sd</code> = SD( Y | X, C ), where Y is the outcome, X is the exposure of
-interest, and C are any adjusted covariates. See Examples for how to extract
-this from <code>lm</code>. A conservative approximation would instead use <code>sd</code>
-= SD( Y ). Regardless, the reported E-value for the confidence interval
-treats <code>sd</code> as known, not estimated.</p>
+    <p>This function is for linear regression with a continuous exposure
+and outcome. Regarding the continuous exposure, the choice of <code>delta</code>
+defines essentially a dichotomization in the exposure between hypothetical
+groups of subjects with exposures equal to an arbitrary value <em>c</em> versus
+to another hypothetical group with exposures equal to <em>c</em> +
+<code>delta</code>. Regarding the continuous outcome, the function uses the
+effect-size conversions in Chinn (2000) and VanderWeele (2017) to
+approximately convert the mean difference between these exposure "groups" to
+the odds ratio that would arise from dichotomizing the continuous outcome.</p>
+<p>For example, if resulting E-value is 2, this means that unmeasured
+confounder(s) would need to double the probability of a subject's having
+exposure equal to <em>c</em> + <code>delta</code> instead of <em>c</em>, and would also
+need to double the probability of being high versus low on the outcome, in
+which the cutoff for "high" versus "low" is arbitrary subject to some
+distributional assumptions (Chinn, 2000).</p>
+<p>A true standardized mean difference for linear regression would use <code>sd</code>
+= SD(Y | X, C), where Y is the outcome, X is the exposure of interest, and C
+are any adjusted covariates. See Examples for how to extract this from
+<code>lm</code>. A conservative approximation would instead use <code>sd</code> = SD(Y).
+Regardless, the reported E-value for the confidence interval treats <code>sd</code>
+as known, not estimated.</p>
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Chinn, S (2000). A simple method for converting an odds ratio to
+effect size for use in meta-analysis. <em>Statistics in Medicine</em>, 19(22),
+3127-3131.</p>
+<p>VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for
+a common outcome. <em>Epidemiology</em>, 28(6), e58.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># first standardizing conservatively by SD(Y)</span>

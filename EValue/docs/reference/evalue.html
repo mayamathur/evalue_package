@@ -249,11 +249,28 @@ of class "estimate", assumed to be on the same scale as <code>est</code>.</p></t
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The estimate is converted appropriately before the E-value is
-calculated. See <a href='convert_measures.html'>conversion functions</a> for more details.
-The point estimate and confidence limits after conversion are returned, as
-is the E-value for the point estimate and the confidence limit closest to
-the proposed "true" value (by default, the null value.)</p>
+    <p>An E-value for unmeasured confounding is minimum strength of
+association, on the risk ratio scale, that an unmeasured confounder would
+need to have with both the treatment and the outcome to fully explain away
+a specific treatment–outcome association, conditional on the measured
+covariates.</p>
+<p>The estimate is converted appropriately before the E-value is calculated.
+See <a href='convert_measures.html'>conversion functions</a> for more details. The point
+estimate and confidence limits after conversion are returned, as is the
+E-value for the point estimate and the confidence limit closest to the
+proposed "true" value (by default, the null value.)</p>
+<p>For an <code><a href='effect_measures.html'>OLS()</a></code> estimate, the E-value is for linear regression with a
+continuous exposure and outcome. Regarding the continuous exposure, the
+choice of <code>delta</code> defines essentially a dichotomization in the
+exposure between hypothetical groups of subjects with exposures equal to an
+arbitrary value <em>c</em> versus to another hypothetical group with
+exposures equal to <em>c</em> + <code>delta</code>.</p>
+<p>For example, if resulting E-value is 2, this means that unmeasured
+confounder(s) would need to double the probability of a subject's having
+exposure equal to <em>c</em> + <code>delta</code> instead of <em>c</em>, and would
+also need to double the probability of being high versus low on the
+outcome, in which the cutoff for "high" versus "low" is arbitrary subject
+to some distributional assumptions (Chinn, 2000).</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># compute E-value for leukemia example in VanderWeele and Ding (2017)</span>

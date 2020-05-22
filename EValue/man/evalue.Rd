@@ -35,11 +35,31 @@ approximate conversion) as well as E-values for the point estimate and the
 confidence interval limit closer to the null.
 }
 \details{
-The estimate is converted appropriately before the E-value is
-calculated. See \link[=convert_measures]{conversion functions} for more details.
-The point estimate and confidence limits after conversion are returned, as
-is the E-value for the point estimate and the confidence limit closest to
-the proposed "true" value (by default, the null value.)
+An E-value for unmeasured confounding is minimum strength of
+association, on the risk ratio scale, that an unmeasured confounder would
+need to have with both the treatment and the outcome to fully explain away
+a specific treatment–outcome association, conditional on the measured
+covariates.
+
+The estimate is converted appropriately before the E-value is calculated.
+See \link[=convert_measures]{conversion functions} for more details. The point
+estimate and confidence limits after conversion are returned, as is the
+E-value for the point estimate and the confidence limit closest to the
+proposed "true" value (by default, the null value.)
+
+For an \code{\link[=OLS]{OLS()}} estimate, the E-value is for linear regression with a
+continuous exposure and outcome. Regarding the continuous exposure, the
+choice of \code{delta} defines essentially a dichotomization in the
+exposure between hypothetical groups of subjects with exposures equal to an
+arbitrary value \emph{c} versus to another hypothetical group with
+exposures equal to \emph{c} + \code{delta}.
+
+For example, if resulting E-value is 2, this means that unmeasured
+confounder(s) would need to double the probability of a subject's having
+exposure equal to \emph{c} + \code{delta} instead of \emph{c}, and would
+also need to double the probability of being high versus low on the
+outcome, in which the cutoff for "high" versus "low" is arbitrary subject
+to some distributional assumptions (Chinn, 2000).
 }
 \examples{
 # compute E-value for leukemia example in VanderWeele and Ding (2017)

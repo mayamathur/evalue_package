@@ -24,12 +24,35 @@
 #' @param ... Arguments passed to other methods.
 #' @export
 #' @keywords e-value
-#' @details A true standardized mean difference for linear regression would use
-#' \code{sd} = SD( Y | X, C ), where Y is the outcome, X is the exposure of
-#' interest, and C are any adjusted covariates. See Examples for how to extract
-#' this from \code{lm}. A conservative approximation would instead use \code{sd}
-#' = SD( Y ). Regardless, the reported E-value for the confidence interval
-#' treats \code{sd} as known, not estimated.
+#' @details This function is for linear regression with a continuous exposure
+#' and outcome. Regarding the continuous exposure, the choice of \code{delta}
+#' defines essentially a dichotomization in the exposure between hypothetical
+#' groups of subjects with exposures equal to an arbitrary value \emph{c} versus
+#' to another hypothetical group with exposures equal to \emph{c} +
+#' \code{delta}. Regarding the continuous outcome, the function uses the
+#' effect-size conversions in Chinn (2000) and VanderWeele (2017) to
+#' approximately convert the mean difference between these exposure "groups" to
+#' the odds ratio that would arise from dichotomizing the continuous outcome.
+#'
+#' For example, if resulting E-value is 2, this means that unmeasured
+#' confounder(s) would need to double the probability of a subject's having
+#' exposure equal to \emph{c} + \code{delta} instead of \emph{c}, and would also
+#' need to double the probability of being high versus low on the outcome, in
+#' which the cutoff for "high" versus "low" is arbitrary subject to some
+#' distributional assumptions (Chinn, 2000).
+#'
+#' A true standardized mean difference for linear regression would use \code{sd}
+#' = SD(Y | X, C), where Y is the outcome, X is the exposure of interest, and C
+#' are any adjusted covariates. See Examples for how to extract this from
+#' \code{lm}. A conservative approximation would instead use \code{sd} = SD(Y).
+#' Regardless, the reported E-value for the confidence interval treats \code{sd}
+#' as known, not estimated.
+#' @references Chinn, S (2000). A simple method for converting an odds ratio to
+#' effect size for use in meta-analysis. \emph{Statistics in Medicine}, 19(22),
+#' 3127-3131.
+#'
+#' VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for
+#' a common outcome. \emph{Epidemiology}, 28(6), e58.
 #' @examples
 #' # first standardizing conservatively by SD(Y)
 #' data(lead)
@@ -89,6 +112,19 @@ evalues.OLS = function( est, se = NA, sd, delta = 1, true = 0, ... ) {
 #' @param ... Arguments passed to other methods.
 #' @export
 #' @keywords e-value
+#' @details 
+#' Regarding the continuous outcome, the function uses the effect-size conversions in Chinn (2000)
+#' and VanderWeele (2017) to approximately convert the mean difference between the exposed versus unexposed groups
+#' to the odds ratio that would arise from dichotomizing the continuous outcome.
+#' 
+#' For example, if resulting E-value is 2, this means that unmeasured confounder(s) would need to double
+#' the probability of a subject's being exposed versus not being exposed, and would also need to
+#' double the probability of being high versus low on the outcome, in which the cutoff for "high" versus
+#' "low" is arbitrary subject to some distributional assumptions (Chinn, 2000). 
+#' @references 
+#' Chinn, S (2000). A simple method for converting an odds ratio to effect size for use in meta-analysis. \emph{Statistics in Medicine}, 19(22), 3127-3131.
+#'
+#' VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for a common outcome. \emph{Epidemiology}, 28(6), e58.
 #' @examples
 #' # compute E-value if Cohen's d = 0.5 with SE = 0.25
 #' evalues.MD(.5, .25)
@@ -625,7 +661,6 @@ evalue.MD = function(est, lo = NA, hi = NA, se = NA, delta = NA, true = 0, ...){
 #' @export
 evalue.default <- function(est, ...) {
   
-  
   if (is.null(measure) && !inherits(est, "estimate")) stop("Effect measure must be specified")
   
   measure <- class(est)[1]
@@ -662,12 +697,32 @@ evalue.default <- function(est, ...) {
 #' @param delta The contrast of interest in the exposure, for `est` of class "OLS"
 #' @param ... Arguments passed to other methods.
 #' @export
-#' @details The estimate is converted appropriately before the E-value is
-#'   calculated. See [conversion functions][convert_measures] for more details.
-#'   The point estimate and confidence limits after conversion are returned, as
-#'   is the E-value for the point estimate and the confidence limit closest to
-#'   the proposed "true" value (by default, the null value.)
-#' 
+#' @details An E-value for unmeasured confounding is minimum strength of
+#'   association, on the risk ratio scale, that an unmeasured confounder would
+#'   need to have with both the treatment and the outcome to fully explain away
+#'   a specific treatment–outcome association, conditional on the measured
+#'   covariates.
+#'
+#'   The estimate is converted appropriately before the E-value is calculated.
+#'   See [conversion functions][convert_measures] for more details. The point
+#'   estimate and confidence limits after conversion are returned, as is the
+#'   E-value for the point estimate and the confidence limit closest to the
+#'   proposed "true" value (by default, the null value.)
+#'
+#'   For an [OLS()] estimate, the E-value is for linear regression with a
+#'   continuous exposure and outcome. Regarding the continuous exposure, the
+#'   choice of \code{delta} defines essentially a dichotomization in the
+#'   exposure between hypothetical groups of subjects with exposures equal to an
+#'   arbitrary value \emph{c} versus to another hypothetical group with
+#'   exposures equal to \emph{c} + \code{delta}.
+#'
+#'   For example, if resulting E-value is 2, this means that unmeasured
+#'   confounder(s) would need to double the probability of a subject's having
+#'   exposure equal to \emph{c} + \code{delta} instead of \emph{c}, and would
+#'   also need to double the probability of being high versus low on the
+#'   outcome, in which the cutoff for "high" versus "low" is arbitrary subject
+#'   to some distributional assumptions (Chinn, 2000).
+#'   
 #' @keywords e-value
 #' @export
 #' @examples
@@ -732,7 +787,6 @@ evalue.default <- function(est, ...) {
 #' evalue(HR(0.56, rare = FALSE), lo = 0.46, hi = 0.69)
 #' # for a rare outcome
 #' evalue(HR(0.56, rare = TRUE), lo = 0.46, hi = 0.69)
-
 
 evalue = function( est, lo = NA, hi = NA, se = NA, delta = 1, true = c(0, 1), ... ) {
   UseMethod( "evalue")
