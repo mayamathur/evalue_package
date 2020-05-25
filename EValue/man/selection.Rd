@@ -9,7 +9,7 @@ selection(..., verbose = FALSE)
 \arguments{
 \item{...}{Optional arguments describing the type of potential selection
 bias. Options are "general" (general selection bias, the default if no
-options are chosen), "increased_risk" and "decreased_risk" (assumptions
+options are chosen), "increased risk" and "decreased risk" (assumptions
 about the direction of risk in the selected population), "S = U"
 (simplification used if the biasing characteristic is common to the entire
 selected population), and "selected" (when the target of inference is the
@@ -25,7 +25,7 @@ Invisibly returns a list with components whose values depend on the
 options chosen: \code{n} (the degree of the polynomial in the numerator), \code{d}
 (the degree of the polynomial in the denominator),\code{mess} (any
 messages/warnings that should be printed for the user), and
-\code{bias}("selection"), as well as
+\code{bias}("selection").
 }
 \description{
 A type of bias. Declares that selection bias will be a component

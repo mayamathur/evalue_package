@@ -32,7 +32,7 @@ confounding <- function(..., verbose = FALSE) {
 
   if (!is.null(mess) & verbose) wrapmessage(mess)
   
-  obj <- gsub("\\\"", "'", deparse(sys.call()))
+  obj <- paste(gsub("\\\"", "'", deparse(sys.call())), collapse = " ")
   
   names(obj) <- "confounding"
   class(obj) <- "bias"
@@ -53,7 +53,7 @@ confounding <- function(..., verbose = FALSE) {
 #'
 #' @param ... Optional arguments describing the type of potential selection
 #'   bias. Options are "general" (general selection bias, the default if no
-#'   options are chosen), "increased_risk" and "decreased_risk" (assumptions
+#'   options are chosen), "increased risk" and "decreased risk" (assumptions
 #'   about the direction of risk in the selected population), "S = U"
 #'   (simplification used if the biasing characteristic is common to the entire
 #'   selected population), and "selected" (when the target of inference is the
@@ -66,7 +66,7 @@ confounding <- function(..., verbose = FALSE) {
 #'   options chosen: `n` (the degree of the polynomial in the numerator), `d`
 #'   (the degree of the polynomial in the denominator),`mess` (any
 #'   messages/warnings that should be printed for the user), and
-#'   `bias`("selection"), as well as
+#'   `bias`("selection").
 #'
 #' @keywords multi-bias
 #'
@@ -155,7 +155,7 @@ selection <- function(..., verbose = FALSE) {
 
   if (verbose & !is.null(mess)) wrapmessage(mess)
   
-  obj <- gsub("\\\"", "'", deparse(sys.call()))
+  obj <- paste(gsub("\\\"", "'", deparse(sys.call())), collapse = " ")
   
   names(obj) <- "selection"
   class(obj) <- "bias"
@@ -237,14 +237,15 @@ misclassification <- function(...,
     stop("Only one of either \"exposure\" or \"outcome\" can be chosen.")
   }
   
-  if (type == "outcome" && (rare_outcome || rare_exposure)) {
+  if (type == "outcome" && (!is.null(rare_outcome) || !is.null(rare_exposure) || 
+                            rare_outcome || rare_exposure)) {
     mess <- paste(mess,
                   "No rare outcome/exposure arguments are necessary for outcome misclassfication; they have been ignored.",
                   sep = "\n"
     )
   }
   
-  obj <- gsub("\\\"", "'", deparse(sys.call()))
+  obj <- paste(gsub("\\\"", "'", deparse(sys.call())), collapse = " ")
   class(obj) <- "bias"
   
   if (type == "outcome") {
@@ -425,7 +426,9 @@ get_arg_tab <- function() {
 
 multi_bias <- function(..., verbose = TRUE) {
   arguments <- list(...)
-  
+  # allow passing null arguments (mostly for app)
+  arguments[sapply(arguments, is.null)] <- NULL
+
   if (!all(sapply(arguments, inherits, what = "bias"))) {
     stop('All arguments to multi_bias() function must be of class "bias"')
   }
