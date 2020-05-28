@@ -4,7 +4,9 @@
 \name{lead}
 \alias{lead}
 \title{An example dataset}
-\format{An object of class \code{data.frame} with 3340 rows and 18 columns.}
+\format{
+An object of class \code{data.frame} with 3340 rows and 18 columns.
+}
 \usage{
 lead
 }

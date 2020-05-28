@@ -141,7 +141,8 @@ test_that("Regression coefficient, preventive", {
   expect_identical( TRUE, is.na( package[2,"lower"] ) )
 })
 
-
+# ???
+# changed to -delta under calculate SMD
 test_that("Regression coefficient, preventive, different delta", {
   
   est = -10
@@ -151,8 +152,8 @@ test_that("Regression coefficient, preventive, different delta", {
   delta = -2
   
   # calculate SMD
-  d = (delta*est)/sd
-  se = (delta*se.b)/sd
+  d = (-delta*est)/sd
+  se = (-delta*se.b)/sd
   
   RR = 1/exp(0.91 * d)
   RR.true = 1/exp(0.91 * true)

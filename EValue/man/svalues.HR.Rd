@@ -2,11 +2,21 @@
 % Please edit documentation in R/EValue_selection.R
 \name{svalues.HR}
 \alias{svalues.HR}
-\title{Compute selection bias E-value for a hazard ratio and its confidence interval limits}
+\title{Compute selection bias E-value for an estimate and its confidence interval
+limits}
 \usage{
-svalues.HR(est, lo = NA, hi = NA, rare = NA, true = 1,
-  sel_pop = FALSE, S_eq_U = FALSE, risk_inc = FALSE,
-  risk_dec = FALSE)
+svalues.HR(
+  est,
+  lo = NA,
+  hi = NA,
+  rare = NA,
+  true = 1,
+  sel_pop = FALSE,
+  S_eq_U = FALSE,
+  risk_inc = FALSE,
+  risk_dec = FALSE,
+  ...
+)
 }
 \arguments{
 \item{est}{The point estimate}
@@ -15,28 +25,48 @@ svalues.HR(est, lo = NA, hi = NA, rare = NA, true = 1,
 
 \item{hi}{The upper limit of the confidence interval}
 
-\item{rare}{1 if outcome is rare (<15 percent at end of follow-up); 0 if outcome is not rare (>15 percent at end of follow-up)}
+\item{rare}{1 if outcome is rare (<15 percent at end of follow-up); 0 if
+outcome is not rare (>15 percent at end of follow-up)}
 
-\item{true}{The true HR to which to shift the observed point estimate. Typically set to 1 to consider a null true effect.}
+\item{true}{The true HR to which to shift the observed point estimate.
+Typically set to 1 to consider a null true effect.}
 
-\item{sel_pop}{Whether inference is specific to selected population (TRUE) or entire population (FALSE). Defaults to FALSE.}
+\item{sel_pop}{Whether inference is specific to selected population (TRUE) or
+entire population (FALSE). Defaults to FALSE.}
 
-\item{S_eq_U}{Whether the unmeasured factor is assumed to be a defining characteristic of the selected population. Defaults to FALSE.}
+\item{S_eq_U}{Whether the unmeasured factor is assumed to be a defining
+characteristic of the selected population. Defaults to FALSE.}
 
-\item{risk_inc}{Whether selection is assumed to be associated with increased risk of the outcome in both exposure groups. Defaults to FALSE.}
+\item{risk_inc}{Whether selection is assumed to be associated with increased
+risk of the outcome in both exposure groups. Defaults to FALSE.}
 
-\item{risk_dec}{Whether selection is assumed to be associated with decreased risk of the outcome in both exposure groups. Defaults to FALSE.}
+\item{risk_dec}{Whether selection is assumed to be associated with decreased
+risk of the outcome in both exposure groups. Defaults to FALSE.}
+
+\item{...}{Arguments passed to other methods.}
 }
 \description{
-Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
-on the risk ratio scale (through an approximate conversion if needed when outcome is common) as well as E-values for the point estimate and the confidence interval
-limit closer to the null.
+Returns a data frame containing point estimates, the lower confidence limit,
+and the upper confidence limit on the risk ratio scale (through an
+approximate conversion if needed when outcome is common) as well as selection bias
+E-values for the point estimate and the confidence interval limit closer to the null.
 }
 \details{
-A selection bias E-value is a summary measure that helps assess susceptibility of a result to selection bias. 
-Each of one or more parameters characterizing the extent of the bias must be greater than or equal to this value to be sufficient
-to shift an estimate (\code{est}) to the null or other true value (\code{true}). The parameters, as defined in Smith and VanderWeele 2019,
-depend on assumptions an investigator is willing to make (see arguments \code{sel_pop}, \code{S_eq_U}, \code{risk_inc}, \code{risk_dec}).
-The \code{svalues.XX} functions print a message about which parameters the selection bias E-value refers to given the assumptions made.
-See the cited article for details.
+A selection bias E-value is a summary measure that helps assess
+susceptibility of a result to selection bias. Each of one or more
+parameters characterizing the extent of the bias must be greater than or
+equal to this value to be sufficient to shift an estimate (\code{est}) to
+the null or other true value (\code{true}). The parameters, as defined in
+Smith and VanderWeele 2019, depend on assumptions an investigator is
+willing to make (see arguments \code{sel_pop}, \code{S_eq_U},
+\code{risk_inc}, \code{risk_dec}). The \code{svalues.XX} functions print a
+message about which parameters the selection bias E-value refers to given
+the assumptions made. See the cited article for details.
 }
+\examples{
+# Examples from Smith and VanderWeele 2019
+
+# Obesity paradox example
+svalues.RR(est = 1.50, lo = 1.22, sel_pop = TRUE)
+}
+\keyword{selection-bias}
