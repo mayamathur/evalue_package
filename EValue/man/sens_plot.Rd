@@ -70,6 +70,6 @@ sens_plot( type="line", q=log(0.90), Bmin=log(1), Bmax=log(4),
 # sens_plot( type="dist", q=log(0.90), muB=log(1.5),
 #           yr=log(0.7), t2=0.2 )
 }
-\keyword{confounding,}
-\keyword{meta-analysis,}
+\keyword{confounding}
+\keyword{meta-analysis}
 \keyword{sensitivity}

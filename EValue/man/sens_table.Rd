@@ -53,6 +53,6 @@ yr=log(1.3), t2=0.1 )
 sens_table( meas="Gmin", r=0.8, q=c( log(1.1) ),
 yr=log(1.3), t2=0.1 )
 }
-\keyword{confounding,}
-\keyword{meta-analysis,}
+\keyword{confounding}
+\keyword{meta-analysis}
 \keyword{sensitivity}

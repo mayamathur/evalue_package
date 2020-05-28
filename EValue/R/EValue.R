@@ -825,7 +825,7 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
 #' @param sigB Standard deviation of log bias factor across studies
 #' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
 #' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis
-#' @keywords meta-analysis, confounding, sensitivity
+#' @keywords meta-analysis confounding sensitivity
 #' @export
 #' @details
 #' For \code{meas=="Tmin"} or \code{meas=="Gmin"}, arguments \code{muB} and
@@ -934,7 +934,7 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' @param breaks.x1 Breaks for lower X-axis (bias factor) on RR scale (optional for line plot; not used for distribution plot)
 #' @param breaks.x2 Breaks for upper X-axis (confounding strength) on RR scale (optional for line plot; not used for distribution plot)
 #' @param CI.level Pointwise confidence level as a proportion
-#' @keywords meta-analysis, confounding, sensitivity
+#' @keywords meta-analysis confounding sensitivity
 #' @details
 #' Arguments \code{vyr} and \code{vt2} can be left \code{NA}, in which case no confidence
 #' band will appear on the line plot. 
