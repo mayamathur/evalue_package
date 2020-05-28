@@ -475,42 +475,6 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
 
 
 
-#' Convert forest plot or summary table to meta-analytic dataset
-#'
-#' This function is now deprecated. You should use the improved version \code{MetaUtility::scrape_meta} instead.
-#' @param type \code{RR} if point estimates are RRs or ORs (to be handled on log scale); \code{raw} if point estimates are raw differences, standardized mean differences, etc. (such that they can be handled with no transformations)
-#' @param est Vector of study point estimates on RR or OR scale
-#' @param hi Vector of upper bounds of 95% CIs on RRs
-#' @param sqrt Vector of booleans (TRUE/FALSE) for whether each study measured an odds ratio of a common outcome that should be approximated as a risk ratio via the square-root transformation
-#' @keywords meta-analysis
-#' @export
-#' @import stats
-
-scrape_meta = function( type="RR", est, hi, sqrt=FALSE ){
-  
-  .Deprecated("MetaUtility::scrape_meta")
-  
-  # if ( type == "RR" ) {
-  #   # take square root for certain elements
-  #   RR = est
-  #   RR[sqrt] = sqrt( RR[sqrt] )
-  #   
-  #   # same for upper CI limit
-  #   hi.RR = hi
-  #   hi.RR[sqrt] = sqrt( hi.RR[sqrt] )
-  #   
-  #   sei = ( log(hi.RR) - log(RR) ) / qnorm(.975)
-  #   
-  #   return( data.frame( yi = log(RR), vyi = sei^2 ) )
-  #   
-  # } else if ( type == "raw" ) {
-  #   
-  #   sei = ( hi - est ) / qnorm(.975)
-  #   return( data.frame( yi = est, vyi = sei^2 ) )
-  # }
-}
-
-
 
 #' Estimate proportion of population effect sizes above or below a threshold
 #'
