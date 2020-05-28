@@ -18,3 +18,4 @@ Plots the bias factor required to explain away a provided relative risk.
 # recreate the plot in VanderWeele and Ding (2017)
 bias_plot(RR=3.9, xmax=20)
 }
+\keyword{e-value}

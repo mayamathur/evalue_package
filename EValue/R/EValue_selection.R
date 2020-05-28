@@ -1,149 +1,191 @@
-#' Compute selection bias E-value for a hazard ratio and its confidence interval limits
-#' 
-#' Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
-#' on the risk ratio scale (through an approximate conversion if needed when outcome is common) as well as E-values for the point estimate and the confidence interval
-#' limit closer to the null.  
+#' Compute selection bias E-value for an estimate and its confidence interval
+#' limits
+#'
+#' Returns a data frame containing point estimates, the lower confidence limit,
+#' and the upper confidence limit on the risk ratio scale (through an
+#' approximate conversion if needed when outcome is common) as well as selection bias
+#' E-values for the point estimate and the confidence interval limit closer to the null.
 #' @param est The point estimate
 #' @param lo The lower limit of the confidence interval
 #' @param hi The upper limit of the confidence interval
-#' @param rare 1 if outcome is rare (<15 percent at end of follow-up); 0 if outcome is not rare (>15 percent at end of follow-up)
-#' @param true The true HR to which to shift the observed point estimate. Typically set to 1 to consider a null true effect. 
-#' @param sel_pop Whether inference is specific to selected population (TRUE) or entire population (FALSE). Defaults to FALSE.
-#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining characteristic of the selected population. Defaults to FALSE.
-#' @param risk_inc Whether selection is assumed to be associated with increased risk of the outcome in both exposure groups. Defaults to FALSE.
-#' @param risk_dec Whether selection is assumed to be associated with decreased risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param rare 1 if outcome is rare (<15 percent at end of follow-up); 0 if
+#'   outcome is not rare (>15 percent at end of follow-up)
+#' @param true The true HR to which to shift the observed point estimate.
+#'   Typically set to 1 to consider a null true effect.
+#' @param sel_pop Whether inference is specific to selected population (TRUE) or
+#'   entire population (FALSE). Defaults to FALSE.
+#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining
+#'   characteristic of the selected population. Defaults to FALSE.
+#' @param risk_inc Whether selection is assumed to be associated with increased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param risk_dec Whether selection is assumed to be associated with decreased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param ... Arguments passed to other methods.
 #' @export
-#' @details A selection bias E-value is a summary measure that helps assess susceptibility of a result to selection bias. 
-#' Each of one or more parameters characterizing the extent of the bias must be greater than or equal to this value to be sufficient
-#' to shift an estimate (\code{est}) to the null or other true value (\code{true}). The parameters, as defined in Smith and VanderWeele 2019,
-#' depend on assumptions an investigator is willing to make (see arguments \code{sel_pop}, \code{S_eq_U}, \code{risk_inc}, \code{risk_dec}).
-#' The \code{svalues.XX} functions print a message about which parameters the selection bias E-value refers to given the assumptions made.
-#' See the cited article for details.
+#' @details A selection bias E-value is a summary measure that helps assess
+#'   susceptibility of a result to selection bias. Each of one or more
+#'   parameters characterizing the extent of the bias must be greater than or
+#'   equal to this value to be sufficient to shift an estimate (\code{est}) to
+#'   the null or other true value (\code{true}). The parameters, as defined in
+#'   Smith and VanderWeele 2019, depend on assumptions an investigator is
+#'   willing to make (see arguments \code{sel_pop}, \code{S_eq_U},
+#'   \code{risk_inc}, \code{risk_dec}). The \code{svalues.XX} functions print a
+#'   message about which parameters the selection bias E-value refers to given
+#'   the assumptions made. See the cited article for details.
+#' @keywords selection-bias
+#' @examples
+#' # Examples from Smith and VanderWeele 2019
+#'
+#' # Obesity paradox example
+#' svalues.RR(est = 1.50, lo = 1.22, sel_pop = TRUE)
 
 svalues.HR = function( est, lo = NA, hi = NA, rare = NA, true = 1,
                        sel_pop = FALSE, S_eq_U = FALSE,
-                       risk_inc = FALSE, risk_dec = FALSE ) {
+                       risk_inc = FALSE, risk_dec = FALSE, ... ) {
   
   # organize user's values
   values = c(est, lo, hi)
   
   # sanity checks
   if ( est < 0 ) stop("HR cannot be negative")
-  if ( is.na(rare) ) stop("Must specify whether outcome is rare")
+  if (is.na(rare)) rare <- NULL # for compatibility w/ HR constructor
   
-  # if needed, convert to approximate RR
-  # if not rare, no conversion needed
-  if (rare){ 
-    #warning("Results assume a rare outcome (<15% at end of follow-up)")
-    true.RR = true
-  }
+  if (!inherits(est, "HR")) est <- HR(est, rare = rare)
+  if (!is.na(lo) && !inherits(lo, "HR")) lo <- HR(lo, rare = attr(est, "rare"))
+  if (!is.na(hi) && !inherits(hi, "HR")) hi <- HR(hi, rare = attr(est, "rare"))
+  if (!inherits(true, "HR")) true <- HR(true, rare = attr(est, "rare"))
   
-  else if ( ! rare ) {
-    #warning("Results assume a common outcome (>15% at end of follow-up)")
-    values = ( 1 - 0.5^sqrt( values ) ) / ( 1 - 0.5^sqrt( 1 / values ) )
-    
-    # convert true value to which to shift observed point estimate
-    #  to RR scale
-    true.RR = ( 1 - 0.5^sqrt( true ) ) / ( 1 - 0.5^sqrt( 1 / true ) )
-  }
+  est <- toRR(est)
+  if (!is.na(lo)) lo <- toRR(lo)
+  if (!is.na(hi)) hi <- toRR(hi)
+  true <- toRR(true)
   
-  return( svalues.RR( values[1], values[2], values[3], true = true.RR,
+  return( svalues.RR( est = est, lo = lo, hi = hi, true = true, 
                       sel_pop = sel_pop, S_eq_U = S_eq_U,
                       risk_inc = risk_inc, risk_dec = risk_dec) )
 }
 
 
-#' Compute selection bias E-value for an odds ratio and its confidence interval limits
-#' 
-#' Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
-#' on the risk ratio scale (through an approximate conversion if needed when outcome is common) as well as E-values for the point estimate and the confidence interval
-#' limit closer to the null.  
+#' Compute selection bias E-value for an odds ratio and its confidence interval
+#' limits
+#'
+#' Returns a data frame containing point estimates, the lower confidence limit,
+#' and the upper confidence limit on the risk ratio scale (through an
+#' approximate conversion if needed when outcome is common) as well as E-values
+#' for the point estimate and the confidence interval limit closer to the null.
 #' @param est The point estimate
 #' @param lo The lower limit of the confidence interval
-#' @param hi The upper limit of the confidence interval 
-#' @param rare 1 if outcome is rare (<15 percent at end of follow-up); 0 if outcome is not rare (>15 percent at end of follow-up)
-#' @param true The true OR to which to shift the observed point estimate. Typically set to 1 to consider a null true effect. 
-#' @param sel_pop Whether inference is specific to selected population (TRUE) or entire population (FALSE). Defaults to FALSE.
-#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining characteristic of the selected population. Defaults to FALSE.
-#' @param risk_inc Whether selection is assumed to be associated with increased risk of the outcome in both exposure groups. Defaults to FALSE.
-#' @param risk_dec Whether selection is assumed to be associated with decreased risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param hi The upper limit of the confidence interval
+#' @param rare 1 if outcome is rare (<15 percent at end of follow-up); 0 if
+#'   outcome is not rare (>15 percent at end of follow-up)
+#' @param true The true OR to which to shift the observed point estimate.
+#'   Typically set to 1 to consider a null true effect.
+#' @param sel_pop Whether inference is specific to selected population (TRUE) or
+#'   entire population (FALSE). Defaults to FALSE.
+#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining
+#'   characteristic of the selected population. Defaults to FALSE.
+#' @param risk_inc Whether selection is assumed to be associated with increased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param risk_dec Whether selection is assumed to be associated with decreased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param ... Arguments passed to other methods.
 #' @export
-#' @details A selection bias E-value is a summary measure that helps assess susceptibility of a result to selection bias. 
-#' Each of one or more parameters characterizing the extent of the bias must be greater than or equal to this value to be sufficient
-#' to shift an estimate (\code{est}) to the null or other true value (\code{true}). The parameters, as defined in Smith and VanderWeele 2019,
-#' depend on assumptions an investigator is willing to make (see arguments \code{sel_pop}, \code{S_eq_U}, \code{risk_inc}, \code{risk_dec}).
-#' The \code{svalues.XX} functions print a message about which parameters the selection bias E-value refers to given the assumptions made.
-#' See the cited article for details.
+#' @details A selection bias E-value is a summary measure that helps assess
+#'   susceptibility of a result to selection bias. Each of one or more
+#'   parameters characterizing the extent of the bias must be greater than or
+#'   equal to this value to be sufficient to shift an estimate (\code{est}) to
+#'   the null or other true value (\code{true}). The parameters, as defined in
+#'   Smith and VanderWeele 2019, depend on assumptions an investigator is
+#'   willing to make (see arguments \code{sel_pop}, \code{S_eq_U},
+#'   \code{risk_inc}, \code{risk_dec}). The \code{svalues.XX} functions print a
+#'   message about which parameters the selection bias E-value refers to given
+#'   the assumptions made. See the cited article for details.
+#' @keywords selection-bias
+#' @examples
+#' # Examples from Smith and VanderWeele 2019
+#'
+#' # Zika virus example
+#' svalues.OR(est = 73.1, rare = TRUE, lo = 13.0)
+#'
+#' # Endometrial cancer example
+#' svalues.OR(est = 2.30, rare = TRUE, true = 11.98, S_eq_U = TRUE, risk_inc = TRUE)
 
 svalues.OR = function( est, lo = NA, hi = NA, rare = NA, true = 1,
                        sel_pop = FALSE, S_eq_U = FALSE,
-                       risk_inc = FALSE, risk_dec = FALSE) {
+                       risk_inc = FALSE, risk_dec = FALSE, ... ) {
   
   # organize user's values
   values = c(est, lo, hi)
   
   # sanity checks
   if ( est < 0 ) stop("OR cannot be negative")
-  if ( is.na(rare) ) stop("Must specify whether outcome is rare")
+  if (is.na(rare)) rare <- NULL # for compatibility w/ OR constructor
   
-  # if needed, convert to approximate RR
-  # if not rare, no conversion needed
-  if (rare){ 
-    #warning("Results assume a rare outcome (<15% at end of follow-up)")
-    true.RR = true
-  }
-  else if ( ! rare ) {
-    #warning("Results assume a common outcome (>15% at end of follow-up)")
-    values = sqrt(values)
-    
-    # convert true value to which to shift observed point estimate
-    #  to RR scale
-    true.RR = sqrt(true)
-  }
+  if (!inherits(est, "OR")) est <- OR(est, rare = rare)
+  if (!is.na(lo) && !inherits(lo, "OR")) lo <- OR(lo, rare = attr(est, "rare"))
+  if (!is.na(hi) && !inherits(hi, "OR")) hi <- OR(hi, rare = attr(est, "rare"))
+  if (!inherits(true, "OR")) true <- OR(true, rare = attr(est, "rare"))
   
-  return( svalues.RR( values[1], values[2], values[3], true = true.RR, 
+  est <- toRR(est)
+  if (!is.na(lo)) lo <- toRR(lo)
+  if (!is.na(hi)) hi <- toRR(hi)
+  true <- toRR(true)
+  
+  return( svalues.RR( est = est, lo = lo, hi = hi, true = true, 
                       sel_pop = sel_pop, S_eq_U = S_eq_U,
                       risk_inc = risk_inc, risk_dec = risk_dec ) )
 }
 
 
 
-#' Compute selection bias E-value for a risk ratio or rate ratio and its confidence interval limits
-#' 
-#' Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
-#' for the risk ratio (as provided by the user) as well as selection bias E-values for the point estimate and the confidence interval
-#' limit closer to the null.  
+#' Compute selection bias E-value for a risk ratio or rate ratio and its
+#' confidence interval limits
+#'
+#' Returns a data frame containing point estimates, the lower confidence limit,
+#' and the upper confidence limit for the risk ratio (as provided by the user)
+#' as well as selection bias E-values for the point estimate and the confidence
+#' interval limit closer to the null.
 #' @param est The point estimate
 #' @param lo The lower limit of the confidence interval
 #' @param hi The upper limit of the confidence interval
-#' @param true The true RR to which to shift the observed point estimate. Typically set to 1 to consider a null true effect. 
-#' @param sel_pop Whether inference is specific to selected population (TRUE) or entire population (FALSE). Defaults to FALSE.
-#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining characteristic of the selected population. Defaults to FALSE.
-#' @param risk_inc Whether selection is assumed to be associated with increased risk of the outcome in both exposure groups. Defaults to FALSE.
-#' @param risk_dec Whether selection is assumed to be associated with decreased risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param true The true RR to which to shift the observed point estimate.
+#'   Typically set to 1 to consider a null true effect.
+#' @param sel_pop Whether inference is specific to selected population (TRUE) or
+#'   entire population (FALSE). Defaults to FALSE.
+#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining
+#'   characteristic of the selected population. Defaults to FALSE.
+#' @param risk_inc Whether selection is assumed to be associated with increased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param risk_dec Whether selection is assumed to be associated with decreased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param ... Arguments passed to other methods.
 #' @export
-#' @details 
-#' A selection bias E-value is a summary measure that helps assess susceptibility of a result to selection bias. 
-#' Each of one or more parameters characterizing the extent of the bias must be greater than or equal to this value to be sufficient
-#' to shift an estimate (\code{est}) to the null or other true value (\code{true}). The parameters, as defined in Smith and VanderWeele 2019,
-#' depend on assumptions an investigator is willing to make (see arguments \code{sel_pop}, \code{S_eq_U}, \code{risk_inc}, \code{risk_dec}).
-#' The \code{svalues.XX} functions print a message about which parameters the selection bias E-value refers to given the assumptions made.
-#' See the cited article for details.
-#' @examples 
+#' @details A selection bias E-value is a summary measure that helps assess
+#' susceptibility of a result to selection bias. Each of one or more parameters
+#' characterizing the extent of the bias must be greater than or equal to this
+#' value to be sufficient to shift an estimate (\code{est}) to the null or other
+#' true value (\code{true}). The parameters, as defined in Smith and VanderWeele
+#' 2019, depend on assumptions an investigator is willing to make (see arguments
+#' \code{sel_pop}, \code{S_eq_U}, \code{risk_inc}, \code{risk_dec}). The
+#' \code{svalues.XX} functions print a message about which parameters the
+#' selection bias E-value refers to given the assumptions made. See the cited
+#' article for details.
+#' @keywords selection-bias
+#' @examples
 #' # Examples from Smith and VanderWeele 2019
-#' 
+#'
 #' # Zika virus example
 #' svalues.RR(est = 73.1, lo = 13.0)
-#' 
+#'
 #' # Endometrial cancer example
 #' svalues.RR(est = 2.30, true = 11.98, S_eq_U = TRUE, risk_inc = TRUE)
-#' 
+#'
 #' # Obesity paradox example
 #' svalues.RR(est = 1.50, lo = 1.22, sel_pop = TRUE)
 
 svalues.RR = function( est, lo = NA, hi = NA, true = 1,
                        sel_pop = FALSE, S_eq_U = FALSE,
-                       risk_inc = FALSE, risk_dec = FALSE) {
+                       risk_inc = FALSE, risk_dec = FALSE, ... ) {
 
   # organize user's values
   values = c(est, lo, hi)
@@ -158,11 +200,11 @@ svalues.RR = function( est, lo = NA, hi = NA, true = 1,
   if ( sel_pop & (S_eq_U | risk_inc | risk_dec) ) message("Since you are interested in the selected population only, the additional assumptions aren't necessary to calculate the selection bias E-value")
   
   # warn user if using non-null true value
-  if ( true != 1 ) message('You are calculating a "non-null" selection bias E-value,
-                           i.e., an E-value for the minimum amount of selection bias
-                           needed to move the estimate and confidence
-                           interval to your specified true value rather than to
-                           the null value.')
+  if ( true != 1 ) wrapmessage(c("You are calculating a \"non-null\" selection bias E-value,",
+                                 "i.e., an E-value for the minimum amount of selection",
+                                 "bias needed to move the estimate and confidence",
+                                 "interval to your specified true value rather than to",
+                                 "the null value."))
 
   # check if CI crosses null
   null.CI = NA
@@ -193,7 +235,7 @@ svalues.RR = function( est, lo = NA, hi = NA, true = 1,
   # if CI crosses null, set its E-value to 1
   if ( !is.na(null.CI) & null.CI == TRUE ){
     E[ 2:3 ] = 1
-    message("Confidence interval crosses the true value, so its selection bias E-value is 1.") 
+    wrapmessage("Confidence interval crosses the true value, so its selection bias E-value is 1.") 
   }
   
   # if user provides either CI limit...
@@ -211,26 +253,35 @@ svalues.RR = function( est, lo = NA, hi = NA, true = 1,
   
   rownames(result) = c("RR", "Selection bias E-values")
   colnames(result) = c("point", "lower", "upper")
-  message(m)
+  wrapmessage(m)
+  class(result) <- c("evalue", "matrix")
   result
 }
 
 
 
-#' Compute selection bias E-value for single value of risk ratio as well as a statement about what parameters it refers to
-#' 
-#' Computes selection bias E-value for a single value of the risk ratio. Users should typically call the 
-#' relevant \code{svalues.XX()} function rather than this internal function.  
+#' Compute selection bias E-value for single value of risk ratio as well as a
+#' statement about what parameters it refers to
+#'
+#' Computes selection bias E-value for a single value of the risk ratio. Users
+#' should typically call the relevant \code{svalues.XX()} function rather than
+#' this internal function.
 #' @param x The risk ratio
-#' @param true The true RR to which to shift the observed point estimate. Typically set to 1 to consider a null true effect. 
-#' @param sel_pop Whether inference is specific to selected population (TRUE) or entire population (FALSE). Defaults to FALSE.
-#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining characteristic of the selected population. Defaults to FALSE.
-#' @param risk_inc Whether selection is assumed to be associated with increased risk of the outcome in both exposure groups. Defaults to FALSE.
-#' @param risk_dec Whether selection is assumed to be associated with decreased risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param true The true RR to which to shift the observed point estimate.
+#'   Typically set to 1 to consider a null true effect.
+#' @param sel_pop Whether inference is specific to selected population (TRUE) or
+#'   entire population (FALSE). Defaults to FALSE.
+#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining
+#'   characteristic of the selected population. Defaults to FALSE.
+#' @param risk_inc Whether selection is assumed to be associated with increased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param risk_dec Whether selection is assumed to be associated with decreased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @keywords internal
 #' @export
 
 threshold_selection = function(x, true = 1, sel_pop = FALSE, S_eq_U = FALSE,
-                               risk_inc = FALSE, risk_dec = FALSE) {
+                               risk_inc = FALSE, risk_dec = FALSE, ... ) {
   
   if ( is.na(x) ) return(NA)
   
@@ -292,3 +343,90 @@ threshold_selection = function(x, true = 1, sel_pop = FALSE, S_eq_U = FALSE,
   
 }
 
+#' @export
+selection_evalue.RR = function(est, lo = NA, hi = NA, true = 1, sel_pop = FALSE, 
+                               S_eq_U = FALSE, risk_inc = FALSE, risk_dec = FALSE, ... ) {
+  svalues.RR(est, lo = lo, hi = hi, true = true, sel_pop = sel_pop, 
+             S_eq_U = S_eq_U, risk_inc = risk_inc, risk_dec = risk_dec)
+}
+#' @export
+selection_evalue.OR = function(est, lo = NA, hi = NA, true = 1, sel_pop = FALSE, 
+                               S_eq_U = FALSE, risk_inc = FALSE, risk_dec = FALSE, ... ) {
+  svalues.OR(est, lo = lo, hi = hi, true = true, sel_pop = sel_pop, 
+             S_eq_U = S_eq_U, risk_inc = risk_inc, risk_dec = risk_dec)
+}
+#' @export
+selection_evalue.HR = function(est, lo = NA, hi = NA, true = 1, sel_pop = FALSE, 
+                               S_eq_U = FALSE, risk_inc = FALSE, risk_dec = FALSE, ... ) {
+  svalues.HR(est, lo = lo, hi = hi, true = true, sel_pop = sel_pop, 
+             S_eq_U = S_eq_U, risk_inc = risk_inc, risk_dec = risk_dec)
+}
+
+
+#' @export
+selection_evalue.default <- function(est, lo = NA, hi = NA, true = 1, sel_pop = FALSE, 
+                                     S_eq_U = FALSE, risk_inc = FALSE, risk_dec = FALSE, ..., measure = NULL) {
+  
+  if (is.null(measure) && !inherits(est, "estimate")) stop("Effect measure must be specified")
+  
+  svalues_func = switch(measure,
+                        "HR" = svalues.HR,
+                        "OR" = svalues.OR,
+                        "RR" = svalues.RR)
+  
+  svalues_func(est = est, lo = lo, hi = hi, true = true, sel_pop = sel_pop, 
+               S_eq_U = S_eq_U, risk_inc = risk_inc, risk_dec = risk_dec)
+}
+
+#' Compute selection bias E-value for a hazard ratio and its confidence interval
+#' limits
+#'
+#' Returns a data frame containing point estimates, the lower confidence limit,
+#' and the upper confidence limit on the risk ratio scale (through an
+#' approximate conversion if needed when outcome is common) as well as E-values
+#' for the point estimate and the confidence interval limit closer to the null.
+#' @param est The point estimate: a risk, odds, or hazard ratio. An object of 
+#'   class "estimate", it should be constructed with functions [RR()], [OR()], 
+#'  or [HR()].
+#' @param lo The lower limit of the confidence interval
+#' @param hi The upper limit of the confidence interval
+#' @param true The true value to which to shift the observed point estimate.
+#'   Typically set to 1 to consider a null true effect.
+#' @param sel_pop Whether inference is specific to selected population (TRUE) or
+#'   entire population (FALSE). Defaults to FALSE.
+#' @param S_eq_U Whether the unmeasured factor is assumed to be a defining
+#'   characteristic of the selected population. Defaults to FALSE.
+#' @param risk_inc Whether selection is assumed to be associated with increased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param risk_dec Whether selection is assumed to be associated with decreased
+#'   risk of the outcome in both exposure groups. Defaults to FALSE.
+#' @param ... Arguments passed to other methods.
+#' @export
+#' @details A selection bias E-value is a summary measure that helps assess
+#'   susceptibility of a result to selection bias. Each of one or more
+#'   parameters characterizing the extent of the bias must be greater than or
+#'   equal to this value to be sufficient to shift an estimate (\code{est}) to
+#'   the null or other true value (\code{true}). The parameters, as defined in
+#'   Smith and VanderWeele 2019, depend on assumptions an investigator is
+#'   willing to make (see arguments \code{sel_pop}, \code{S_eq_U},
+#'   \code{risk_inc}, \code{risk_dec}). The function prints a
+#'   message about which parameters the selection bias E-value refers to given
+#'   the assumptions made. See the cited article for details.
+#' @keywords selection-bias
+#' @examples
+#' # Examples from Smith and VanderWeele 2019
+#'
+#' # Zika virus example
+#' selection_evalue(OR(73.1, rare = TRUE), lo = 13.0)
+#'
+#' # Endometrial cancer example
+#' selection_evalue(OR(2.30, rare = TRUE), true = 11.98, S_eq_U = TRUE, risk_inc = TRUE)
+#'
+#' # Obesity paradox example
+#' selection_evalue(RR(1.50), lo = 1.22, sel_pop = TRUE)
+#' 
+#' @export
+selection_evalue = function( est, lo = NA, hi = NA, true = 1, sel_pop = FALSE, 
+                             S_eq_U = FALSE, risk_inc = FALSE, risk_dec = FALSE, ... ) {
+  UseMethod( "selection_evalue")
+}

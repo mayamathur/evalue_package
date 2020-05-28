@@ -18,7 +18,8 @@ twoXtwoRR(n11, n10, n01, n00, alpha = 0.05)
 \item{alpha}{Alpha level associated with confidence interval}
 }
 \description{
-Given counts in a two-by-two table, computes risk ratio and confidence interval limits.
+Given counts in a two-by-two table, computes risk ratio and confidence
+interval limits.
 }
 \examples{
 # Hammond and Holl (1958 JAMA) Data

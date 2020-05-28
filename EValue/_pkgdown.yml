@@ -1,0 +1,90 @@
+destination: docs
+home:
+  title: An R package for E-values and bounds
+  links:
+  - text: E-value calculator
+    href: https://www.evalue-calculator.com
+authors:
+  Maya B. Mathur:
+    href: https://mayamathur.com
+  Louisa H. Smith:
+    href: https://louisahsmith.com
+  Tyler J. VanderWeele:
+    href: https://www.hsph.harvard.edu/tyler-vanderweele/
+  Peng Ding: 
+    href: https://sites.google.com/site/pengdingpku/
+reference:
+- title: E-values for unmeasured confounding
+  contents:  
+  - has_keyword("e-value")
+- title: Multiple-bias sensitivity analysis
+- contents:
+  - has_keyword("multi-bias")
+- title: Sensitivity analysis for meta-analysis
+- contents:
+  - has_keyword("meta-analysis")
+- title: Sensitivity analysis for selection bias
+- contents:
+  - has_keyword("selection-bias")
+- title: Other
+- contents:
+  - -has_keyword(c("e-value", "multi-bias", "meta-analysis", "selection-bias"))
+navbar:
+  structure:
+    left:  [home, reference, evalues, multi-bias, meta-analysis, selection-bias]
+  components:
+    home: ~
+    reference:
+      text: All functions
+      href: reference/index.html
+    articles:
+    evalues:
+      text: Unmeasured confounding
+      menu: 
+      - text: Examples
+        href: articles/unmeasured-confounding.html
+      - text: Articles
+        menu: 
+        - text: Sensitivity analysis without assumptions
+          href: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4820664/
+        - text: "Sensitivity analysis in observational research: Introducing the E-value"
+          href: http://annals.org/aim/article-abstract/2643434/sensitivity-analysis-observational-research-introducing-e-value?doi=10.7326%2fM16-2607
+        - text: Website and R package for computing E-values
+          href: https://journals.lww.com/epidem/Fulltext/2018/09000/Web_Site_and_R_Package_for_Computing_E_values.26.aspx
+        - text: Correcting misinterpretations of the E-value
+          href: https://annals.org/aim/article-abstract/2719984/correcting-misinterpretations-e-value
+        - text: Technical considerations in the use of the E-value
+          href: https://biostats.bepress.com/harvardbiostat/paper215/
+      - text: E-value calculator
+        href: https://www.evalue-calculator.com
+    multi-bias:
+      text: Multiple biases
+      menu: 
+      - text: Introduction
+        href: articles/multiple-bias.html
+      - text: Examples
+        href: articles/multiple-bias-examples.html
+      - text: Article
+        href: https://arxiv.org/abs/2005.02908
+    meta-analysis:
+      text: Meta-analysis
+      menu: 
+      # - text: Examples
+      #   href: articles/meta-analysis.html
+      - text: Article
+        href: https://www.tandfonline.com/doi/full/10.1080/01621459.2018.1529598
+      - text: Calculator
+        href: https://mmathur.shinyapps.io/meta_gui_2/
+    selection-bias:
+      text: Selection bias
+      menu: 
+      # - text: Examples
+      #   href: articles/selection-bias.html
+      - text: Articles
+        menu: 
+        - text: Bounding bias due to selection
+          href: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6553568/pdf/ede-30-509.pdf
+        - text: Simple sensitivity analysis for control selection bias
+          href: https://journals.lww.com/epidem/Citation/9000/Simple_sensitivity_analysis_for_control_selection.98406.aspx
+      - text: Calculator
+        href: http://selection-bias.louisahsmith.com

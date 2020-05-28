@@ -4,42 +4,54 @@
 \alias{evalues.OLS}
 \title{Compute E-value for a linear regression coefficient estimate}
 \usage{
-evalues.OLS(est, se = NA, sd, delta = 1, true = 0)
+evalues.OLS(est, se = NA, sd, delta = 1, true = 0, ...)
 }
 \arguments{
-\item{est}{The linear regression coefficient estimate (standardized or unstandardized)}
+\item{est}{The linear regression coefficient estimate (standardized or
+unstandardized)}
 
 \item{se}{The standard error of the point estimate}
 
-\item{sd}{The standard deviation of the outcome (or residual standard deviation); see Details}
+\item{sd}{The standard deviation of the outcome (or residual standard
+deviation); see Details}
 
 \item{delta}{The contrast of interest in the exposure}
 
-\item{true}{The true standardized mean difference to which to shift the observed point estimate. Typically set to 0 to consider a null true effect.}
+\item{true}{The true standardized mean difference to which to shift the
+observed point estimate. Typically set to 0 to consider a null true effect.}
+
+\item{...}{Arguments passed to other methods.}
 }
 \description{
-Returns a data frame containing point estimates, the lower confidence limit, and the upper confidence limit
-on the risk ratio scale (through an approximate conversion) as well as E-values for the point estimate and the confidence interval
-limit closer to the null.
+Returns a data frame containing point estimates, the lower confidence limit,
+and the upper confidence limit on the risk ratio scale (through an
+approximate conversion) as well as E-values for the point estimate and the
+confidence interval limit closer to the null.
 }
 \details{
-This function is for linear regression with a continuous exposure and outcome.
-Regarding the continuous exposure, the choice of \code{delta} defines essentially a 
-dichotomization in the exposure between hypothetical groups of subjects with exposures equal to an arbitrary
-value \emph{c} versus to another hypothetical group with exposures equal to \emph{c} + \code{delta}.
-Regarding the continuous outcome, the function uses the effect-size conversions in Chinn (2000)
-and VanderWeele (2017) to approximately convert the mean difference between these exposure "groups"
-to the odds ratio that would arise from dichotomizing the continuous outcome.
+This function is for linear regression with a continuous exposure
+and outcome. Regarding the continuous exposure, the choice of \code{delta}
+defines essentially a dichotomization in the exposure between hypothetical
+groups of subjects with exposures equal to an arbitrary value \emph{c} versus
+to another hypothetical group with exposures equal to \emph{c} +
+\code{delta}. Regarding the continuous outcome, the function uses the
+effect-size conversions in Chinn (2000) and VanderWeele (2017) to
+approximately convert the mean difference between these exposure "groups" to
+the odds ratio that would arise from dichotomizing the continuous outcome.
 
-For example, if resulting E-value is 2, this means that unmeasured confounder(s) would need to double
-the probability of a subject's having exposure equal to \emph{c} + \code{delta} instead of \emph{c}, and would also need to
-double the probability of being high versus low on the outcome, in which the cutoff for "high" versus
-"low" is arbitrary subject to some distributional assumptions (Chinn, 2000). 
+For example, if resulting E-value is 2, this means that unmeasured
+confounder(s) would need to double the probability of a subject's having
+exposure equal to \emph{c} + \code{delta} instead of \emph{c}, and would also
+need to double the probability of being high versus low on the outcome, in
+which the cutoff for "high" versus "low" is arbitrary subject to some
+distributional assumptions (Chinn, 2000).
 
-A true standardized mean difference for linear regression would use \code{sd} = SD(Y | X, C), where Y is
-the outcome, X is the exposure of interest, and C are any adjusted covariates. See Examples for how to extract 
-this from \code{lm}. A conservative approximation would instead use \code{sd} = SD(Y). Regardless, the reported E-value
-for the confidence interval treats \code{sd} as known, not estimated.
+A true standardized mean difference for linear regression would use \code{sd}
+= SD(Y | X, C), where Y is the outcome, X is the exposure of interest, and C
+are any adjusted covariates. See Examples for how to extract this from
+\code{lm}. A conservative approximation would instead use \code{sd} = SD(Y).
+Regardless, the reported E-value for the confidence interval treats \code{sd}
+as known, not estimated.
 }
 \examples{
 # first standardizing conservatively by SD(Y)
@@ -49,23 +61,27 @@ ols = lm(age ~ income, data = lead)
 # for a 1-unit increase in income
 evalues.OLS(est = ols$coefficients[2],
             se = summary(ols)$coefficients['income', 'Std. Error'],
-            sd = sd(lead$age) )
-            
+            sd = sd(lead$age))
+
 # for a 0.5-unit increase in income
 evalues.OLS(est = ols$coefficients[2],
             se = summary(ols)$coefficients['income', 'Std. Error'],
             sd = sd(lead$age),
-            delta = 0.5 )
-            
+            delta = 0.5)
+
 # now use residual SD to avoid conservatism
 # here makes very little difference because income and age are
 # not highly correlated
 evalues.OLS(est = ols$coefficients[2],
             se = summary(ols)$coefficients['income', 'Std. Error'],
-            sd = summary(ols)$sigma )
+            sd = summary(ols)$sigma)
 }
 \references{
-Chinn, S (2000). A simple method for converting an odds ratio to effect size for use in meta-analysis. \emph{Statistics in Medicine}, 19(22), 3127-3131.
+Chinn, S (2000). A simple method for converting an odds ratio to
+effect size for use in meta-analysis. \emph{Statistics in Medicine}, 19(22),
+3127-3131.
 
-VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for a common outcome. \emph{Epidemiology}, 28(6), e58.
+VanderWeele, TJ (2017). On a square-root transformation of the odds ratio for
+a common outcome. \emph{Epidemiology}, 28(6), e58.
 }
+\keyword{e-value}
