@@ -88,8 +88,7 @@ multi_evalues.HR = function(biases, est, lo = NA, hi = NA, rare = NULL, true = 1
   return( multi_evalues.RR(biases = biases, est = est, lo = lo, hi = hi, true = true, verbose = verbose ) )
 }
 
-#' @param rare Logical indicating whether outcome is sufficiently rare for 
-#'  risk ratio approximation to hold.
+
 #' @keywords multi-bias
 #' @export
 #' @rdname multi_evalue
