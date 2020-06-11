@@ -230,7 +230,9 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
 #' @param sigB Standard deviation of log bias factor across studies
 #' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
 #' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis
-#' @keywords meta-analysis, confounding, sensitivity
+#' @keywords meta-analysis
+#' confounding
+#' sensitivity
 #' @export
 #' @details
 #' For \code{meas=="Tmin"} or \code{meas=="Gmin"}, arguments \code{muB} and

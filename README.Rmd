@@ -43,7 +43,8 @@ E-values are simple to calculate. For example, the E-value for the association b
 evalues.RR(est = 10.73, lo = 8.02, hi = 14.36)
 ```
 
-For more on E-values for unmeasured confounding, see the [vignette](articles/unmeasured-confounding.html).
+<!-- MM: using full URLs to please CRAN check (o.w. files need to be in same dir) -->
+For more on E-values for unmeasured confounding, see the [vignette](https://louisahsmith.github.io/evalue/articles/unmeasured-confounding.html).
 
 More complex assessment of several biases is also easy. To bound the bias due to unmeasured confounding, selection bias, and differential outcome misclassification, we can use background knowledge about the strength of the biases to propose sensitivity analysis parameters:
 
@@ -57,7 +58,7 @@ multi_bound(biases,
             RRSUsA1 = 1.25, RRUsYA1 = 2.5,
             ORYAaS = 1.75)
 ```
-Read more about how to specify [multiple biases](articles/multiple-bias.html) and see several worked [examples](articles/multiple-bias-examples.html).
+Read more about how to specify [multiple biases](https://louisahsmith.github.io/evalue/articles/multiple-bias.html) and see several worked [examples](https://louisahsmith.github.io/evalue/articles/multiple-bias-examples.html).
 
 ## Other options
 

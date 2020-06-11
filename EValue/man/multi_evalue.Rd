@@ -47,9 +47,6 @@ risk ratio approximation to hold.}
 
 \item{verbose}{Logical indicating whether or not to print information about
 which parameters the multi-bias E-value refers to. Defaults to TRUE.}
-
-\item{rare}{Logical indicating whether outcome is sufficiently rare for
-risk ratio approximation to hold.}
 }
 \value{
 Returns a multiple bias E-value, of class "multi_evalue", describing
