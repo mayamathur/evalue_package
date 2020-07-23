@@ -374,7 +374,7 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
                       yr, vyr=NA, t2, vt2=NA,
                       breaks.x1=NA, breaks.x2=NA,
-                      CI.level=0.95 ) {
+                      CI.level=0.95, tail=c("above", "below") ) {
   
   ##### Check for Bad Input ######
   if ( type=="dist" ) {
@@ -434,7 +434,7 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
       # r is irrelevant here
       cm = confounded_meta(q, r=0.10, muB=t$B[i], sigB,
                            yr, vyr, t2, vt2,
-                           CI.level=CI.level)
+                           CI.level=CI.level, tail=tail)
       t$phat[i] = cm$Est[ cm$Value=="Prop" ]
       t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
       t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
@@ -462,7 +462,7 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
                                                 breaks=breaks.x2 ) ) +
       geom_line(lwd=1.2) +
       xlab("Bias factor (RR scale)") +
-      ylab( paste( ifelse( yr > log(1),
+      ylab( paste( ifelse( tail=="above",
                            paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
                            paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) )
     
