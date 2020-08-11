@@ -58,12 +58,16 @@
 #'                  yr=yr, t2=t2, CI.level=0.95 )
 
 
-confounded_meta = function( q, r=NA, muB=NA, sigB=0,
+confounded_meta = function( method=c("calibrated", "non-parametric"), q, r=NA, muB=NA, sigB=0,
                             yr, vyr=NA, t2, vt2=NA,
-                            CI.level=0.95, tail=NA ) {
+                            CI.level=0.95, tail=NA, 
+                           .B.vec=NA, .calib=NA, .give.CI=TRUE, .R=2000, .dat=NA, .calib.name=NA ) {
   
   # somewhere have option to plot the bias factor distribution, the confounded distribution, and the adjusted distribution
-  
+ ### for calibrated
+ if (method=="calibrated"){
+    
+    
   ##### Check for Bad Input #####
   if ( t2 < 0 ) stop("Heterogeneity cannot be negative")
   if ( sigB < 0 ) stop("Bias factor variance cannot be negative")
@@ -208,7 +212,100 @@ confounded_meta = function( q, r=NA, muB=NA, sigB=0,
   )
   
   return(res)
-}
+} ## closes calibrated method
+  
+## for non-parametric
+if(method=="non-parametric"){
+  require(boot)
+      # confounding-adjusted calibrated estimates
+    # ~~~ SPECIFIC TO THIS STUDY: assumes apparently protective case
+    calib.t = .calib + log(.B.vec)
+    
+    # confounding-adjusted Phat
+    if ( tail == "above" ) Phat.t = mean( calib.t > q )
+    if ( tail == "below" ) Phat.t = mean( calib.t < q )
+    
+    
+    if ( .give.CI == FALSE ) {
+      
+      # return(Phat.t)
+      
+    } else {
+      boot.res = suppressWarnings( boot( data = .dat,
+                                         parallel = "multicore",
+                                         R = .R, 
+                                         statistic = Phat_causal_bt,
+                                         # below arguments are being passed to get_stat
+                                         .calib.name = .calib.name,
+                                         .q = q,
+                                         .B = .B.vec,
+                                         .tail = tail ) )
+      
+      bootCIs = boot.ci(boot.res,
+                        type="bca",
+                        conf = 0.95 )
+      
+      lo_Phat = bootCIs$bca[4]
+      hi_Phat = bootCIs$bca[5]
+      SE_Phat = sd(boot.res$t)
+      Bl = as.list(.B.vec)
+      
+      Phat.t.vec = lapply( Bl,
+                           FUN = function(B) Phat_causal( .q = .q, 
+                                                          .B = B,
+                                                          .calib = .calib,
+                                                          .tail = .tail,
+                                                          .give.CI = FALSE ) )
+      
+      res = data.frame( B = .B.vec,
+                        Phat.t = unlist(Phat.t.vec) )
+      
+      That = res$B[ which.min( abs( res$Phat.t - .r ) ) ]
+      Ghat = g(That)
+      
+      
+      if ( .give.CI == FALSE ) {
+        
+        return( data.frame( That, Ghat ) )
+        
+      } else {
+        boot.res = suppressWarnings( boot( data = .dat,
+                                           parallel = "multicore",
+                                           R = .R, 
+                                           statistic = That_causal_bt,
+                                           # below arguments are being passed to get_stat
+                                           .calib.name = .calib.name,
+                                           .q = .q,
+                                           .r = .r,
+                                           .B.vec = .B.vec,
+                                           .tail = .tail ) )
+        
+        bootCIs = boot.ci(boot.res,
+                          type="bca",
+                          conf = 0.95 )
+        
+        lo = bootCIs$bca[4]
+        hi = bootCIs$bca[5]
+        SE = sd(boot.res$t)
+        
+        return(ifelse(method=="calibrated", res, data.frame( Stat = c("Phat.t", "That", "Ghat"),
+                            Est = c(Phat.t, That, Ghat),
+                            SE = c(SE_Phat, SE, NA),  # ~~ for latter, could replace with delta method
+                            lo = c(lo_Phat, lo, g(lo)), 
+                            hi = c(hi_Phat, hi, g(hi)),
+                            Meaning = c(NA, "Bias factor required", "Confounding strength required") ) ))
+      }
+    }
+    
+    
+    
+    
+    
+    
+  } #closes non-parametric method
+
+} #closes confounded_meta function
+
 
 
 
