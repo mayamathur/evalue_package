@@ -5,8 +5,17 @@
 \title{Compute selection bias E-value for a hazard ratio and its confidence interval
 limits}
 \usage{
-selection_evalue(est, lo = NA, hi = NA, true = 1, sel_pop = FALSE,
-  S_eq_U = FALSE, risk_inc = FALSE, risk_dec = FALSE, ...)
+selection_evalue(
+  est,
+  lo = NA,
+  hi = NA,
+  true = 1,
+  sel_pop = FALSE,
+  S_eq_U = FALSE,
+  risk_inc = FALSE,
+  risk_dec = FALSE,
+  ...
+)
 }
 \arguments{
 \item{est}{The point estimate: a risk, odds, or hazard ratio. An object of

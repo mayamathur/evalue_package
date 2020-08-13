@@ -5,9 +5,18 @@
 \title{Compute selection bias E-value for an estimate and its confidence interval
 limits}
 \usage{
-svalues.HR(est, lo = NA, hi = NA, rare = NA, true = 1,
-  sel_pop = FALSE, S_eq_U = FALSE, risk_inc = FALSE,
-  risk_dec = FALSE, ...)
+svalues.HR(
+  est,
+  lo = NA,
+  hi = NA,
+  rare = NA,
+  true = 1,
+  sel_pop = FALSE,
+  S_eq_U = FALSE,
+  risk_inc = FALSE,
+  risk_dec = FALSE,
+  ...
+)
 }
 \arguments{
 \item{est}{The point estimate}

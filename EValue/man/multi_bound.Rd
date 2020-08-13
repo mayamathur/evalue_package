@@ -4,11 +4,25 @@
 \alias{multi_bound}
 \title{Calculate a bound for the bias}
 \usage{
-multi_bound(biases, RRAUc = NULL, RRUcY = NULL, RRUsYA1 = NULL,
-  RRSUsA1 = NULL, RRUsYA0 = NULL, RRSUsA0 = NULL, RRAUscS = NULL,
-  RRUscYS = NULL, RRAYy = NULL, ORYAa = NULL, RRYAa = NULL,
-  RRAYyS = NULL, ORYAaS = NULL, RRYAaS = NULL, RRAUsS = NULL,
-  RRUsYS = NULL)
+multi_bound(
+  biases,
+  RRAUc = NULL,
+  RRUcY = NULL,
+  RRUsYA1 = NULL,
+  RRSUsA1 = NULL,
+  RRUsYA0 = NULL,
+  RRSUsA0 = NULL,
+  RRAUscS = NULL,
+  RRUscYS = NULL,
+  RRAYy = NULL,
+  ORYAa = NULL,
+  RRYAa = NULL,
+  RRAYyS = NULL,
+  ORYAaS = NULL,
+  RRYAaS = NULL,
+  RRAUsS = NULL,
+  RRUsYS = NULL
+)
 }
 \arguments{
 \item{biases}{A set of biases (or single bias) to include in the calculation

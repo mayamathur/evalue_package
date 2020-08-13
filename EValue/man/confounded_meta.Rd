@@ -4,8 +4,18 @@
 \alias{confounded_meta}
 \title{Estimates and inference for sensitivity analyses}
 \usage{
-confounded_meta(q, r = NA, muB = NA, sigB = 0, yr, vyr = NA, t2,
-  vt2 = NA, CI.level = 0.95, tail = NA)
+confounded_meta(
+  q,
+  r = NA,
+  muB = NA,
+  sigB = 0,
+  yr,
+  vyr = NA,
+  t2,
+  vt2 = NA,
+  CI.level = 0.95,
+  tail = NA
+)
 }
 \arguments{
 \item{q}{True effect size that is the threshold for "scientific significance"}

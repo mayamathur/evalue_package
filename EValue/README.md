@@ -44,7 +44,7 @@ evalues.RR(est = 10.73, lo = 8.02, hi = 14.36)
 ```
 
 For more on E-values for unmeasured confounding, see the
-[vignette](articles/unmeasured-confounding.html).
+[vignette](https://louisahsmith.github.io/evalue/articles/unmeasured-confounding.html).
 
 More complex assessment of several biases is also easy. To bound the
 bias due to unmeasured confounding, selection bias, and differential
@@ -64,8 +64,7 @@ multi_bound(biases,
 ```
 
 Read more about how to specify [multiple
-biases](articles/multiple-bias.html) and see several worked
-[examples](articles/multiple-bias-examples.html).
+biases](https://louisahsmith.github.io/evalue/articles/multiple-bias.html) and see several worked [examples](https://louisahsmith.github.io/evalue/articles/multiple-bias-examples.html).
 
 ## Other options
 

@@ -4,8 +4,12 @@
 \alias{misclassification}
 \title{Misclassification}
 \usage{
-misclassification(..., rare_outcome = FALSE, rare_exposure = FALSE,
-  verbose = FALSE)
+misclassification(
+  ...,
+  rare_outcome = FALSE,
+  rare_exposure = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{...}{Arguments describing the type of misclassification. Currently two

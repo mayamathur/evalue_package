@@ -4,8 +4,7 @@
 \alias{evalue}
 \title{Compute an E-value for unmeasured confounding}
 \usage{
-evalue(est, lo = NA, hi = NA, se = NA, delta = 1, true = c(0, 1),
-  ...)
+evalue(est, lo = NA, hi = NA, se = NA, delta = 1, true = c(0, 1), ...)
 }
 \arguments{
 \item{est}{The effect estimate that was observed but which is suspected to be

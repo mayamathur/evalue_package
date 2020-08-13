@@ -5,8 +5,17 @@
 \title{Compute selection bias E-value for a risk ratio or rate ratio and its
 confidence interval limits}
 \usage{
-svalues.RR(est, lo = NA, hi = NA, true = 1, sel_pop = FALSE,
-  S_eq_U = FALSE, risk_inc = FALSE, risk_dec = FALSE, ...)
+svalues.RR(
+  est,
+  lo = NA,
+  hi = NA,
+  true = 1,
+  sel_pop = FALSE,
+  S_eq_U = FALSE,
+  risk_inc = FALSE,
+  risk_dec = FALSE,
+  ...
+)
 }
 \arguments{
 \item{est}{The point estimate}

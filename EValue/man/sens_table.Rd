@@ -4,8 +4,7 @@
 \alias{sens_table}
 \title{Tables for sensitivity analyses}
 \usage{
-sens_table(meas, q, r = seq(0.1, 0.9, 0.1), muB = NA, sigB = NA, yr,
-  t2)
+sens_table(meas, q, r = seq(0.1, 0.9, 0.1), muB = NA, sigB = NA, yr, t2)
 }
 \arguments{
 \item{meas}{\code{prop}, \code{Tmin}, or \code{Gmin}}
@@ -53,7 +52,6 @@ yr=log(1.3), t2=0.1 )
 sens_table( meas="Gmin", r=0.8, q=c( log(1.1) ),
 yr=log(1.3), t2=0.1 )
 }
-\keyword{confounding,}
+\keyword{confounding}
 \keyword{meta-analysis}
-\keyword{meta-analysis,}
 \keyword{sensitivity}

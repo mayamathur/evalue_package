@@ -4,9 +4,21 @@
 \alias{sens_plot}
 \title{Plots for sensitivity analyses}
 \usage{
-sens_plot(type, q, muB = NA, Bmin = log(1), Bmax = log(5),
-  sigB = 0, yr, vyr = NA, t2, vt2 = NA, breaks.x1 = NA,
-  breaks.x2 = NA, CI.level = 0.95)
+sens_plot(
+  type,
+  q,
+  muB = NA,
+  Bmin = log(1),
+  Bmax = log(5),
+  sigB = 0,
+  yr,
+  vyr = NA,
+  t2,
+  vt2 = NA,
+  breaks.x1 = NA,
+  breaks.x2 = NA,
+  CI.level = 0.95
+)
 }
 \arguments{
 \item{type}{\code{dist} for distribution plot; \code{line} for line plot (see Details)}
@@ -39,7 +51,7 @@ sens_plot(type, q, muB = NA, Bmin = log(1), Bmax = log(5),
 Produces line plots (\code{type="line"}) showing the bias factor on the relative risk (RR) scale vs. the proportion
 of studies with true RRs above \code{q} (or below it for an apparently preventive relative risk).
 The plot secondarily includes a X-axis scaled based on the minimum strength of confounding
-to produce the given bias factor. The shaded region represents a 95% pointwise confidence band.
+to produce the given bias factor. The shaded region represents a 95\% pointwise confidence band.
 Alternatively, produces distribution plots (\code{type="dist"}) for a specific bias factor showing the observed and
 true distributions of RRs with a red line marking exp(\code{q}).
 }

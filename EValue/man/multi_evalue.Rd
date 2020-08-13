@@ -9,14 +9,29 @@
 \usage{
 multi_evalue(biases, est, ...)
 
-multi_evalues.HR(biases, est, lo = NA, hi = NA, rare = NULL,
-  true = 1, verbose = TRUE, ...)
+multi_evalues.HR(
+  biases,
+  est,
+  lo = NA,
+  hi = NA,
+  rare = NULL,
+  true = 1,
+  verbose = TRUE,
+  ...
+)
 
-multi_evalues.OR(biases, est, lo = NA, hi = NA, rare = NULL,
-  true = 1, verbose = TRUE, ...)
+multi_evalues.OR(
+  biases,
+  est,
+  lo = NA,
+  hi = NA,
+  rare = NULL,
+  true = 1,
+  verbose = TRUE,
+  ...
+)
 
-multi_evalues.RR(biases, est, lo = NA, hi = NA, true = 1,
-  verbose = TRUE, ...)
+multi_evalues.RR(biases, est, lo = NA, hi = NA, true = 1, verbose = TRUE, ...)
 }
 \arguments{
 \item{biases}{An object created by \code{\link[=multi_bias]{multi_bias()}} (or a single bias) to

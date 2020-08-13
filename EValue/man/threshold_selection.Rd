@@ -5,8 +5,15 @@
 \title{Compute selection bias E-value for single value of risk ratio as well as a
 statement about what parameters it refers to}
 \usage{
-threshold_selection(x, true = 1, sel_pop = FALSE, S_eq_U = FALSE,
-  risk_inc = FALSE, risk_dec = FALSE, ...)
+threshold_selection(
+  x,
+  true = 1,
+  sel_pop = FALSE,
+  S_eq_U = FALSE,
+  risk_inc = FALSE,
+  risk_dec = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{The risk ratio}
