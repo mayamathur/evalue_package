@@ -10,6 +10,7 @@
 #' less than \code{r} the proportion of studies with true effect sizes more extreme than
 #' \code{q}; and (3) the counterpart to (2) in which bias is parameterized as the minimum
 #' relative risk for both confounding associations (\code{Gmin}).
+#' @param method "calibrated" or "parametric"
 #' @param q True effect size that is the threshold for "scientific significance"
 #' @param r For \code{Tmin} and \code{Gmin}, value to which the proportion of large effect sizes is to be reduced
 #' @param muB Mean bias factor on the log scale across studies
@@ -22,6 +23,11 @@
 #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
 #' the proportion of effects below \code{q}. By default, is set to \code{above} for relative risks
 #' above 1 and to \code{below} for relative risks below 1.
+#' @param .B.vec Vector of bias factors
+#' @param .calib Calibrated estimates on logRR scale
+#' @param .give.CI Logical. If TRUE, bootstrap confidence intervals provided
+#' @param .R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.
+#' @param .calb.name column name in dataframe containing calibrated estimates
 #' @export
 #' @details
 #' To compute all three point estimates (\code{prop, Tmin, and Gmin}) and inference, all
@@ -58,177 +64,282 @@
 #'                  yr=yr, t2=t2, CI.level=0.95 )
 
 
-confounded_meta = function( method=c("calibrated", "non-parametric"), q, r=NA, muB=NA, sigB=0,
-                            yr, vyr=NA, t2, vt2=NA,
+confounded_meta = function( method="parametric", q, r=NA, muB=NA, sigB=0,
+                            yr=NA, vyr=NA, t2=NA, vt2=NA,
                             CI.level=0.95, tail=NA, 
-                           .B.vec=NA, .calib=NA, .give.CI=TRUE, .R=2000, .dat=NA, .calib.name=NA ) {
+                            .B.vec=NA, .calib=NA, .give.CI=TRUE, .R=2000, .dat=NA, .calib.name=NA ) {
   
   # somewhere have option to plot the bias factor distribution, the confounded distribution, and the adjusted distribution
- ### for calibrated
- if (method=="calibrated"){
+  ### for parametric
+  if (method=="parametric"){
     
     
-  ##### Check for Bad Input #####
-  if ( t2 < 0 ) stop("Heterogeneity cannot be negative")
-  if ( sigB < 0 ) stop("Bias factor variance cannot be negative")
-  
-  # the second condition is needed for Shiny app:
-  #  if user deletes the input in box, then it's NA instead of NULL
-  if ( ! is.na(vyr) ) {
-    if (vyr < 0) stop("Variance of point estimate cannot be negative")
-  }
-  
-  if ( ! is.na(vt2) ) {
-    if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
-  }
-  
-  if ( ! is.na(r) ) {
-    if (r < 0 | r > 1) stop("r must be between 0 and 1")
-  }
-  
-  if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
-  
-  ##### Messages When Not All Output Can Be Computed #####
-  if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
-  if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
-  
-  ##### Point Estimates: Causative Case #####
-  
-  # if tail isn't provided, assume user wants the more extreme one (away from the null)
-  if ( is.na(tail) ) tail = ifelse( yr > log(1), "above", "below" )
-  
-  # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
-  if ( yr > log(1) ) yr.corr = yr - muB
-  else yr.corr = yr + muB
-  
-  if ( tail == "above" ) {
+    ##### Check for Bad Input #####
+    if ( t2 < 0 ) stop("Heterogeneity cannot be negative")
+    if ( sigB < 0 ) stop("Bias factor variance cannot be negative")
     
-    if ( !is.na(muB) ) {
-      # prop above
-      Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
-      phat = 1 - pnorm(Z) 
-    } else {
-      phat = NA
+    # the second condition is needed for Shiny app:
+    #  if user deletes the input in box, then it's NA instead of NULL
+    if ( ! is.na(vyr) ) {
+      if (vyr < 0) stop("Variance of point estimate cannot be negative")
     }
     
-    if ( !is.na(r) ) {
+    if ( ! is.na(vt2) ) {
+      if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
+    }
+    
+    if ( ! is.na(r) ) {
+      if (r < 0 | r > 1) stop("r must be between 0 and 1")
+    }
+    
+    if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
+    
+    ##### Messages When Not All Output Can Be Computed #####
+    if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
+    if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
+    
+    ##### Point Estimates: Causative Case #####
+    
+    # if tail isn't provided, assume user wants the more extreme one (away from the null)
+    if ( is.na(tail) ) tail = ifelse( yr > log(1), "above", "below" )
+    
+    # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
+    if ( yr > log(1) ) {
+      yr.corr = yr - muB
+    }else{ yr.corr = yr + muB}
+    
+    if ( tail == "above" ) {
       
-      # min bias factor
-      # the max is there in case no bias is needed
-      # (i.e., proportion of effects > q already < r without confounding)
-      Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2) - q + yr ) )
+      if ( !is.na(muB) ) {
+        # prop above
+        Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
+        phat = 1 - pnorm(Z) 
+      } else {
+        phat = NA
+      }
       
-      # min confounding strength
-      # suppress warnings to avoid warnings about NaN when term inside sqrt is negative
-      Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
-    } else {
-      Tmin = Gmin = NA
-    }
-  }
-  
-  ##### Point Estimates: Preventive Case #####
-  else if ( tail == "below" ) {
-    
-    if ( !is.na(muB) ) {
-      # prop below
-      Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
-      phat = pnorm(Z) 
-    } else {
-      phat = NA
+      if ( !is.na(r) ) {
+        
+        # min bias factor
+        # the max is there in case no bias is needed
+        # (i.e., proportion of effects > q already < r without confounding)
+        Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2) - q + yr ) )
+        
+        # min confounding strength
+        # suppress warnings to avoid warnings about NaN when term inside sqrt is negative
+        Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
+      } else {
+        Tmin = Gmin = NA
+      }
     }
     
-    if ( !is.na(r) ) {
-      # min bias factor
-      Tmin = exp( q - yr - qnorm(r) * sqrt(t2) )
+    ##### Point Estimates: Preventive Case #####
+    if ( tail == "below" ) {
       
-      # min confounding strength
-      Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
-    } else {
-      Tmin = Gmin = NA
-    }
-  }
-  
-  ##### Delta Method Inference: P-Hat #####
-  # do inference only if given needed SEs
-  if ( !is.na(vyr) & !is.na(vt2) & !is.na(muB) ){
-    
-    # term in numerator depends on whether causative or preventive RR
-    num.term = ifelse( yr > log(1), q + muB - yr, q - muB - yr )
-    
-    term1.1 = vyr / (t2 - sigB^2 )
-    term1.2 = ( vt2 * (num.term)^2 ) / ( 4 * (t2 - sigB^2 )^3 )
-    term1 = sqrt( term1.1 + term1.2 )
-    
-    Z = num.term / sqrt( t2 - sigB^2 )
-    SE = term1 * dnorm(Z)
-    
-    # confidence interval
-    tail.prob = ( 1 - CI.level ) / 2
-    lo.phat = max( 0, phat + qnorm( tail.prob )*SE )
-    hi.phat = min( 1, phat - qnorm( tail.prob )*SE )
-    
-    # warn if bootstrapping needed
-    if ( phat < 0.15 | phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
-    
-  } else {
-    SE = lo.phat = hi.phat = NA
-  }
-  
-  ##### Delta Method Inference: Tmin and Gmin #####
-  # do inference only if given needed SEs and r
-  if ( !is.na(vyr) & !is.na(vt2) & !is.na(r) ){
-    
-    ##### Tmin #####
-    if (yr > log(1) ) {
-      term = ( vt2 * qnorm(1-r)^2 ) / ( 4 * t2 )
-      SE.T = exp( sqrt(t2) * qnorm(1-r) - q + yr ) * sqrt( vyr + term  )
-    } else {
-      term = ( vt2 * qnorm(r)^2 ) / ( 4 * t2 )
-      SE.T = exp( q - yr - sqrt(t2) * qnorm(r) ) * sqrt( vyr + term  )
+      if ( !is.na(muB) ) {
+        # prop below
+        Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
+        phat = pnorm(Z) 
+      } else {
+        phat = NA
+      }
+      
+      if ( !is.na(r) ) {
+        # min bias factor
+        Tmin = exp( q - yr - qnorm(r) * sqrt(t2) )
+        
+        # min confounding strength
+        Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
+      } else {
+        Tmin = Gmin = NA
+      }
     }
     
-    tail.prob = ( 1 - CI.level ) / 2
-    lo.T = max( 1, Tmin + qnorm( tail.prob )*SE.T )  # bias factor can't be < 1
-    hi.T = Tmin - qnorm( tail.prob )*SE.T  # but has no upper bound
+    ##### Delta Method Inference: P-Hat #####
+    # do inference only if given needed SEs
+    if ( !is.na(vyr) & !is.na(vt2) & !is.na(muB) ){
+      
+      # term in numerator depends on whether causative or preventive RR
+      num.term = ifelse( yr > log(1), q + muB - yr, q - muB - yr )
+      
+      term1.1 = vyr / (t2 - sigB^2 )
+      term1.2 = ( vt2 * (num.term)^2 ) / ( 4 * (t2 - sigB^2 )^3 )
+      term1 = sqrt( term1.1 + term1.2 )
+      
+      Z = num.term / sqrt( t2 - sigB^2 )
+      SE = term1 * dnorm(Z)
+      
+      # confidence interval
+      tail.prob = ( 1 - CI.level ) / 2
+      lo.phat = max( 0, phat + qnorm( tail.prob )*SE )
+      hi.phat = min( 1, phat - qnorm( tail.prob )*SE )
+      
+      # warn if bootstrapping needed
+      if ( phat < 0.15 | phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
+      
+    } else {
+      SE = lo.phat = hi.phat = NA
+    }
+    
+    ##### Delta Method Inference: Tmin and Gmin #####
+    # do inference only if given needed SEs and r
+    if ( !is.na(vyr) & !is.na(vt2) & !is.na(r) ){
+      
+      ##### Tmin #####
+      if (yr > log(1) ) {
+        term = ( vt2 * qnorm(1-r)^2 ) / ( 4 * t2 )
+        SE.T = exp( sqrt(t2) * qnorm(1-r) - q + yr ) * sqrt( vyr + term  )
+      } else {
+        term = ( vt2 * qnorm(r)^2 ) / ( 4 * t2 )
+        SE.T = exp( q - yr - sqrt(t2) * qnorm(r) ) * sqrt( vyr + term  )
+      }
+      
+      tail.prob = ( 1 - CI.level ) / 2
+      lo.T = max( 1, Tmin + qnorm( tail.prob )*SE.T )  # bias factor can't be < 1
+      hi.T = Tmin - qnorm( tail.prob )*SE.T  # but has no upper bound
+      
+      
+      ##### Gmin #####
+      SE.G = SE.T * ( 1 + ( 2*Tmin - 1 ) / ( 2 * sqrt( Tmin^2 - Tmin ) ) )
+      
+      lo.G = max( 1, Gmin + qnorm( tail.prob )*SE.G )  # confounding RR can't be < 1
+      hi.G = Gmin - qnorm( tail.prob )*SE.G  # but has no upper bound
+      
+    } else {  # i.e., user didn't pass parameters needed for inference
+      SE.T = SE.G = lo.T = lo.G = hi.T = hi.G = NA
+    }
     
     
-    ##### Gmin #####
-    SE.G = SE.T * ( 1 + ( 2*Tmin - 1 ) / ( 2 * sqrt( Tmin^2 - Tmin ) ) )
+    # return results
+    res = data.frame( Value = c("Prop", "Tmin", "Gmin"), 
+                      Est = c( phat, Tmin, Gmin ),
+                      SE = c(SE, SE.T, SE.G),
+                      CI.lo = c(lo.phat, lo.T, lo.G), 
+                      CI.hi = c(hi.phat, hi.T, hi.G) 
+    )
     
-    lo.G = max( 1, Gmin + qnorm( tail.prob )*SE.G )  # confounding RR can't be < 1
-    hi.G = Gmin - qnorm( tail.prob )*SE.G  # but has no upper bound
+    return(res)
+  } ## closes parametric method
+  
+  ## for calibrated
+  if(method=="calibrated"){
     
-  } else {  # i.e., user didn't pass parameters needed for inference
-    SE.T = SE.G = lo.T = lo.G = hi.T = hi.G = NA
-  }
-  
-  
-  # return results
-  res = data.frame( Value = c("Prop", "Tmin", "Gmin"), 
-                    Est = c( phat, Tmin, Gmin ),
-                    SE = c(SE, SE.T, SE.G),
-                    CI.lo = c(lo.phat, lo.T, lo.G), 
-                    CI.hi = c(hi.phat, hi.T, hi.G) 
-  )
-  
-  return(res)
-} ## closes calibrated method
-  
-## for non-parametric
-if(method=="non-parametric"){
-  require(boot)
-      # confounding-adjusted calibrated estimates
-    # ~~~ SPECIFIC TO THIS STUDY: assumes apparently protective case
-    calib.t = .calib + log(.B.vec)
+    ### ADDITIONAL FUNCTIONS NEEDED FOR BELOW...IS IT BETTER TO BREAK THESE FUNCTIONS DOWN TO RUN? ###
+    ############################### FNS FOR PHAT CAUSAL ############################### 
+    
+    ###### Phat after shifting by bias factor B and using calibrated estimates #####
+    # .dat needs to have a column called "calib"
+    Phat_causal = function( .q,
+                            .B,
+                            .calib, # assumed on log scale
+                            .tail,
+                            
+                            .give.CI = TRUE,
+                            .R = 2000,
+                            .dat = NA,
+                            .calib.name = NA ) {
+      
+      # confounding-adjusted Phat
+      if ( .tail == "above" ) Phat.t = mean( .calib > .q )
+      if ( .tail == "below" ) Phat.t = mean( .calib < .q )
+      
+      
+      if ( .give.CI == FALSE ) {
+        
+        return(Phat.t)
+        
+      } else {
+        boot.res = suppressWarnings( boot( data = .dat,
+                                           parallel = "multicore",
+                                           R = .R, 
+                                           statistic = Phat_causal_bt,
+                                           # below arguments are being passed to get_stat
+                                           .calib.name = .calib.name,
+                                           .q = .q,
+                                           .B = .B,
+                                           .tail = .tail ) )
+        
+        bootCIs = boot.ci(boot.res,
+                          type="bca",
+                          conf = 0.95 )
+        
+        lo = bootCIs$bca[4]
+        hi = bootCIs$bca[5]
+        SE = sd(boot.res$t)
+        
+        return( data.frame( Est = Phat.t,
+                            SE = SE,
+                            lo = lo, 
+                            hi = hi ) )
+      }
+    }
+    
+    
+    
+    ###### Simplified version of above for boot to call #####
+    Phat_causal_bt = function( original,
+                               indices,
+                               .calib.name,
+                               .q,
+                               .B,
+                               .tail ) {
+      
+      b = original[indices,]
+      
+      phatb = Phat_causal( .q = .q, 
+                           .B = .B,
+                           .calib = b[[.calib.name]], 
+                           .tail = .tail,
+                           .give.CI = FALSE)
+      return(phatb)
+    }
+    
+    # define transformation in a way that is monotonic over the effective range of B (>1)
+    # to avoid ggplot errors
+    g = Vectorize( function(x) {
+      if (x < 1) return( x / 1e10 )
+      x + sqrt( x^2 - x )
+    } )
+    
+    ##### Simplified version of the above for boot to call #####
+    That_causal_bt = function( original,
+                               indices, 
+                               .calib.name,
+                               .q,
+                               .r,
+                               .B.vec,
+                               .tail ) {
+      b = original[indices,]
+      
+      Bl = as.list(.B.vec)
+      
+      # calculate Phat for a vector of B
+      Phat.t.vec = unlist( lapply( Bl,
+                                   FUN = function(B) Phat_causal( .q = .q, 
+                                                                  .B = B,
+                                                                  .calib = b[[.calib.name]],
+                                                                  .tail = .tail,
+                                                                  .give.CI = FALSE ) ) )
+      
+      
+      That = .B.vec[ which.min( abs( Phat.t.vec - .r ) ) ]
+      return(That)
+      
+    }
+    
+    ### END OF ADDITIONAL FUNCTIONS NEEDED ###
+    
+    require(boot)
+    # confounding-adjusted calibrated estimates
     
     # confounding-adjusted Phat
-    if ( tail == "above" ) Phat.t = mean( calib.t > q )
-    if ( tail == "below" ) Phat.t = mean( calib.t < q )
+    if ( tail == "above" ) Phat.t = mean( .calib > q )
+    if ( tail == "below" ) Phat.t = mean( .calib < q )
     
     
     if ( .give.CI == FALSE ) {
       
-      # return(Phat.t)
+      return(Phat.t)
       
     } else {
       boot.res = suppressWarnings( boot( data = .dat,
@@ -251,18 +362,17 @@ if(method=="non-parametric"){
       Bl = as.list(.B.vec)
       
       Phat.t.vec = lapply( Bl,
-                           FUN = function(B) Phat_causal( .q = .q, 
+                           FUN = function(B) Phat_causal( .q = q, 
                                                           .B = B,
                                                           .calib = .calib,
-                                                          .tail = .tail,
+                                                          .tail = tail,
                                                           .give.CI = FALSE ) )
       
       res = data.frame( B = .B.vec,
                         Phat.t = unlist(Phat.t.vec) )
       
-      That = res$B[ which.min( abs( res$Phat.t - .r ) ) ]
+      That = res$B[ which.min( abs( res$Phat.t - r ) ) ]
       Ghat = g(That)
-      
       
       if ( .give.CI == FALSE ) {
         
@@ -275,10 +385,10 @@ if(method=="non-parametric"){
                                            statistic = That_causal_bt,
                                            # below arguments are being passed to get_stat
                                            .calib.name = .calib.name,
-                                           .q = .q,
-                                           .r = .r,
+                                           .q = q,
+                                           .r = r,
                                            .B.vec = .B.vec,
-                                           .tail = .tail ) )
+                                           .tail = tail ) )
         
         bootCIs = boot.ci(boot.res,
                           type="bca",
@@ -288,22 +398,23 @@ if(method=="non-parametric"){
         hi = bootCIs$bca[5]
         SE = sd(boot.res$t)
         
-        return(ifelse(method=="calibrated", res, data.frame( Stat = c("Phat.t", "That", "Ghat"),
-                            Est = c(Phat.t, That, Ghat),
-                            SE = c(SE_Phat, SE, NA),  # ~~ for latter, could replace with delta method
-                            lo = c(lo_Phat, lo, g(lo)), 
-                            hi = c(hi_Phat, hi, g(hi)),
-                            Meaning = c(NA, "Bias factor required", "Confounding strength required") ) ))
+        # return results
+        res = data.frame( Value = c("Phat.t", "That", "Ghat"), 
+                          Est = c(Phat.t, That, Ghat),
+                          SE = c(SE_Phat, SE, NA),  # ~~ for latter, could replace with delta method
+                          CI.lo = c(lo_Phat, lo, g(lo)), 
+                          CI.hi = c(hi_Phat, hi, g(hi)),
+                          Meaning = c(NA, "Bias factor required", "Confounding strength required")
+        )
+        
+        return(res)
       }
     }
     
     
     
-    
-    
-    
-  } #closes non-parametric method
-
+  } #closes calibrated method
+  
 } #closes confounded_meta function
 
 
