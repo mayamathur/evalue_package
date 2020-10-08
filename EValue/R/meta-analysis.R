@@ -23,7 +23,8 @@
 #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
 #' the proportion of effects below \code{q}. By default, is set to \code{above} for relative risks
 #' above 1 and to \code{below} for relative risks below 1.
-#' @param .B.vec Vector of bias factors
+#' @param Bmin Lower limit of bias factor (used for "calibrated" method only)
+#' @param Bmax Upper limit of bias factor (used for "calibrated" method only)
 #' @param .calib Calibrated estimates on logRR scale
 #' @param .give.CI Logical. If TRUE, bootstrap confidence intervals provided
 #' @param .R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.
@@ -66,8 +67,14 @@
 
 confounded_meta = function( method="parametric", q, r=NA, muB=NA, sigB=0,
                             yr=NA, vyr=NA, t2=NA, vt2=NA,
-                            CI.level=0.95, tail=NA, 
-                            .B.vec=NA, .calib=NA, .give.CI=TRUE, .R=2000, .dat=NA, .calib.name=NA ) {
+                            CI.level=0.95, tail=NA, Bmin=NA, Bmax=NA,
+                            .calib=NA, .give.CI=TRUE, .R=2000, .dat=NA, .calib.name=NA ) {
+  
+  
+  ### JL NEED TO CHANGE THIS PATH, ASK MAYA WHERE
+  code.dir = "~/Box Sync/jlee/Maya/meta/code"
+  setwd(code.dir)
+  source("confounded_meta_helper.R")
   
   # somewhere have option to plot the bias factor distribution, the confounded distribution, and the adjusted distribution
   ### for parametric
@@ -224,113 +231,8 @@ confounded_meta = function( method="parametric", q, r=NA, muB=NA, sigB=0,
   ## for calibrated
   if(method=="calibrated"){
     
-    ### ADDITIONAL FUNCTIONS NEEDED FOR BELOW...IS IT BETTER TO BREAK THESE FUNCTIONS DOWN TO RUN? ###
-    ############################### FNS FOR PHAT CAUSAL ############################### 
-    
-    ###### Phat after shifting by bias factor B and using calibrated estimates #####
-    # .dat needs to have a column called "calib"
-    Phat_causal = function( .q,
-                            .B,
-                            .calib, # assumed on log scale
-                            .tail,
-                            
-                            .give.CI = TRUE,
-                            .R = 2000,
-                            .dat = NA,
-                            .calib.name = NA ) {
-      
-      # confounding-adjusted Phat
-      if ( .tail == "above" ) Phat.t = mean( .calib > .q )
-      if ( .tail == "below" ) Phat.t = mean( .calib < .q )
-      
-      
-      if ( .give.CI == FALSE ) {
-        
-        return(Phat.t)
-        
-      } else {
-        boot.res = suppressWarnings( boot( data = .dat,
-                                           parallel = "multicore",
-                                           R = .R, 
-                                           statistic = Phat_causal_bt,
-                                           # below arguments are being passed to get_stat
-                                           .calib.name = .calib.name,
-                                           .q = .q,
-                                           .B = .B,
-                                           .tail = .tail ) )
-        
-        bootCIs = boot.ci(boot.res,
-                          type="bca",
-                          conf = 0.95 )
-        
-        lo = bootCIs$bca[4]
-        hi = bootCIs$bca[5]
-        SE = sd(boot.res$t)
-        
-        return( data.frame( Est = Phat.t,
-                            SE = SE,
-                            lo = lo, 
-                            hi = hi ) )
-      }
-    }
-    
-    
-    
-    ###### Simplified version of above for boot to call #####
-    Phat_causal_bt = function( original,
-                               indices,
-                               .calib.name,
-                               .q,
-                               .B,
-                               .tail ) {
-      
-      b = original[indices,]
-      
-      phatb = Phat_causal( .q = .q, 
-                           .B = .B,
-                           .calib = b[[.calib.name]], 
-                           .tail = .tail,
-                           .give.CI = FALSE)
-      return(phatb)
-    }
-    
-    # define transformation in a way that is monotonic over the effective range of B (>1)
-    # to avoid ggplot errors
-    g = Vectorize( function(x) {
-      if (x < 1) return( x / 1e10 )
-      x + sqrt( x^2 - x )
-    } )
-    
-    ##### Simplified version of the above for boot to call #####
-    That_causal_bt = function( original,
-                               indices, 
-                               .calib.name,
-                               .q,
-                               .r,
-                               .B.vec,
-                               .tail ) {
-      b = original[indices,]
-      
-      Bl = as.list(.B.vec)
-      
-      # calculate Phat for a vector of B
-      Phat.t.vec = unlist( lapply( Bl,
-                                   FUN = function(B) Phat_causal( .q = .q, 
-                                                                  .B = B,
-                                                                  .calib = b[[.calib.name]],
-                                                                  .tail = .tail,
-                                                                  .give.CI = FALSE ) ) )
-      
-      
-      That = .B.vec[ which.min( abs( Phat.t.vec - .r ) ) ]
-      return(That)
-      
-    }
-    
-    ### END OF ADDITIONAL FUNCTIONS NEEDED ###
-    
     require(boot)
-    # confounding-adjusted calibrated estimates
+    .B.vec = seq(Bmin, Bmax, .01)
     
     # confounding-adjusted Phat
     if ( tail == "above" ) Phat.t = mean( .calib > q )
