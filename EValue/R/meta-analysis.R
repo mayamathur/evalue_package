@@ -65,11 +65,10 @@
 #'                  yr=yr, t2=t2, CI.level=0.95 )
 
 
-confounded_meta = function( method="parametric", q, r=NA, muB=NA, sigB=0,
-                            yr=NA, vyr=NA, t2=NA, vt2=NA,
-                            CI.level=0.95, tail=NA, Bmin=NA, Bmax=NA,
-                            .calib=NA, .give.CI=TRUE, .R=2000, .dat=NA, .calib.name=NA ) {
-  
+confounded_meta = function( method="parametric", q, r, muB, sigB,
+                            yr, vyr, t2, vt2,
+                            CI.level=0.95, tail, Bmin, Bmax,
+                            .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name ) {
   
   ### JL NEED TO CHANGE THIS PATH, ASK MAYA WHERE
   code.dir = "~/Box Sync/jlee/Maya/meta/code"
