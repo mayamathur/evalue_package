@@ -65,9 +65,9 @@
 #'                  yr=yr, t2=t2, CI.level=0.95 )
 
 
-confounded_meta = function( method, q, r, muB, sigB,
-                            yr, vyr, t2, vt2,
-                            CI.level=0.95, tail, Bmin, Bmax,
+confounded_meta = function( method, q, r=NA, muB, sigB,
+                            yr, vyr=NA, t2, vt2=NA,
+                            CI.level=0.95, tail=NA, Bmin, Bmax,
                             .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name ) {
   
   ### JL NEED TO CHANGE THIS PATH, ASK MAYA WHERE
