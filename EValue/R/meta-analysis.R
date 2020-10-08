@@ -65,7 +65,7 @@
 #'                  yr=yr, t2=t2, CI.level=0.95 )
 
 
-confounded_meta = function( method="parametric", q, r, muB, sigB,
+confounded_meta = function( method, q, r, muB, sigB,
                             yr, vyr, t2, vt2,
                             CI.level=0.95, tail, Bmin, Bmax,
                             .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name ) {
