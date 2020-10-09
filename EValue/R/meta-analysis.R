@@ -14,8 +14,8 @@ Phat_causal = function( .q,
                         .dat = NA,
                         .calib.name = NA ) {
   
-  if(.B > .q) calib.t = .calib + log(.B)
-  if(.B < .q) calib.t = .calib - log(.B)
+  if(.tail == "above") calib.t = .calib - log(.B)
+  if(.tail == "below") calib.t = .calib + log(.B)
   
   # confounding-adjusted Phat
   if ( .tail == "above" ) Phat.t = mean( calib.t > .q )
@@ -185,16 +185,6 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
                             yr, vyr=NA, t2, vt2=NA,
                             CI.level=0.95, tail=NA, Bmin, Bmax,
                             .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name ) {
-  
-<<<<<<< HEAD
-=======
-  ### JL NEED TO CHANGE THIS PATH, ASK MAYA WHERE
-  code.dir = "~/Box Sync/jlee/Maya/meta/code"
-  setwd(code.dir)
-  source("confounded_meta_helper.R")
-  
->>>>>>> fd837979b4050d3ae295ecacf8ba1c9dd82d5065
-  # somewhere have option to plot the bias factor distribution, the confounded distribution, and the adjusted distribution
   ### for parametric
   if (method=="parametric"){
     
@@ -207,7 +197,6 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
     #  if user deletes the input in box, then it's NA instead of NULL
     if ( ! is.na(vyr) ) {
       if (vyr < 0) stop("Variance of point estimate cannot be negative")
-<<<<<<< HEAD
     }
     
     if ( ! is.na(vt2) ) {
@@ -218,18 +207,6 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
       if (r < 0 | r > 1) stop("r must be between 0 and 1")
     }
     
-=======
-    }
-    
-    if ( ! is.na(vt2) ) {
-      if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
-    }
-    
-    if ( ! is.na(r) ) {
-      if (r < 0 | r > 1) stop("r must be between 0 and 1")
-    }
-    
->>>>>>> fd837979b4050d3ae295ecacf8ba1c9dd82d5065
     if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
     
     ##### Messages When Not All Output Can Be Computed #####
@@ -365,93 +342,12 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
     require(boot)
     .B.vec = seq(Bmin, Bmax, .01)
     
-<<<<<<< HEAD
     
     # confounding-adjusted Phat
     if ( tail == "above" ) Phat.t = mean( .calib > q )
     if ( tail == "below" ) Phat.t = mean( .calib < q )
-=======
-    # confounding-adjusted Phat
-    if ( tail == "above" ) Phat.t = mean( .calib > q )
-    if ( tail == "below" ) Phat.t = mean( .calib < q )
     
->>>>>>> fd837979b4050d3ae295ecacf8ba1c9dd82d5065
     
-    if ( .give.CI == FALSE ) {
-      
-      return(Phat.t)
-      
-    } else {
-      boot.res = suppressWarnings( boot( data = .dat,
-                                         parallel = "multicore",
-                                         R = .R, 
-                                         statistic = Phat_causal_bt,
-                                         # below arguments are being passed to get_stat
-                                         .calib.name = .calib.name,
-                                         .q = q,
-                                         .B = .B.vec,
-                                         .tail = tail ) )
-      
-      bootCIs = boot.ci(boot.res,
-                        type="bca",
-                        conf = 0.95 )
-      
-      lo_Phat = bootCIs$bca[4]
-      hi_Phat = bootCIs$bca[5]
-      SE_Phat = sd(boot.res$t)
-      Bl = as.list(.B.vec)
-      
-      Phat.t.vec = lapply( Bl,
-                           FUN = function(B) Phat_causal( .q = q, 
-                                                          .B = B,
-                                                          .calib = .calib,
-                                                          .tail = tail,
-                                                          .give.CI = FALSE ) )
-      
-      res = data.frame( B = .B.vec,
-                        Phat.t = unlist(Phat.t.vec) )
-      
-      That = res$B[ which.min( abs( res$Phat.t - r ) ) ]
-      Ghat = g(That)
-      
-      if ( .give.CI == FALSE ) {
-        
-        return( data.frame( That, Ghat ) )
-        
-      } else {
-        boot.res = suppressWarnings( boot( data = .dat,
-                                           parallel = "multicore",
-                                           R = .R, 
-                                           statistic = That_causal_bt,
-                                           # below arguments are being passed to get_stat
-                                           .calib.name = .calib.name,
-                                           .q = q,
-                                           .r = r,
-                                           .B.vec = .B.vec,
-                                           .tail = tail ) )
-        
-        bootCIs = boot.ci(boot.res,
-                          type="bca",
-                          conf = 0.95 )
-        
-        lo = bootCIs$bca[4]
-        hi = bootCIs$bca[5]
-        SE = sd(boot.res$t)
-        
-        # return results
-        res = data.frame( Value = c("Phat.t", "That", "Ghat"), 
-                          Est = c(Phat.t, That, Ghat),
-                          SE = c(SE_Phat, SE, NA),  # ~~ for latter, could replace with delta method
-                          CI.lo = c(lo_Phat, lo, g(lo)), 
-                          CI.hi = c(hi_Phat, hi, g(hi)),
-                          Meaning = c(NA, "Bias factor required", "Confounding strength required")
-        )
-        
-        return(res)
-      }
-    }
-    
-<<<<<<< HEAD
     if ( .give.CI == FALSE ) {
       
       return(Phat.t)
@@ -528,19 +424,9 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
     
     
     
-=======
-    
-    
->>>>>>> fd837979b4050d3ae295ecacf8ba1c9dd82d5065
   } #closes calibrated method
   
 } #closes confounded_meta function
-
-<<<<<<< HEAD
-
-
-=======
->>>>>>> fd837979b4050d3ae295ecacf8ba1c9dd82d5065
 
 
 
