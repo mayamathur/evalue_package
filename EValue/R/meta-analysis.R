@@ -2,6 +2,8 @@
 
 #' ###### Phat after shifting by bias factor B and using calibrated estimates #####
 #' .dat needs to have a column called "calib"
+#' helper function for confounded_meta
+#' 
 Phat_causal = function( .q,
                         .B,
                         .calib, # assumed on log scale
@@ -72,6 +74,7 @@ Phat_causal_bt = function( original,
 
 #' define transformation in a way that is monotonic over the effective range of B (>1)
 #' to avoid ggplot errors
+#' helper function for confounded_meta
 #' 
 g = Vectorize( function(x) {
   if (x < 1) return( x / 1e10 )
@@ -85,7 +88,7 @@ logHR_to_logRR = function(logRR){
 #' ##### That and Ghat from grid search of Phat values #####
 #' # for each of a vector of bias factors, calculates Phat causal and then finds the one
 #' # that's closest to threshold proportion, .r
-#' 
+#' helper function for confounded_meta
 #'
 ##### Simplified version of the above for boot to call #####
 That_causal_bt = function( original,
