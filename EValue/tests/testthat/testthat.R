@@ -515,11 +515,11 @@ test_that("Reject negative outcomes", {
 
 
 test_that("Setting q equal to observed mean without bias should yield 50%", {
-  expect_equal( 0.5, confounded_meta( q=log(1.4), muB=0, sigB=0,
-                                      yr=log(1.4), t2=0.1 )[1,2] )
+  expect_equal( 0.5, confounded_meta(method="parametric", q=log(1.4), muB=0, sigB=0,
+                                     yr=log(1.4), t2=0.1 )[1,2] )
   
-  expect_equal( 0.5, confounded_meta( q=log(0.5), muB=0, sigB=0,
-                                      yr=log(0.5), t2=0.1 )[1,2] )
+  expect_equal( 0.5, confounded_meta(method="parametric", q=log(0.5), muB=0, sigB=0,
+                                     yr=log(0.5), t2=0.1 )[1,2] )
 })
 
 
@@ -536,14 +536,14 @@ test_that("Case #1, causative", {
   
   r = 0.1
   
-  cm = confounded_meta( q=q, r=r, muB=muB, sigB=sigB,
-                        yr=yr, vyr=vyr,
-                        t2=t2, vt2=vt2 )
+  cm = confounded_meta(method="parametric", q=q, r=r, muB=muB, sigB=sigB,
+                       yr=yr, vyr=vyr,
+                       t2=t2, vt2=vt2 )
   
   # make q more extreme to trigger bootstrap warning
-  expect_warning( confounded_meta( q=log(1.5), r=r, muB=muB, sigB=sigB,
-                        yr=yr, vyr=vyr,
-                        t2=t2, vt2=vt2 ) )
+  expect_warning( confounded_meta(method="parametric", q=log(1.5), r=r, muB=muB, sigB=sigB,
+                                  yr=yr, vyr=vyr,
+                                  t2=t2, vt2=vt2 ) )
   
   
   ##### Prop Above ######
@@ -556,8 +556,8 @@ test_that("Case #1, causative", {
   SE = deltamethod( ~ 1 - pnorm( ( log(1.1) + log(2) - x1 ) / sqrt( x2 - 0.1^2 ) ),
                     mean = c( yr, t2 ), cov = diag( c(vyr, vt2) ) )
   expect_equal( SE, cm[1,3] )
-#   
-#   # CI limits
+  #   
+  #   # CI limits
   expect_equal( max(0, cm[1,2] - SE*qnorm(0.975)), cm[1,4] )
   expect_equal( min(1, cm[1,2] + SE*qnorm(0.975)), cm[1,5] )
   
@@ -570,7 +570,7 @@ test_that("Case #1, causative", {
   # check standard error against deltamethod function
   #qnorm( 1 - 0.1 ) # because deltamethod can't take its derivatve
   SE = deltamethod( ~ exp( 1.281552 * sqrt(x2) - log(1.1) + x1 ), mean = c( log(1.4), 0.3 ), cov = diag( c(0.5, 0.02) ) )
-
+  
   expect_equal( SE, cm[2,3], tol = 0.001 )
   
   # CI limits
@@ -610,9 +610,9 @@ test_that("Case #2, preventive", {
   
   r = 0.1
   
-  cm = confounded_meta( q=q, r=r, muB=muB, sigB=sigB,
-                        yr=yr, vyr=vyr,
-                        t2=t2, vt2=vt2 )
+  cm = confounded_meta(method="parametric", q=q, r=r, muB=muB, sigB=sigB,
+                       yr=yr, vyr=vyr,
+                       t2=t2, vt2=vt2 )
   
   
   ##### Prop Above ######
@@ -640,7 +640,7 @@ test_that("Case #2, preventive", {
   #qnorm( 0.1 ) # because deltamethod can't take its derivative
   SE = deltamethod( ~ exp( log(0.9) - x1 - (-1.281552) * sqrt(x2) ), mean = c( log(0.6), 0.2 ), cov = diag( c(0.2, 0.01) ) )
   
-   expect_equal( SE, cm[2,3], tol = 0.001 )
+  expect_equal( SE, cm[2,3], tol = 0.001 )
   
   # CI limits
   expect_equal( max(1, cm[2,2] - SE*qnorm(0.975)), cm[2,4], tol = 0.001 )
@@ -669,13 +669,33 @@ test_that("Case #2, preventive", {
 
 
 test_that("No bias needed to reduce strong effects to less than r", {
-  cm = suppressMessages( confounded_meta(q=log(1.5), r = 0.1, muB=0, sigB=0, 
-                                           yr=log(1.3), t2=0.01) )
+  cm = suppressMessages( confounded_meta(method="parametric", q=log(1.5), r = 0.1, muB=0, sigB=0, 
+                                         yr=log(1.3), t2=0.01) )
   
   # Tmin and Gmin should both be 1 because already fewer than 10% of true effects
   #  are above q
   expect_equal( 1, cm[2,2] )
   expect_equal( 1, cm[3,2] )
+})
+
+
+### jl testing calibrated confounded_meta ###
+test_that("calibrated confounded_meta compared to That_causal results in analysis.R",{
+  cm = confounded_meta( method = "calibrated",q = logHR_to_logRR(log(.8)),
+                        r = .1,
+                        Bmin=1,
+                        Bmax=4,
+                        .calib = d$calib.logRR, 
+                        tail = "below",
+                        
+                        .give.CI = TRUE,
+                        .R = 2000,
+                        .dat = d, 
+                        .calib.name = "calib.logRR")
+  ## That value from That_causal results in analysis.R
+  expect_equal(2.3100000, cm[2,2])
+  ## Ghat value from That_causal results in analysis.R
+  expect_equal(4.0495689, cm[3,2])
 })
 
 
