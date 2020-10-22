@@ -589,10 +589,11 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' #           yr=log(0.7), t2=0.2 )
 
 
-sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
-                      yr, vyr=NA, t2, vt2=NA,
-                      breaks.x1=NA, breaks.x2=NA,
-                      CI.level=0.95, tail=c("above", "below") ) {
+sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
+                             yr, vyr=NA, t2, vt2=NA,
+                             breaks.x1=NA, breaks.x2=NA,
+                             CI.level=0.95, tail=NA,
+                             .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name) {
   
   ##### Check for Bad Input ######
   if ( type=="dist" ) {
@@ -650,12 +651,26 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
     
     for ( i in 1:dim(t)[1] ) {
       # r is irrelevant here
-      cm = confounded_meta(q, r=0.10, muB=t$B[i], sigB,
-                           yr, vyr, t2, vt2,
-                           CI.level=CI.level, tail=tail)
-      t$phat[i] = cm$Est[ cm$Value=="Prop" ]
-      t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
-      t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
+      if(method=="parametric"){
+        cm = confounded_meta(method=method,q=q, r=r, muB=t$B[i], sigB=sigB,
+                             yr=yr, vyr=vyr, t2=t2, vt2=vt2,
+                             CI.level=CI.level, tail=tail)
+        t$phat[i] = cm$Est[ cm$Value=="Prop" ]
+        t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
+        t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
+      } else { if(method=="calibrated"){
+        cm = confounded_meta(method=method,q=q, r=r, Bmin = Bmin, Bmax = Bmax, .calib = d$calib.logRR,
+                             tail,
+                             .give.CI = TRUE,
+                             .R,
+                             .dat = d,
+                             .calib.name = "calib.logRR",
+                             CI.level=CI.level,tail=tail)
+        t$phat[i] = cm$Est[ cm$Value=="Phat.t" ]
+        t$lo[i] = cm$CI.lo[ cm$Value=="Phat.t" ]
+        t$hi[i] = cm$CI.hi[ cm$Value=="Phat.t" ]
+      }
+      }
     }
     
     # compute values of g for the dual X-axis
@@ -692,6 +707,7 @@ sens_plot = function( type, q, muB=NA, Bmin=log(1), Bmax=log(5), sigB=0,
     
   }
 }
+
 
 
 
