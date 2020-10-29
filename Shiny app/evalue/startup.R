@@ -1,3 +1,5 @@
+# install.packages("shinyWidgets")
+
 library(shiny)
 # library(EValue) #include confounded_meta function and not the whole package to see if it works?
 library(plotly)
@@ -6,6 +8,8 @@ library(shinyBS)
 library(shinyalert)
 library(bsplus)
 library(shinydashboard)
+library(shinyWidgets)
+
 
 # try to fix deployment problem
 library(purrr)
@@ -437,185 +441,159 @@ sens_plot_addtail = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax
   
   ##### Line Plot ######
   if ( type=="line" ) {
-    # get mean bias factor values for a bunch of different B's
-    t = data.frame( B = seq(Bmin, Bmax, .01), phat = NA, lo = NA, hi = NA )
-    t$eB = exp(t$B)
-    
-    for ( i in 1:dim(t)[1] ) {
-      # r is irrelevant here
-      if(method=="parametric"){
+    if(method=="parametric"){
+      # get mean bias factor values for a bunch of different B's
+      t = data.frame( B = seq(Bmin, Bmax, .01), phat = NA, lo = NA, hi = NA )
+      t$eB = exp(t$B)
+      
+      for ( i in 1:dim(t)[1] ) {
+        # r is irrelevant here
         cm = confounded_meta(method=method,q=q, r=r, muB=t$B[i], sigB=sigB,
                              yr=yr, vyr=vyr, t2=t2, vt2=vt2,
                              CI.level=CI.level, tail=tail)
         t$phat[i] = cm$Est[ cm$Value=="Prop" ]
         t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
         t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
-      } else { if(method=="calibrated"){
-        cm = confounded_meta(method=method,q=q, r=r, Bmin = Bmin, Bmax = Bmax, .calib = d$calib.logRR,
-                             tail,
-                             .give.CI = TRUE,
-                             .R,
-                             .dat = d,
-                             .calib.name = "calib.logRR",
-                             CI.level=CI.level,tail=tail)
-        t$phat[i] = cm$Est[ cm$Value=="Phat.t" ]
-        t$lo[i] = cm$CI.lo[ cm$Value=="Phat.t" ]
-        t$hi[i] = cm$CI.hi[ cm$Value=="Phat.t" ]
       }
+      
+      # compute values of g for the dual X-axis
+      if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
+      if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
+      
+      # define transformation in a way that is monotonic over the effective range of B (>1)
+      # to avoid ggplot errors
+      g = Vectorize( function(x) {
+        if (x < 1) return( x / 1e10 )
+        x + sqrt( x^2 - x )
+      } )
+      
+      p = ggplot2::ggplot( t, aes(x=t$eB, y=t$phat ) ) + theme_bw() +
+        scale_y_continuous( limits=c(0,1),
+                            breaks=seq(0, 1, .1) ) +
+        scale_x_continuous(  limits = c(min(breaks.x1), 
+                                        max(breaks.x1)),
+                             breaks = breaks.x1,
+                             sec.axis = sec_axis( ~ g(.),  # confounding strength axis
+                                                  name = "Minimum strength of both confounding RRs",
+                                                  breaks=breaks.x2 ) ) +
+        geom_line(lwd=1.2) +
+        xlab("Bias factor (RR scale)") +
+        ylab( paste( ifelse( tail=="above",
+                             paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
+                             paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) )
+      
+      # can't compute a CI if the bounds aren't there
+      no.CI = any( is.na(t$lo) ) | any( is.na(t$hi) )
+      
+      if ( no.CI ) graphics::plot(p)
+      else p + ggplot2::geom_ribbon( aes(ymin=t$lo, ymax=t$hi), alpha=0.15 )   
+    } ## closes method=="parametric"
+    
+    else {if(method=="calibrated"){
+      
+      require(boot)
+      .B.vec = seq(Bmin, Bmax, .01)
+      # confounding-adjusted Phat
+      if ( tail == "above" ) Phat.t = mean( .calib > q )
+      if ( tail == "below" ) Phat.t = mean( .calib < q )
+      
+      if ( .give.CI == FALSE ) {
+        
+        return(Phat.t)
+        
+      } else {
+        boot.res = suppressWarnings( boot( data = .dat,
+                                           parallel = "multicore",
+                                           R = .R, 
+                                           statistic = Phat_causal_bt,
+                                           # below arguments are being passed to get_stat
+                                           .calib.name = .calib.name,
+                                           .q = q,
+                                           .B = .B.vec,
+                                           .tail = tail ) )
+        
+        bootCIs = boot.ci(boot.res,
+                          type="bca",
+                          conf = 0.95 )
+        
+        lo_Phat = bootCIs$bca[4]
+        hi_Phat = bootCIs$bca[5]
+        SE_Phat = sd(boot.res$t)
+        Bl = as.list(.B.vec)
+        
+        Phat.t.vec = lapply( Bl,
+                             FUN = function(B) Phat_causal( .q = q, 
+                                                            .B = B,
+                                                            .calib = .calib,
+                                                            .tail = tail,
+                                                            .give.CI = FALSE ) )
+        
+        res = data.frame( B = .B.vec,
+                          Phat.t = unlist(Phat.t.vec) )
+        
+        That = res$B[ which.min( abs( res$Phat.t - r ) ) ]
+        
+        # look at just the values of B at which Phat jumps
+        #  this will not exceed the number of point estimates in the meta-analysis
+        res.short = res[ diff(res$Phat.t) != 0, ]
+        
+        library(dplyr)
+        
+        # bootstrap a CI for each entry in res.short
+        temp = res.short %>% rowwise() %>%
+          do( Phat_causal( .q = q, 
+                           .B = .$B,
+                           .calib = .calib,
+                           .tail = tail,
+                           .give.CI = TRUE,
+                           .dat = .dat,
+                           .R = .R,
+                           .calib.name = "calib.logRR" ) )
+        
+        # merge this with the full-length res dataframe, merging by Phat itself
+        res = merge( res, temp, by.x = "Phat.t", by.y = "Est")
+        
+        ##### Make Plot #####
+        library(ggplot2)
+        
+        ggplot( data = res,
+                aes( x = B,
+                     y = Phat.t ) ) +
+          theme_bw() +
+          
+          # proprtion "r" line
+          geom_hline( yintercept = r, 
+                      lty = 2,
+                      color = "red" ) +
+          
+          # That line
+          geom_vline( xintercept = That, 
+                      lty = 2,
+                      color = "black" ) +
+          
+          scale_y_continuous( limits=c(0,1), breaks=seq(0, 1, .1)) +
+          scale_x_continuous(  breaks = seq(1, 20, .1),
+                               sec.axis = sec_axis( ~ g(.),  # confounding strength axis
+                                                    name = "Minimum strength of both confounding RRs",
+                                                    breaks = seq(1, 8, .5 )) ) +
+          geom_line(lwd=1.2) +
+          
+          # # parametric estimate for comparison
+          # geom_line( data = res,
+          #            aes( x = B,
+          #                 y = Est.param ),
+          #            lwd = 1.2,
+          #            color = "blue") +
+          
+          xlab("Hypothetical bias factor in all studies (RR scale)") +
+          ylab( paste( ifelse( tail=="above",
+                               paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
+                               paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) ) +
+          
+          
+          geom_ribbon( aes(ymin=res$lo, ymax=res$hi), alpha=0.15, fill = "black" ) 
+        
       }
-    }
-    
-    # compute values of g for the dual X-axis
-    if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
-    if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
-    
-    # define transformation in a way that is monotonic over the effective range of B (>1)
-    # to avoid ggplot errors
-    g = Vectorize( function(x) {
-      if (x < 1) return( x / 1e10 )
-      x + sqrt( x^2 - x )
-    } )
-    
-    p = ggplot2::ggplot( t, aes(x=t$eB, y=t$phat ) ) + theme_bw() +
-      scale_y_continuous( limits=c(0,1),
-                          breaks=seq(0, 1, .1) ) +
-      scale_x_continuous(  limits = c(min(breaks.x1), 
-                                      max(breaks.x1)),
-                           breaks = breaks.x1,
-                           sec.axis = sec_axis( ~ g(.),  # confounding strength axis
-                                                name = "Minimum strength of both confounding RRs",
-                                                breaks=breaks.x2 ) ) +
-      geom_line(lwd=1.2) +
-      xlab("Bias factor (RR scale)") +
-      ylab( paste( ifelse( tail=="above",
-                           paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
-                           paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) )
-    
-    # can't compute a CI if the bounds aren't there
-    no.CI = any( is.na(t$lo) ) | any( is.na(t$hi) )
-    
-    if ( no.CI ) graphics::plot(p)
-    else p + ggplot2::geom_ribbon( aes(ymin=t$lo, ymax=t$hi), alpha=0.15 )   
-    
-  }
-}
-
-
-sens_plot_addtail = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
-                             yr, vyr=NA, t2, vt2=NA,
-                             breaks.x1=NA, breaks.x2=NA,
-                             CI.level=0.95, tail=NA,
-                             .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name) {
-  
-  ##### Check for Bad Input ######
-  if ( type=="dist" ) {
-    
-    if( is.na(muB) ) stop("For type='dist', must provide muB")
-    
-    if ( ( length(muB) > 1 ) | ( length(sigB) > 1 ) ) {
-      stop( "For type='dist', muB and sigB must be length 1")
-    }
-  }
-  
-  if ( type=="line" ) {
-    
-    if ( is.na(vyr) | is.na(vt2) ) {
-      message( "No confidence interval because vyr or vt2 is NULL")
-    }
-  }
-  
-  ##### Distribution Plot ######
-  if ( type=="dist" ) {
-    
-    # simulate confounded distribution
-    reps = 10000
-    RR.c = exp( rnorm( n=reps, mean=yr, sd=sqrt(t2) ) )
-    
-    # simulate unconfounded distribution
-    Mt = ifelse( yr > 0, yr - muB, yr + muB )
-    RR.t = exp( rnorm( n=reps, mean=Mt, sd=sqrt(t2-sigB^2) ) )
-    
-    # get reasonable limits for X-axis
-    x.min = min( quantile(RR.c, 0.01), quantile(RR.t, 0.01) )
-    x.max = max( quantile(RR.c, 0.99), quantile(RR.t, 0.99) )
-    
-    temp = data.frame( group = rep( c( "Observed", "True" ), each = reps ), 
-                       val = c( RR.c, RR.t ) )
-    
-    colors=c("black", "orange")
-    p = ggplot2::ggplot( data=temp, aes(x=temp$val, group=temp$group ) ) +
-      geom_density( aes( fill=temp$group ), alpha=0.4 ) +
-      theme_bw() + xlab("Study-specific relative risks") +
-      ylab("") + guides(fill=guide_legend(title=" ")) +
-      scale_fill_manual(values=colors) +
-      geom_vline( xintercept = exp(q), lty=2, color="red" ) +
-      scale_x_continuous( limits=c(x.min, x.max), breaks = seq( round(x.min), round(x.max), 0.5) ) +
-      ggtitle("Observed and true relative risk distributions")
-    
-    graphics::plot(p)
-  }
-  
-  ##### Line Plot ######
-  if ( type=="line" ) {
-    # get mean bias factor values for a bunch of different B's
-    t = data.frame( B = seq(Bmin, Bmax, .01), phat = NA, lo = NA, hi = NA )
-    t$eB = exp(t$B)
-    
-    for ( i in 1:dim(t)[1] ) {
-      # r is irrelevant here
-      if(method=="parametric"){
-        cm = confounded_meta(method=method,q=q, r=r, muB=t$B[i], sigB=sigB,
-                             yr=yr, vyr=vyr, t2=t2, vt2=vt2,
-                             CI.level=CI.level, tail=tail)
-        t$phat[i] = cm$Est[ cm$Value=="Prop" ]
-        t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
-        t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
-      } else { if(method=="calibrated"){
-        cm = confounded_meta(method=method,q=q, r=r, Bmin = Bmin, Bmax = Bmax, .calib = d$calib.logRR,
-                             tail,
-                             .give.CI = TRUE,
-                             .R,
-                             .dat = d,
-                             .calib.name = "calib.logRR",
-                             CI.level=CI.level,tail=tail)
-        t$phat[i] = cm$Est[ cm$Value=="Phat.t" ]
-        t$lo[i] = cm$CI.lo[ cm$Value=="Phat.t" ]
-        t$hi[i] = cm$CI.hi[ cm$Value=="Phat.t" ]
-      }
-      }
-    }
-    
-    # compute values of g for the dual X-axis
-    if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
-    if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
-    
-    # define transformation in a way that is monotonic over the effective range of B (>1)
-    # to avoid ggplot errors
-    g = Vectorize( function(x) {
-      if (x < 1) return( x / 1e10 )
-      x + sqrt( x^2 - x )
-    } )
-    
-    p = ggplot2::ggplot( t, aes(x=t$eB, y=t$phat ) ) + theme_bw() +
-      scale_y_continuous( limits=c(0,1),
-                          breaks=seq(0, 1, .1) ) +
-      scale_x_continuous(  limits = c(min(breaks.x1), 
-                                      max(breaks.x1)),
-                           breaks = breaks.x1,
-                           sec.axis = sec_axis( ~ g(.),  # confounding strength axis
-                                                name = "Minimum strength of both confounding RRs",
-                                                breaks=breaks.x2 ) ) +
-      geom_line(lwd=1.2) +
-      xlab("Bias factor (RR scale)") +
-      ylab( paste( ifelse( tail=="above",
-                           paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
-                           paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) )
-    
-    # can't compute a CI if the bounds aren't there
-    no.CI = any( is.na(t$lo) ) | any( is.na(t$hi) )
-    
-    if ( no.CI ) graphics::plot(p)
-    else p + ggplot2::geom_ribbon( aes(ymin=t$lo, ymax=t$hi), alpha=0.15 )   
-    
-  }
-}
+    } ## closes method="calibrated
+    }} ## closes type=="line"
+} ## closes sens_plot function

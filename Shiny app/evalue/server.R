@@ -205,8 +205,9 @@ function(input, output, session) {
   # output$calibrated_tab1 = renderTable(mydata())
   
   calibrated_output <- observeEvent(input$calibrated_calculate, {
+    
     if(input$calibrated_scale=="RR"){
-      q = logHR_to_logRR(log(input$calibrated_q))
+      q = log(input$calibrated_q)
       r = input$calibrated_r
       tail = input$calibrated_tail
       
@@ -220,7 +221,7 @@ function(input, output, session) {
       
     } else {
       if(input$calibrated_scale=="Log-RR"){
-        q = logHR_to_logRR(input$calibrated_q)
+        q = input$calibrated_q
         r = input$calibrated_r
         tail = input$calibrated_tail
         
@@ -233,6 +234,7 @@ function(input, output, session) {
         calib.name = input$calibrated_calib.name
       }
     }
+    
     output$calibrated_text1 = renderText({
       ## just for testing, can delete
       # print(c(q_2,r_2,tail_2,method_2,Bmin_2,Bmax_2,calib_2,R_2,calib.name_2))
@@ -269,6 +271,7 @@ function(input, output, session) {
       # R = 2000
       # dat = d
       # calib.name = "calib.logRR"
+      withProgress(message="calculating proportion...", value=1,{
       
       cm = suppressWarnings(confounded_meta(method=method,q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name))
       
@@ -281,9 +284,12 @@ function(input, output, session) {
       string_p = paste( p, " (95% CI: ", p_lo, ", ", p_hi, ")", sep="" )
       return( string_p )
       
+      }) ## closes withProgress
+      
     }) ## closes calibrated_text1
     
     output$calibrated_text2 = renderText({
+      withProgress(message="calculating minimum bias factor...", value=1,{
       cm = suppressWarnings(confounded_meta(method=method,q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name))
       
       p = round( as.numeric(cm$Est[which(cm$Value=="Phat.t" )]), 3 )
@@ -296,9 +302,12 @@ function(input, output, session) {
       string_Tmin = ifelse(p < r, "Not applicable. This is already the case, even with no bias, given your pooled effect size, threshold, and choice of tail.", paste( Tmin, " (95% CI: ", Tmin_lo, ", ", Tmin_hi, ")", sep="" ))
       return( string_Tmin )
       
+      }) ## closes withProgress
+      
     }) ## closes calibrated_text2
     
     output$calibrated_text3 = renderText({
+      withProgress(message="calculating minimum confounding strength...", value=1,{
       cm = suppressWarnings(confounded_meta(method=method,q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name))
       
       p = round( as.numeric(cm$Est[ which(cm$Value=="Phat.t") ]), 3 )
@@ -311,29 +320,15 @@ function(input, output, session) {
       string_Gmin = ifelse(p < r, "Not applicable. This is already the case, even with no bias, given your pooled effect size, threshold, and choice of tail.", paste( Gmin, " (95% CI: ", Gmin_lo, ", ", Gmin_hi, ")", sep="" ))
       return( string_Gmin )
       
+      }) ## closes withProgress
+      
     }) ## closes calibrated_text3
     
-    ### warnings:
-    output$calibrated_kwarn <- reactive({
-      numStudies <- input$calibrated_k
-      ifelse(numStudies <=10,
-             "WARNING: These methods may not work well for meta-analyses with fewer than 10 studies.",
-             "")
-    }) ## closes calibrated_kwarn
-    
-    output$calibrated_phatwarn <- reactive({
-      cm = suppressWarnings(confounded_meta(method=method,q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name))
-      
-      p = round( cm$Est[ cm$Value=="Phat.t" ], 3 )
-      ifelse(p<0.15 | p>0.85,
-             HTML(paste('WARNING: Extreme estimated proportion', 'The estimated proportion of meaningfully strong effects is <0.15 or >0.85. The methods implemented in this website do not always work well in these situations. We would recommend instead applying alternative methods that have the same interpretation (see the "More Resouces" tab).', sep = "<br/>")), "")
-    }) ## closes calibrated_phatwarn_2
-    
-    
-    # ### 10/21/20 TBD, get the rest working then ask Maya about these plots:
-    # output$calibrated_plot1 <- renderPlot({
-    #   suppressWarnings(sens_plot_addtail(method=method, type="line", q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name ))
-    # }) ## closes calibrated_plot1
+    output$calibrated_plot1 <- renderPlot({
+      withProgress(message="generating plot...", value=1,{
+      suppressWarnings(sens_plot_addtail(method=method, type="line", q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name ))
+  }) ## closes withProgress
+    }) ## closes calibrated_plot1
   }) ## closes calibrated_output
   
   
@@ -357,13 +352,15 @@ function(input, output, session) {
       t2_2 = input$parametric_t2
       q_2 = log(input$parametric_q)
       vyr_2 = input$parametric_se_yr^2
-      vt2_2 = input$parametric_se_t2^2
+      vt2_2 = (input$parametric_prop_t2*(input$parametric_t2^2))
       muB_2 = log(input$parametric_muB)
       sigB_2 = input$parametric_sigB
       r_2 = input$parametric_r
       tail_2 = input$parametric_tail
       
       method_2 = input$parametric_method
+      Bmin_2 = log(input$parametric_Bmin)
+      Bmax_2 = log(input$parametric_Bmax)
       
     } else {
       if(input$parametric_scale=="Log-RR"){
@@ -371,13 +368,15 @@ function(input, output, session) {
         t2_2 = input$parametric_t2
         q_2 = input$parametric_q
         vyr_2 = input$parametric_se_yr^2
-        vt2_2 = input$parametric_se_t2^2
+        vt2_2 = (input$parametric_prop_t2*(input$parametric_t2^2))
         muB_2 = input$parametric_muB
         sigB_2 = input$parametric_sigB
         r_2 = input$parametric_r
         tail_2 = input$parametric_tail
         
         method_2 = input$parametric_method
+        Bmin_2 = input$parametric_Bmin
+        Bmax_2 = input$parametric_Bmax
       }
     }
     
@@ -459,11 +458,11 @@ function(input, output, session) {
              HTML(paste('WARNING: Extreme estimated proportion', 'The estimated proportion of meaningfully strong effects is <0.15 or >0.85. The methods implemented in this website do not always work well in these situations. We would recommend instead applying alternative methods that have the same interpretation (see the "More Resouces" tab).', sep = "<br/>")), "")
     }) ## closes parametric_phatwarn_2
     
-    
-    ### 10/21/20 TBD, get the rest working then ask Maya about these plots:
-    output$parametric_plot <- renderPlot({
-      suppressWarnings(sens_plot_addtail( type="dist", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
-                                          muB=muB_2, sigB=sigB_2, tail=tail_2 ))
+    output$parametric_plot1 <- renderPlot({
+      # suppressWarnings(sens_plot_addtail( type="dist", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
+      #                                     muB=muB_2, sigB=sigB_2, tail=tail_2 ))
+      suppressWarnings(sens_plot_addtail(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
+                                         Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 ))
     }) ## closes parametric_plot1
   }) ## closes parametric_output
   
@@ -479,41 +478,42 @@ function(input, output, session) {
   })
   
   
+  ### 10/29/20 jl think we will remove this tab, but keep the code here for now ###
   ##### For Tab Panel Range of sensitivity parameters #####
-  output$plot_3 <- renderPlot({
-    
-    if(input$scale_3=="RR"){
-      yr_3 = log(input$yr_3)
-      t2_3 = input$t2_3
-      q_3= log(input$q_3)
-      vyr_3 = input$se_yr_3^2
-      vt2_3 = input$se_t2_3^2
-      sigB_3 = input$sigB_3
-      Bmin_3 = log(input$Bmin_3)
-      Bmax_3 = log(input$Bmax_3)
-      tail_3 = input$tail_3
-      
-      method_3 = "parametric"
-      
-    } else {
-      if(input$scale_3=="Log-RR"){
-        yr_3 = input$yr_3
-        t2_3 = input$t2_3
-        q_3 = input$q_3
-        vyr_3 = input$se_yr_3^2
-        vt2_3 = input$se_t2_3^2
-        sigB_3 = input$sigB_3
-        Bmin_3 = input$Bmin_3
-        Bmax_3 = input$Bmax_3
-        tail_3 = input$tail_3
-        
-        method_3 = "parametric"
-      }
-    }
-    
-    suppressWarnings(sens_plot_addtail(method = method_3, type="line", q=q_3, yr=yr_3, vyr=vyr_3, t2=t2_3, vt2=vt2_3,
-                                       Bmin=Bmin_3, Bmax=Bmax_3, sigB=sigB_3, tail=tail_3 ))
-  })
+  # output$plot_3 <- renderPlot({
+  #   
+  #   if(input$scale_3=="RR"){
+  #     yr_3 = log(input$yr_3)
+  #     t2_3 = input$t2_3
+  #     q_3= log(input$q_3)
+  #     vyr_3 = input$se_yr_3^2
+  #     vt2_3 = (input$prop_t2_3*(input$t2_3^2))
+  #     sigB_3 = input$sigB_3
+  #     Bmin_3 = log(input$Bmin_3)
+  #     Bmax_3 = log(input$Bmax_3)
+  #     tail_3 = input$tail_3
+  #     
+  #     method_3 = "parametric"
+  #     
+  #   } else {
+  #     if(input$scale_3=="Log-RR"){
+  #       yr_3 = input$yr_3
+  #       t2_3 = input$t2_3
+  #       q_3 = input$q_3
+  #       vyr_3 = input$se_yr_3^2
+  #       vt2_3 = (input$prop_t2_3*(input$t2_3^2))
+  #       sigB_3 = input$sigB_3
+  #       Bmin_3 = input$Bmin_3
+  #       Bmax_3 = input$Bmax_3
+  #       tail_3 = input$tail_3
+  #       
+  #       method_3 = "parametric"
+  #     }
+  #   }
+  #   
+  #   suppressWarnings(sens_plot_addtail(method = method_3, type="line", q=q_3, yr=yr_3, vyr=vyr_3, t2=t2_3, vt2=vt2_3,
+  #                                      Bmin=Bmin_3, Bmax=Bmax_3, sigB=sigB_3, tail=tail_3 ))
+  # })
   
   
   
@@ -620,7 +620,5 @@ function(input, output, session) {
 #   ifelse(p<0.15 | p>0.85,
 #          HTML(paste('WARNING: Extreme estimated proportion', 'The estimated proportion of meaningfully strong effects is <0.15 or >0.85. The methods implemented in this website do not always work well in these situations. We would recommend instead applying alternative methods that have the same interpretation (see the "More Resouces" tab).', sep = "<br/>")), "")
 # })
-
-
 
 
