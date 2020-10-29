@@ -362,11 +362,11 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                                                    numericInput('parametric_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0, max=Inf, step=0.1) %>%
                                                                                      shinyInput_label_embed(
                                                                                        shiny_iconlink() %>%
-                                                                                         bs_embed_popover(title = 'used for "calibrated" method only')),
+                                                                                         bs_embed_popover(title = 'used for plot only')),
                                                                                    numericInput('parametric_Bmax', 'Upper limit of bias factor (Bmax)', 4, min=0, max=Inf, step=0.1) %>%
                                                                                      shinyInput_label_embed(
                                                                                        shiny_iconlink() %>%
-                                                                                         bs_embed_popover(title = 'used for "calibrated" method only')),
+                                                                                         bs_embed_popover(title = 'used for plot only')),
                                                                                    actionButton(inputId = 'parametric_calculate', label='Generate parametric confounded_meta results'))
                                                                )
                                                                
