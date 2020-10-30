@@ -21,27 +21,33 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
             
             theme = shinytheme("flatly"),
             
-            tabPanel("E-value calculator",
-                     wellPanel(  HTML(paste("<b>Computing an E-value</b>",
+            tabPanel("Sensitivity of the point estimate",
+                     wellPanel(  HTML(paste('This website implements the sensitivity analyses described in <a href="https://www.tandfonline.com/doi/full/10.1080/01621459.2018.1529598">Mathur & VanderWeele (2020a)</a>.
+                                            For more information on how to interpret these sensitivity analyses, see that paper and other materials listed in the "More Resources" tab.',
+                       
+                       
+                       "<b>Sensitivity analysis for the pooled point estimate</b>",
                                             
-                                            'The tab "Compute an E-value" computes the E-value, defined as the minimum strength of association
-                                            on the risk ratio scale that an unmeasured confounder would need to have with both the exposure
-                                            and the outcome, conditional on the measured covariates, to fully explain away a specific
-                                            exposure-outcome association. Note that for outcome types other than relative risks, assumptions
-                                            are involved with the approximate conversions used. See citation (2) for details.',
+                                            'This tab computes the E-value for the pooled point estimate of a meta-analysis (Section 7.2 of reference XX). This E-value represents the average severity of confounding in the meta-analyzed studies (i.e., the minimum strength of association
+                                            on the risk ratio scale that unmeasured confounder(s) would need to have with both the exposure
+                                            and the outcome, conditional on the measured covariates), to fully explain away the observed meta-analytic point estimate. Note that for outcome types other than relative risks, assumptions
+                                            are involved with the approximate conversions used. See citation (XX) for details.',
                                             
-                                            'Alternatively, you can consider the confounding strength capable of moving the observed
-                                            association to any other value (e.g. attenuating the observed association to a true causal
+                                            'Alternatively, you can consider the average confounding strength capable of moving the observed
+                                            point estimate to any other value (e.g. attenuating the observed association to a true causal
                                             effect that is no longer scientifically important, or alternatively increasing a near-null
                                             observed association to a value that is of scientific importance). For this purpose, simply
                                             type a non-null effect size into the box "True causal effect to which to shift estimate"
-                                            when computing the E-value.',
-                                            
-                                            "<b>Computing a bias factor</b>",                     
-                                            
-                                            "Additionally, if you have substantive knowledge on the strength of the relationships
-                                            between the unmeasured confounder(s) and the exposure and outcome, you can use these
-                                            numbers to <a href='https://bias-factor.hmdc.harvard.edu'>calculate the bias factor</a>.",
+                                            when computing the meta-analytic E-value.',
+                       
+                       "<b>Example of how to interpret the results</b>",
+                       
+                       "For example, if your meta-analytic point estimate on the relative risk scale is 1.5 (95% confidence interval: [1.4, 1.5]), you will obtain an E-value for the point estimate of 2.37 and an E-value for the lower confidence interval limit of 2.15. This means that if, hypothetically, the meta-analyzed studies were subject to confounding such that, on average across the studies, there were unmeasured confounder(s) that were associated with the studies' exposures and outcomes by relative risks of at least 2.37 each, this amount of average confounding could potentially explain away the point estimate of 1.5 (i.e., to have the true causal effect be a relative risk of 1), but weaker average confounding could not. Similarly, if this strength of average confounding were at 2.15 across studies, this amount of confounding could potentially shift the confidence interval to include the null, but weaker average confounding could not.",
+                       
+                       "<b>A caveat about the pooled point estimate</b>",
+                       
+                       'Note that this tab of the website conducts sensitivity analyses that describe evidence strength only in terms of the pooled point estimate, a measure that does not fully characterize effect heterogeneity in a meta-analysis. For example, consider two meta-analyses with the pooled point estimate of relative risk = 1.1. The first, Meta-Analysis A, has very little heterogeneity, such that all true population effects are very close to 1.1. In contrast, despite having the same point estimate, Meta-Analysis B could have substantial heterogeneity, such that a large proportion of the true population effects are large (e.g., >1.5). Thus, Meta-Analysis B provides stronger support for the presence of meaningfully large effects than does Meta-Analysis A, and furthermore Meta-Analysis B might also suggest that a non-negligible proportion of the effects are actually preventive rather than causative (i.e., with relative risks less than 1). For this reason, meta-analyses that have some heterogeneity should generally report not only the point estimate, but also the estimated percentage of meaningfully strong population effects (REF), and sensitivity analyses should consider this quantity as well (which you can do using the tab "Sensitivity of the percentage of meaningfully strong effects" in this website.',
+                       
                                             sep="<br/><br/>"))
                                  
                                  
@@ -178,7 +184,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                      ) # end contour plot panel
                      ),
             
-            tabPanel("Fixed sensitivity parameters -- TABNAME TO CHANGE",
+            tabPanel("Sensitivity of the percentage of meaningfully strong effects",
                      shinyjs::useShinyjs(),
                      wellPanel(  HTML(paste(
                        'This website implements the sensitivity analyses described in <a href="https://www.tandfonline.com/doi/full/10.1080/01621459.2018.1529598">Mathur & VanderWeele (2020a)</a>.
@@ -223,7 +229,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                                    shiny_iconlink() %>%
                                                                      bs_embed_popover(title = 'For the second two metrics, the value to which the proportion of meaningfully strong effects is to be reduced')),
                                                                shinydashboard::box(width=6,
-                                                                                   title=strong("Title filler for Bmin Bmax"),
+                                                                                   title=strong("Range of bias factors to search"),
                                                                                    numericInput('calibrated_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0, max=Inf, step=0.1) %>%
                                                                                      shinyInput_label_embed(
                                                                                        shiny_iconlink() %>%
@@ -358,7 +364,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                         
                                                         column(width=6,
                                                                shinydashboard::box(width=6,
-                                                                                   title=strong("Bmin and Bmax used for plot only"),
+                                                                                   title=strong("Bias factor range to include in plot"),
                                                                                    numericInput('parametric_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0, max=Inf, step=0.1) %>%
                                                                                      shinyInput_label_embed(
                                                                                        shiny_iconlink() %>%
