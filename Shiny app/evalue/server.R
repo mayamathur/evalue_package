@@ -202,7 +202,7 @@ function(input, output, session) {
   })
   
   ### jl testing if data is being read okay:
-  # output$calibrated_tab1 = renderTable(mydata())
+  output$calibrated_tab1 = renderTable(mydata())
   
   calibrated_output <- observeEvent(input$calibrated_calculate, {
     
@@ -210,28 +210,34 @@ function(input, output, session) {
       q = log(input$calibrated_q)
       r = input$calibrated_r
       tail = input$calibrated_tail
+      B = input$calibrated_B
+      yr = input$calibrated_yr
+      vyr = input$calibrated_vyr
       
       method = input$calibrated_method
       Bmin = input$calibrated_Bmin
       Bmax = input$calibrated_Bmax
-      calib = mydata()[[input$calibrated_calib.name]]
+      # calib = mydata()[[input$calibrated_calib.name]]
       R = input$calibrated_R
       dat = mydata()
-      calib.name = input$calibrated_calib.name
+      # calib.name = input$calibrated_calib.name
       
     } else {
       if(input$calibrated_scale=="Log-RR"){
         q = input$calibrated_q
         r = input$calibrated_r
         tail = input$calibrated_tail
-        
+        yr = input$calibrated_yr
+        vyr = input$calibrated_vyr
+        B = input$calibrated_B
+
         method = input$calibrated_method
         Bmin = input$calibrated_Bmin
         Bmax = input$calibrated_Bmax
-        calib = mydata()[[input$calibrated_calib.name]]
+        # calib = mydata()[[input$calibrated_calib.name]]
         R = input$calibrated_R
         dat = mydata()
-        calib.name = input$calibrated_calib.name
+        # calib.name = input$calibrated_calib.name
       }
     }
     
@@ -239,27 +245,11 @@ function(input, output, session) {
       ## just for testing, can delete
       # print(c(q_2,r_2,tail_2,method_2,Bmin_2,Bmax_2,calib_2,R_2,calib.name_2))
       # 
-      # d=as.data.frame(list(author = c("Teo 2010", "Da silva-gane 2012", "Hussain 2013",
-      #                                 "Shih 2013", "Shum 2014", "Brown 2015", "Kwok 2016", "Verberne 2016",
-      #                                 "Chandna 2016", "Reindl-schwaighofer 2017", "Raman 2018", "Tam-tham 2018"),
-      #                      year = c(2010, 2012, 2013, 2013, 2014, 2015, 2016, 2016, 2016,2017, 2018, 2018),
-      #                      hr = c(0.44, 0.44, 0.46, 1.16, 0.46, 0.31,0.22, 0.62, 0.53, 0.23, 0.61, 0.67),
-      #                      lb = c(0.22, 0.22, 0.32,1.07, 0.31, 0.21, 0.17, 0.42, 0.39, 0.18, 0.41, 0.53),
-      #                      ub = c(0.86, 0.92, 0.68, 1.25, 0.68, 0.47, 0.3, 0.92, 0.73, 0.29, 0.91, 0.83),
-      #                      n = c(57, 154, 306, 8341, 199, 286, 558, 311, 250, 8796, 204,838),
-      #                      nx = c(41, 124, 164, 6292, 157, 164, 126, 204, 92, 8622,123, 500),
-      #                      n0 = c(16, 30, 142, 2049, 42, 122, 432, 107, 158,174, 81, 338),
-      #                      yi = c(-0.82098055206983, -0.82098055206983, -0.776528789498996,0.148420005118273, -0.776528789498996, -1.17118298150295, -1.51412773262978,
-      #                             -0.478035800943, -0.63487827243597, -1.46967597005894, -0.49429632181478, -0.400477566597125),
-      #                      vyi = c(0.116911650846615, 0.141626456589046,0.0397704305571613, 0.00145351248489691, 0.0397704305571613,0.0450842985184214, 0.0250415490680121,
-      #                              0.0405449956738431, 0.0266844577833026,0.0139873914540288, 0.0416478534714748, 0.0119380066476652),
-      #                      calib = c(-0.815500241994327, -0.814528779625426, -0.776052752266121,0.147175232542529, -0.776052752266121, -1.15489254358239,-1.49702475156308,
-      #                                -0.488331228832504, -0.637983041992715, -1.46055146962155, -0.504254067888611, -0.404485663510471),
-      #                      calib.logRR = c(-0.560977462897841, -0.560319288814832,
-      #                                      -0.534223240540279, 0.101988678750287, -0.534223240540279,
-      #                                      -0.788465088962296, -1.01180042488262, -0.337559759120245,
-      #                                      -0.440157063435869, -0.988320988323321, -0.3485033298636,
-      #                                      -0.279841496330782)))
+      # d = readxl::read_xlsx("~/Box Sync/jlee/Maya/meta/data/dat.xlsx")
+      # es = MetaUtility::scrape_meta(type="RR",
+      #                               est = d$hr,
+      #                               hi=d$ub)
+      # d=cbind(d,es)
       # 
       # q = logHR_to_logRR(log(.8))
       # r = .1
@@ -267,19 +257,23 @@ function(input, output, session) {
       # method = "calibrated"
       # Bmin = 1
       # Bmax = 4
-      # calib = d$calib.logRR
+      # yr="yi"
+      # vyr="vyi"
+      # 
       # R = 2000
       # dat = d
+      # calib = d$calib.logRR
       # calib.name = "calib.logRR"
       withProgress(message="calculating proportion...", value=1,{
       
-      cm = suppressWarnings(confounded_meta(method=method,q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name))
-      
+      cm = suppressWarnings(confounded_meta(method=method, muB=B,q=q, r=r, yr=yr, vyr=vyr,
+                                            Bmin=Bmin, Bmax=Bmax, tail=tail, .give.CI=TRUE, .R=R, .dat=dat))
+
       p = round( as.numeric(cm$Est[which(cm$Value=="Phat.t")]), 3 )
       p_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Phat.t")]), 3 )
       p_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="Phat.t")]), 3 )
-      
-      
+
+
       ##### Create String for UI #####
       string_p = paste( p, " (95% CI: ", p_lo, ", ", p_hi, ")", sep="" )
       return( string_p )
@@ -290,7 +284,8 @@ function(input, output, session) {
     
     output$calibrated_text2 = renderText({
       withProgress(message="calculating minimum bias factor...", value=1,{
-      cm = suppressWarnings(confounded_meta(method=method,q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name))
+        cm = suppressWarnings(confounded_meta(method=method, muB=B,q=q, r=r, yr=yr, vyr=vyr,
+                                              Bmin=Bmin, Bmax=Bmax, tail=tail, .give.CI=TRUE, .R=R, .dat=dat))
       
       p = round( as.numeric(cm$Est[which(cm$Value=="Phat.t" )]), 3 )
       Tmin = round( as.numeric(cm$Est[which(cm$Value=="That" )]), 3 )
@@ -308,7 +303,8 @@ function(input, output, session) {
     
     output$calibrated_text3 = renderText({
       withProgress(message="calculating minimum confounding strength...", value=1,{
-      cm = suppressWarnings(confounded_meta(method=method,q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name))
+        cm = suppressWarnings(confounded_meta(method=method, muB=B,q=q, r=r, yr=yr, vyr=vyr,
+                                              Bmin=Bmin, Bmax=Bmax, tail=tail, .give.CI=TRUE, .R=R, .dat=dat))
       
       p = round( as.numeric(cm$Est[ which(cm$Value=="Phat.t") ]), 3 )
       Gmin = round( as.numeric(cm$Est[ which(cm$Value=="Ghat") ]), 3 )
@@ -326,7 +322,7 @@ function(input, output, session) {
     
     output$calibrated_plot1 <- renderPlot({
       withProgress(message="generating plot...", value=1,{
-      suppressWarnings(sens_plot_addtail(method=method, type="line", q=q, r=r, Bmin=Bmin, Bmax=Bmax, .calib=calib, tail=tail, .give.CI=TRUE, .R=R, .dat=dat, .calib.name=calib.name ))
+      suppressWarnings(sens_plot(method=method, type="line", muB=B, q=q, r=r, yr=yr, vyr=vyr, Bmin=Bmin, Bmax=Bmax, tail=tail, .give.CI=TRUE, .R=R, .dat=dat ))
   }) ## closes withProgress
     }) ## closes calibrated_plot1
   }) ## closes calibrated_output
@@ -459,9 +455,7 @@ function(input, output, session) {
     }) ## closes parametric_phatwarn_2
     
     output$parametric_plot1 <- renderPlot({
-      # suppressWarnings(sens_plot_addtail( type="dist", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
-      #                                     muB=muB_2, sigB=sigB_2, tail=tail_2 ))
-      suppressWarnings(sens_plot_addtail(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
+      suppressWarnings(sens_plot(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
                                          Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 ))
     }) ## closes parametric_plot1
   }) ## closes parametric_output
@@ -511,7 +505,7 @@ function(input, output, session) {
   #     }
   #   }
   #   
-  #   suppressWarnings(sens_plot_addtail(method = method_3, type="line", q=q_3, yr=yr_3, vyr=vyr_3, t2=t2_3, vt2=vt2_3,
+  #   suppressWarnings(sens_plot(method = method_3, type="line", q=q_3, yr=yr_3, vyr=vyr_3, t2=t2_3, vt2=vt2_3,
   #                                      Bmin=Bmin_3, Bmax=Bmax_3, sigB=sigB_3, tail=tail_3 ))
   # })
   
@@ -545,7 +539,7 @@ function(input, output, session) {
 #   r_2 = input$r_2
 #   
 #   
-#   suppressWarnings(sens_plot_addtail( type="dist", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
+#   suppressWarnings(sens_plot( type="dist", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
 #                                       muB=muB_2, sigB=sigB_2 ))
 #   
 #   
@@ -580,7 +574,7 @@ function(input, output, session) {
 #     }
 #   }
 #   
-#   suppressWarnings(sens_plot_addtail( type="line", q=q, yr=yr, vyr=vyr, t2=t2, vt2=vt2,
+#   suppressWarnings(sens_plot( type="line", q=q, yr=yr, vyr=vyr, t2=t2, vt2=vt2,
 #                                       Bmin=Bmin, Bmax=Bmax, sigB=sigB, tail=tail ))
 # })
 

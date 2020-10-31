@@ -338,14 +338,22 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
   
   ## for calibrated
   if(method=="calibrated"){
-    
     require(boot)
     .B.vec = seq(Bmin, Bmax, .01)
     
+    .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yr]],
+                                              sei=sqrt(.dat[[vyr]]))
+    .calib=.dat$calib
+    .calib.name="calib"
+    
+    .B=muB
+    
+    if(tail == "above") calib.t = .calib - log(.B)
+    if(tail == "below") calib.t = .calib + log(.B)
     
     # confounding-adjusted Phat
-    if ( tail == "above" ) Phat.t = mean( .calib > q )
-    if ( tail == "below" ) Phat.t = mean( .calib < q )
+    if ( tail == "above" ) Phat.t = mean( calib.t > q )
+    if ( tail == "below" ) Phat.t = mean( calib.t < q )
     
     
     if ( .give.CI == FALSE ) {
@@ -590,10 +598,13 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 
 
 sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
-                             yr, vyr=NA, t2, vt2=NA,
-                             breaks.x1=NA, breaks.x2=NA,
-                             CI.level=0.95, tail=NA,
-                             .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name) {
+                     yr, vyr=NA, t2, vt2=NA,
+                     breaks.x1=NA, breaks.x2=NA,
+                     CI.level=0.95, tail=NA,
+                     # .calib, 
+                     .give.CI=TRUE, .R=2000, .dat
+                     # , .calib.name
+) {
   
   ##### Check for Bad Input ######
   if ( type=="dist" ) {
@@ -697,9 +708,20 @@ sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
       
       require(boot)
       .B.vec = seq(Bmin, Bmax, .01)
+      
+      .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yr]],
+                                                sei=sqrt(.dat[[vyr]]))
+      .calib=.dat$calib
+      .calib.name="calib"
+      
+      .B=muB
+      
+      if(tail == "above") calib.t = .calib - log(.B)
+      if(tail == "below") calib.t = .calib + log(.B)
+      
       # confounding-adjusted Phat
-      if ( tail == "above" ) Phat.t = mean( .calib > q )
-      if ( tail == "below" ) Phat.t = mean( .calib < q )
+      if ( tail == "above" ) Phat.t = mean( calib.t > q )
+      if ( tail == "below" ) Phat.t = mean( calib.t < q )
       
       if ( .give.CI == FALSE ) {
         
@@ -752,7 +774,7 @@ sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
                            .give.CI = TRUE,
                            .dat = .dat,
                            .R = .R,
-                           .calib.name = "calib.logRR" ) )
+                           .calib.name = .calib.name ) )
         
         # merge this with the full-length res dataframe, merging by Phat itself
         res = merge( res, temp, by.x = "Phat.t", by.y = "Est")

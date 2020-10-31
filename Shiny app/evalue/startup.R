@@ -1,7 +1,7 @@
 # install.packages("shinyWidgets")
 
 library(shiny)
-# library(EValue) #include confounded_meta function and not the whole package to see if it works?
+# library(EValue) #include confounded_meta and sens_plot below to test, will eventually be loaded into EValue package and can remove the functions below
 library(plotly)
 library(shinythemes)
 library(shinyBS)
@@ -9,6 +9,7 @@ library(shinyalert)
 library(bsplus)
 library(shinydashboard)
 library(shinyWidgets)
+library(MetaUtility)
 
 
 # try to fix deployment problem
@@ -41,8 +42,7 @@ Phat_causal = function( .q,
   # confounding-adjusted Phat
   if ( .tail == "above" ) Phat.t = mean( calib.t > .q )
   if ( .tail == "below" ) Phat.t = mean( calib.t < .q )
-  
-  
+
   if ( .give.CI == FALSE ) {
     
     return(Phat.t)
@@ -65,6 +65,7 @@ Phat_causal = function( .q,
     lo = bootCIs$bca[4]
     hi = bootCIs$bca[5]
     SE = sd(boot.res$t)
+    
     
     return( data.frame( Est = Phat.t,
                         SE = SE,
@@ -294,14 +295,22 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
   
   ## for calibrated
   if(method=="calibrated"){
-    
     require(boot)
     .B.vec = seq(Bmin, Bmax, .01)
+
+    .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yr]],
+                                      sei=sqrt(.dat[[vyr]]))
+    .calib=.dat$calib
+    .calib.name="calib"
     
+    .B=muB
     
+    if(tail == "above") calib.t = .calib - log(.B)
+    if(tail == "below") calib.t = .calib + log(.B)
+
     # confounding-adjusted Phat
-    if ( tail == "above" ) Phat.t = mean( .calib > q )
-    if ( tail == "below" ) Phat.t = mean( .calib < q )
+    if ( tail == "above" ) Phat.t = mean( calib.t > q )
+    if ( tail == "below" ) Phat.t = mean( calib.t < q )
     
     
     if ( .give.CI == FALSE ) {
@@ -385,11 +394,14 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
 } #closes confounded_meta function
 
 
-sens_plot_addtail = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
+sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
                              yr, vyr=NA, t2, vt2=NA,
                              breaks.x1=NA, breaks.x2=NA,
                              CI.level=0.95, tail=NA,
-                             .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name) {
+                             # .calib, 
+                             .give.CI=TRUE, .R=2000, .dat
+                             # , .calib.name
+                             ) {
   
   ##### Check for Bad Input ######
   if ( type=="dist" ) {
@@ -493,9 +505,20 @@ sens_plot_addtail = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax
       
       require(boot)
       .B.vec = seq(Bmin, Bmax, .01)
+      
+      .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yr]],
+                                                sei=sqrt(.dat[[vyr]]))
+      .calib=.dat$calib
+      .calib.name="calib"
+      
+      .B=muB
+      
+      if(tail == "above") calib.t = .calib - log(.B)
+      if(tail == "below") calib.t = .calib + log(.B)
+      
       # confounding-adjusted Phat
-      if ( tail == "above" ) Phat.t = mean( .calib > q )
-      if ( tail == "below" ) Phat.t = mean( .calib < q )
+      if ( tail == "above" ) Phat.t = mean( calib.t > q )
+      if ( tail == "below" ) Phat.t = mean( calib.t < q )
       
       if ( .give.CI == FALSE ) {
         
@@ -548,7 +571,7 @@ sens_plot_addtail = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax
                            .give.CI = TRUE,
                            .dat = .dat,
                            .R = .R,
-                           .calib.name = "calib.logRR" ) )
+                           .calib.name = .calib.name ) )
         
         # merge this with the full-length res dataframe, merging by Phat itself
         res = merge( res, temp, by.x = "Phat.t", by.y = "Est")
