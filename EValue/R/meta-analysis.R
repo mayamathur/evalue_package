@@ -21,11 +21,10 @@
 #' @param R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).
 #' @param calib.name Column name in dataframe \code{dat} containing calibrated estimates
 #' @import
-#' @noRd
 #' boot 
+#' @noRd
 Phat_causal = function( q,
                         B,
-                        calib, # assumed on log scale
                         tail,
                         
                         give.CI = TRUE,
@@ -75,21 +74,36 @@ Phat_causal = function( q,
 
 
 
-###### Simplified version of above for boot to call #####
+#' Simplified Phat_causal for bootstrapping
+#'
+#' An internal function that calls \code{Phat_causal} in a way that plays well with the \code{boot} package. Draws a resample internally. Only returns Phat itself. 
+#' @param original The original dataset from which to resample (will be passed by \code{boot})
+#' @param indices The indices to resample (will be passed by \code{boot})
+#' @param q True effect size that is the threshold for "scientific significance"
+#' @param B Single value of bias factor
+
+#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
+#' the proportion of effects below \code{q}.
+#' @param calib.name Column name in dataframe \code{dat} containing calibrated estimates
+#' @import
+#' @noRd
+#' boot 
 Phat_causal_bt = function( original,
                            indices,
-                           .calib.name,
-                           .q,
-                           .B,
-                           .tail ) {
+       
+                           q,
+                           B,
+                           tail,
+                           calib.name) {
   
+  # draw bootstrap sample
   b = original[indices,]
   
-  phatb = Phat_causal( .q = .q, 
-                       .B = .B,
-                       .calib = b[[.calib.name]], 
-                       .tail = .tail,
-                       .give.CI = FALSE)
+  phatb = Phat_causal( q = q, 
+                       B = B,
+                       calib = b[[calib.name]], 
+                       tail = tail,
+                       give.CI = FALSE)
   return(phatb)
 }
 
@@ -267,9 +281,9 @@ confounded_meta = function( method="calibrated",
       if ( !is.na(muB) ) {
         # prop above
         Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
-        phat = 1 - pnorm(Z) 
+        Phat = 1 - pnorm(Z) 
       } else {
-        phat = NA
+        Phat = NA
       }
       
       if ( !is.na(r) ) {
@@ -293,9 +307,9 @@ confounded_meta = function( method="calibrated",
       if ( !is.na(muB) ) {
         # prop below
         Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
-        phat = pnorm(Z) 
+        Phat = pnorm(Z) 
       } else {
-        phat = NA
+        Phat = NA
       }
       
       if ( !is.na(r) ) {
@@ -321,19 +335,19 @@ confounded_meta = function( method="calibrated",
       term1 = sqrt( term1.1 + term1.2 )
       
       Z = num.term / sqrt( t2 - sigB^2 )
-      SE = term1 * dnorm(Z)
+      SE.Phat = term1 * dnorm(Z)
       
       # confidence interval
       tail.prob = ( 1 - CI.level ) / 2
-      lo.phat = max( 0, phat + qnorm( tail.prob )*SE )
-      hi.phat = min( 1, phat - qnorm( tail.prob )*SE )
+      lo.Phat = max( 0, Phat + qnorm( tail.prob )*SE.Phat )
+      hi.Phat = min( 1, Phat - qnorm( tail.prob )*SE.Phat )
       
       # warn if bootstrapping needed
       # @ change to recommending calibrated?
-      if ( phat < 0.15 | phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
+      if ( Phat < 0.15 | Phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
       
     } else {
-      SE = lo.phat = hi.phat = NA
+      SE.Phat = lo.Phat = hi.Phat = NA
     }
     
     ##### Delta Method Inference: Tmin and Gmin #####
@@ -365,15 +379,14 @@ confounded_meta = function( method="calibrated",
     }
     
     
-    # return results
-    res = data.frame( Value = c("Prop", "Tmin", "Gmin"), 
-                      Est = c( phat, Tmin, Gmin ),
-                      SE = c(SE, SE.T, SE.G),
-                      CI.lo = c(lo.phat, lo.T, lo.G), 
-                      CI.hi = c(hi.phat, hi.T, hi.G) 
-    )
-    
-    return(res)
+    # # return results
+    # res = data.frame( Value = c("Prop", "Tmin", "Gmin"), 
+    #                   Est = c( Phat, Tmin, Gmin ),
+    #                   SE = c(SE, SE.T, SE.G),
+    #                   CI.lo = c(lo.Phat, lo.T, lo.G), 
+    #                   CI.hi = c(hi.Phat, hi.T, hi.G) )
+    # 
+    # return(res)
   } ## closes parametric method
   
   ##### CALIBRATED #####
@@ -390,99 +403,102 @@ confounded_meta = function( method="calibrated",
     # for use with later bootstrapping fns
     calib.name = "calib"
     
-    # this method only works for homogeneous bias, so set the common log-bias factor
+    # calibrated method only works for homogeneous bias,
+    #  so use the common log-bias factor
     #  across studies equal to the mean log-bias factor
-    .B = muB
+    if (tail == "above") calib.t = .calib - log(muB)
+    if (tail == "below") calib.t = .calib + log(muB)
     
-    if (tail == "above") calib.t = .calib - log(.B)
-    if (tail == "below") calib.t = .calib + log(.B)
+    ##### Phat #####
+    if ( tail == "above" ) Phat = mean( calib.t > q )
+    if ( tail == "below" ) Phat = mean( calib.t < q )
     
-    # confounding-adjusted Phat
-    if ( tail == "above" ) Phat.t = mean( calib.t > q )
-    if ( tail == "below" ) Phat.t = mean( calib.t < q )
+    ##### Tmin and Gmin Via Grid Search #####
+    # calculate Phat causal at each value of B.vec
+    # list of bias factors
+    Bl = as.list(B.vec)
+    Phat.vec = lapply( Bl,
+                         FUN = function(B) Phat_causal( q = q, 
+                                                        B = B,
+                                                        calib = calib,
+                                                        tail = tail,
+                                                        give.CI = FALSE ) )
+    
+    res = data.frame( B = B.vec,
+                      Phat.t = unlist(Phat.vec) )
+    
+    Tmin = res$B[ which.min( abs( res$Phat - r ) ) ]
+    Gmin = g(Tmin)
     
     
-    if ( .give.CI == FALSE ) {
+    if ( give.CI == FALSE ) {
       
-      return(Phat.t)
+      SE.Phat = SE.T = SE.G = lo.Phat = lo.T = lo.G = hi.Phat = hi.T = hi.G = NA
       
     } else {
+      ##### Confidence Intervals for All Three #####
       require(boot)
+      
+      # Phat
       boot.res = suppressWarnings( boot( data = .dat,
                                          parallel = "multicore",
                                          R = .R, 
                                          statistic = Phat_causal_bt,
                                          # below arguments are being passed to Phat_causal_bt
+                                         q = q,
+                                         B = B.vec,
+                                         tail = tail,
+                                         calib.name = calib.name ) )
+      
+      bootCIs = boot.ci(boot.res,
+                        type="bca",
+                        conf = CI.level )
+      
+      lo.Phat = bootCIs$bca[4]
+      hi.Phat = bootCIs$bca[5]
+      SE.Phat = sd(boot.res$t)
+      
+      # Tmin and Gmin
+      boot.res = suppressWarnings( boot( data = .dat,
+                                         parallel = "multicore",
+                                         R = .R, 
+                                         statistic = That_causal_bt,
+                                         # below arguments are being passed to get_stat
                                          .calib.name = .calib.name,
                                          .q = q,
-                                         .B = .B.vec,
+                                         .r = r,
+                                         .B.vec = .B.vec,
                                          .tail = tail ) )
       
       bootCIs = boot.ci(boot.res,
                         type="bca",
-                        conf = 0.95 )
+                        conf = CI.level )
       
-      lo_Phat = bootCIs$bca[4]
-      hi_Phat = bootCIs$bca[5]
-      SE_Phat = sd(boot.res$t)
-      Bl = as.list(.B.vec)
+      lo.T = max(1, bootCIs$bca[4])  # bias factor can't be < 1
+      hi.T = bootCIs$bca[5]  # but has no upper bound
+      SE.T = sd(boot.res$t)
+    
       
-      Phat.t.vec = lapply( Bl,
-                           FUN = function(B) Phat_causal( .q = q, 
-                                                          .B = B,
-                                                          .calib = .calib,
-                                                          .tail = tail,
-                                                          .give.CI = FALSE ) )
-      
-      res = data.frame( B = .B.vec,
-                        Phat.t = unlist(Phat.t.vec) )
-      
-      That = res$B[ which.min( abs( res$Phat.t - r ) ) ]
-      Ghat = g(That)
-      
-      if ( .give.CI == FALSE ) {
-        
-        return( data.frame( That, Ghat ) )
-        
-      } else {
-        boot.res = suppressWarnings( boot( data = .dat,
-                                           parallel = "multicore",
-                                           R = .R, 
-                                           statistic = That_causal_bt,
-                                           # below arguments are being passed to get_stat
-                                           .calib.name = .calib.name,
-                                           .q = q,
-                                           .r = r,
-                                           .B.vec = .B.vec,
-                                           .tail = tail ) )
-        
-        bootCIs = boot.ci(boot.res,
-                          type="bca",
-                          conf = 0.95 )
-        
-        lo = bootCIs$bca[4]
-        hi = bootCIs$bca[5]
-        SE = sd(boot.res$t)
-        
-        # return results
-        res = data.frame( Value = c("Phat.t", "That", "Ghat"), 
-                          Est = c(Phat.t, That, Ghat),
-                          SE = c(SE_Phat, SE, NA),  # ~~ for latter, could replace with delta method
-                          CI.lo = c(lo_Phat, lo, g(lo)), 
-                          CI.hi = c(hi_Phat, hi, g(hi)),
-                          Meaning = c(NA, "Bias factor required", "Confounding strength required")
-        )
-        
-        return(res)
-      }
+      ##### Gmin #####
+      lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
+      hi.G = g(hi.T)  # but has no upper bound
+      SE.G = NA  # in principle, could bootstrap this one as well, but seems a waste of time
     }
     
     
     
   } #closes calibrated method
   
-} #closes confounded_meta function
-
+  # bm
+  #browser()
+  ##### Return Results #####
+  return( data.frame( Value = c("Prop", "Tmin", "Gmin"), 
+                    Est = c( Phat, Tmin, Gmin ),
+                    SE = c(SE.Phat, SE.T, SE.G),
+                    CI.lo = c(lo.Phat, lo.T, lo.G), 
+                    CI.hi = c(hi.Phat, hi.T, hi.G) ) )
+  
+} # closes confounded_meta function
 
 
 

@@ -1,5 +1,5 @@
 library(testthat)
-library(EValue)
+#library(EValue)
 library(devtools)
 
 
@@ -513,13 +513,21 @@ test_that("Reject negative outcomes", {
 
 ###################### CONFOUNDEDMETA ###################### 
 
-
+##### Parametric Method #####
 test_that("Setting q equal to observed mean without bias should yield 50%", {
-  expect_equal( 0.5, confounded_meta(method="parametric", q=log(1.4), muB=0, sigB=0,
-                                     yr=log(1.4), t2=0.1 )[1,2] )
+  expect_equal( 0.5, confounded_meta(method="parametric",
+                                     q=log(1.4),
+                                     muB=0,
+                                     sigB=0,
+                                     yr=log(1.4),
+                                     t2=0.1 )[1,2] )
   
-  expect_equal( 0.5, confounded_meta(method="parametric", q=log(0.5), muB=0, sigB=0,
-                                     yr=log(0.5), t2=0.1 )[1,2] )
+  expect_equal( 0.5, confounded_meta(method="parametric",
+                                     q=log(0.5),
+                                     muB=0,
+                                     sigB=0,
+                                     yr=log(0.5),
+                                     t2=0.1 )[1,2] )
 })
 
 
@@ -679,6 +687,8 @@ test_that("No bias needed to reduce strong effects to less than r", {
 })
 
 
+
+##### Calibrated Method #####
 ### jl testing calibrated confounded_meta 1 ###
 test_that("calibrated confounded_meta compared to That_causal results in analysis.R",{
   ### packages and functions from Maya's old code:
