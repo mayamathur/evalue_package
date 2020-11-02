@@ -1,7 +1,8 @@
 library(testthat)
 #library(EValue)
 library(devtools)
-
+library(dplyr)
+library(ICC)
 
 ###################### EVALUE: ANNALS PAPER EXAMPLES ###################### 
 
@@ -690,12 +691,50 @@ test_that("Parametric, test set #4, (no bias needed to reduce this Phat to less 
 ##### Calibrated Method #####
 
 test_that("Calibrated, test set #1 (setting q equal to observed mean without bias should yield 50%)", {
-  expect_equal( 0.5, confounded_meta(method="parametric",
-                                     q=log(1.4),
+  
+  # bm
+  # @need to source these fns
+  d = sim_data2( k = 100,
+                 m = 100,
+                 b0 = log(1.4), # intercept
+                 bc = 0, # effect of continuous moderator
+                 bb = 0, # effect of binary moderator
+                 V = 0.1, 
+                 Vzeta = 0, # used to calcuate within-cluster variance
+                 
+                 muN = 100,
+                 minN = 100,
+                 sd.w = 1,
+                 true.effect.dist = "expo" )
+  
+
+  # hand-calculate the calibrated estimates and their median
+  d$calib = MetaUtility::calib_ests(yi = d$yi,
+                                    sei = sqrt(d$vyi) )
+  
+  q = median(d$calib)
+  
+  x = confounded_meta(method="calibrated",
+                      q=q,
+                      tail = "above",
+                      muB=0,
+                      
+                      Bmin = 1,  
+                      Bmax = 5,
+                      give.CI=TRUE,
+                      dat = d,
+                      yi.name = "yi",
+                      vi.name = "vyi")
+  
+
+  expect_equal( 0.5, confounded_meta(method="calibrated",
+                                     q=q,
                                      muB=0,
-                                     sigB=0,
-                                     yr=log(1.4),
-                                     t2=0.1 )[1,2] )
+        
+                                     Bmin = 1,  
+                                     Bmax = 5,
+                                     give.CI=TRUE,
+                                     dat = d) )
   
   expect_equal( 0.5, confounded_meta(method="parametric",
                                      q=log(0.5),
