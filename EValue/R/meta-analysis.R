@@ -4,38 +4,59 @@
 #' .dat needs to have a column called "calib"
 #' helper function for confounded_meta
 #' 
-Phat_causal = function( .q,
-                        .B,
-                        .calib, # assumed on log scale
-                        .tail,
+#' 
+#' 
+
+
+#' Proportion of studies with true effects above or below q
+#'
+#' An internal function that estimates the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call 
+#' @param q True effect size that is the threshold for "scientific significance"
+#' @param B Single value of bias factor
+
+#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
+#' the proportion of effects below \code{q}.
+#' @param calib Calibrated estimates on logRR scale
+#' @param give.CI Logical. If TRUE, bootstrap confidence intervals provided
+#' @param R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).
+#' @param calib.name Column name in dataframe \code{dat} containing calibrated estimates
+#' @import
+#' @noRd
+#' boot 
+Phat_causal = function( q,
+                        B,
+                        calib, # assumed on log scale
+                        tail,
                         
-                        .give.CI = TRUE,
-                        .R = 2000,
-                        .dat = NA,
-                        .calib.name = NA ) {
+                        give.CI = TRUE,
+                        R = 2000,
+                        dat = NA,
+                        calib.name = NA ) {
   
-  if(.tail == "above") calib.t = .calib - log(.B)
-  if(.tail == "below") calib.t = .calib + log(.B)
+  # confounding-adjusted calibrated estimates
+  # always shift the estiamtes in the direction that will DECREASE the proportion
+  if ( tail == "above" ) calib.t = calib - log(B)
+  if ( tail == "below" ) calib.t = calib + log(B)
   
   # confounding-adjusted Phat
-  if ( .tail == "above" ) Phat.t = mean( calib.t > .q )
-  if ( .tail == "below" ) Phat.t = mean( calib.t < .q )
+  if ( tail == "above" ) Phat.t = mean( calib.t > q )
+  if ( tail == "below" ) Phat.t = mean( calib.t < q )
   
   
-  if ( .give.CI == FALSE ) {
+  if ( give.CI == FALSE ) {
     
     return(Phat.t)
     
   } else {
-    boot.res = suppressWarnings( boot( data = .dat,
+    boot.res = suppressWarnings( boot( data = dat,
                                        parallel = "multicore",
-                                       R = .R, 
+                                       R = R, 
                                        statistic = Phat_causal_bt,
                                        # below arguments are being passed to get_stat
-                                       .calib.name = .calib.name,
-                                       .q = .q,
-                                       .B = .B,
-                                       .tail = .tail ) )
+                                       .calib.name = calib.name,
+                                       .q = q,
+                                       .B = B,
+                                       .tail = tail ) )
     
     bootCIs = boot.ci(boot.res,
                       type="bca",
@@ -71,6 +92,7 @@ Phat_causal_bt = function( original,
                        .give.CI = FALSE)
   return(phatb)
 }
+
 
 #' define transformation in a way that is monotonic over the effective range of B (>1)
 #' to avoid ggplot errors
@@ -118,7 +140,7 @@ That_causal_bt = function( original,
 
 
 #' Estimates and inference for sensitivity analyses
-#'
+#' 
 #' Computes point estimates, standard errors, and confidence interval bounds
 #' for (1) \code{prop}, the proportion of studies with true effect sizes above \code{q} (or below
 #' \code{q} for an apparently preventive \code{yr}) as a function of the bias parameters;
@@ -129,7 +151,7 @@ That_causal_bt = function( original,
 #' @param method "calibrated" or "parametric"
 #' @param q True effect size that is the threshold for "scientific significance"
 #' @param r For \code{Tmin} and \code{Gmin}, value to which the proportion of large effect sizes is to be reduced
-#' @param muB Mean bias factor on the log scale across studies
+#' @param muB Mean bias factor on the log scale across studies. When considering bias that of homogeneous strength across studies (i.e., \code{method == "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. 
 #' @param sigB Standard deviation of log bias factor across studies
 #' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
 #' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis
@@ -137,14 +159,13 @@ That_causal_bt = function( original,
 #' @param vt2 Estimated variance of tau^2 from confounded meta-analysis
 #' @param CI.level Confidence level as a proportion
 #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' the proportion of effects below \code{q}. By default, is set to \code{above} for relative risks
+#' the proportion of effects below \code{q}. By default, is set to \code{above} for relative risks (@@check if true)
 #' above 1 and to \code{below} for relative risks below 1.
 #' @param Bmin Lower limit of bias factor (used for "calibrated" method only)
 #' @param Bmax Upper limit of bias factor (used for "calibrated" method only)
-#' @param .calib Calibrated estimates on logRR scale
-#' @param .give.CI Logical. If TRUE, bootstrap confidence intervals provided
-#' @param .R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.
-#' @param .calb.name column name in dataframe containing calibrated estimates
+#' @param give.CI Logical. If TRUE, bootstrap confidence intervals provided
+#' @param R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.
+#' @param calib.name column name in dataframe containing calibrated estimates
 #' @export
 #' @details
 #' To compute all three point estimates (\code{prop, Tmin, and Gmin}) and inference, all
@@ -154,8 +175,11 @@ That_causal_bt = function( original,
 #' can be left \code{NA}. To compute inference for all point estimates, \code{vyr} and 
 #' \code{vt2} must be supplied. 
 #' @keywords meta-analysis
-#' @import metafor
+#' @import
+#' metafor
 #' stats 
+#' MetaUtility
+#' boot
 #' @examples
 #' d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
 #' ci=cpos, di=cneg, data=metafor::dat.bcg)
@@ -181,11 +205,24 @@ That_causal_bt = function( original,
 #'                  yr=yr, t2=t2, CI.level=0.95 )
 
 
-confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
-                            yr, vyr=NA, t2, vt2=NA,
-                            CI.level=0.95, tail=NA, Bmin, Bmax,
-                            .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name ) {
-  ### for parametric
+confounded_meta = function( method="calibrated",
+                            q,
+                            r=NA,
+                            muB,
+                            sigB,
+                            yr,
+                            vyr=NA,
+                            t2,
+                            vt2=NA,
+                            CI.level=0.95,
+                            tail=NA,
+                            
+                            Bmin,
+                            Bmax,
+                            give.CI=TRUE,
+                            R=2000,
+                            dat ) {
+  ##### PARAMETRIC #####
   if (method=="parametric"){
     
     
@@ -214,14 +251,16 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
     if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
     
     ##### Point Estimates: Causative Case #####
-    
     # if tail isn't provided, assume user wants the more extreme one (away from the null)
     if ( is.na(tail) ) tail = ifelse( yr > log(1), "above", "below" )
     
     # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
+    # @make sure Phat_causal is consistent with this
     if ( yr > log(1) ) {
       yr.corr = yr - muB
-    }else{ yr.corr = yr + muB}
+    } else {
+      yr.corr = yr + muB
+    }
     
     if ( tail == "above" ) {
       
@@ -290,6 +329,7 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
       hi.phat = min( 1, phat - qnorm( tail.prob )*SE )
       
       # warn if bootstrapping needed
+      # @ change to recommending calibrated?
       if ( phat < 0.15 | phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
       
     } else {
@@ -336,20 +376,26 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
     return(res)
   } ## closes parametric method
   
-  ## for calibrated
-  if(method=="calibrated"){
-    require(boot)
-    .B.vec = seq(Bmin, Bmax, .01)
+  ##### CALIBRATED #####
+  if( method == "calibrated" ){
     
-    .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yr]],
+    # make vector of bias factors for the grid search
+    B.vec = seq(Bmin, Bmax, .01)
+    
+    # add calibrated estimates (without adjustment for confounding)
+    #  to dat
+    dat$calib = MetaUtility::calib_ests(yi=.dat[[yr]],
                                               sei=sqrt(.dat[[vyr]]))
-    .calib=.dat$calib
-    .calib.name="calib"
+    calib = dat$calib
+    # for use with later bootstrapping fns
+    calib.name = "calib"
     
-    .B=muB
+    # this method only works for homogeneous bias, so set the common log-bias factor
+    #  across studies equal to the mean log-bias factor
+    .B = muB
     
-    if(tail == "above") calib.t = .calib - log(.B)
-    if(tail == "below") calib.t = .calib + log(.B)
+    if (tail == "above") calib.t = .calib - log(.B)
+    if (tail == "below") calib.t = .calib + log(.B)
     
     # confounding-adjusted Phat
     if ( tail == "above" ) Phat.t = mean( calib.t > q )
@@ -361,11 +407,12 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
       return(Phat.t)
       
     } else {
+      require(boot)
       boot.res = suppressWarnings( boot( data = .dat,
                                          parallel = "multicore",
                                          R = .R, 
                                          statistic = Phat_causal_bt,
-                                         # below arguments are being passed to get_stat
+                                         # below arguments are being passed to Phat_causal_bt
                                          .calib.name = .calib.name,
                                          .q = q,
                                          .B = .B.vec,

@@ -5,19 +5,25 @@
 \title{Plots for sensitivity analyses}
 \usage{
 sens_plot(
+  method = "calibrated",
   type,
   q,
-  muB = NA,
-  Bmin = log(1),
-  Bmax = log(5),
-  sigB = 0,
+  r = NA,
+  muB,
+  Bmin,
+  Bmax,
+  sigB,
   yr,
   vyr = NA,
   t2,
   vt2 = NA,
   breaks.x1 = NA,
   breaks.x2 = NA,
-  CI.level = 0.95
+  CI.level = 0.95,
+  tail = NA,
+  .give.CI = TRUE,
+  .R = 2000,
+  .dat
 )
 }
 \arguments{

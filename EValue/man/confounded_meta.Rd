@@ -5,19 +5,29 @@
 \title{Estimates and inference for sensitivity analyses}
 \usage{
 confounded_meta(
+  method = "calibrated",
   q,
   r = NA,
-  muB = NA,
-  sigB = 0,
+  muB,
+  sigB,
   yr,
   vyr = NA,
   t2,
   vt2 = NA,
   CI.level = 0.95,
-  tail = NA
+  tail = NA,
+  Bmin,
+  Bmax,
+  .calib,
+  .give.CI = TRUE,
+  .R = 2000,
+  .dat,
+  .calib.name
 )
 }
 \arguments{
+\item{method}{"calibrated" or "parametric"}
+
 \item{q}{True effect size that is the threshold for "scientific significance"}
 
 \item{r}{For \code{Tmin} and \code{Gmin}, value to which the proportion of large effect sizes is to be reduced}
@@ -39,6 +49,18 @@ confounded_meta(
 \item{tail}{\code{above} for the proportion of effects above \code{q}; \code{below} for
 the proportion of effects below \code{q}. By default, is set to \code{above} for relative risks
 above 1 and to \code{below} for relative risks below 1.}
+
+\item{Bmin}{Lower limit of bias factor (used for "calibrated" method only)}
+
+\item{Bmax}{Upper limit of bias factor (used for "calibrated" method only)}
+
+\item{.calib}{Calibrated estimates on logRR scale}
+
+\item{.give.CI}{Logical. If TRUE, bootstrap confidence intervals provided}
+
+\item{.R}{Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.}
+
+\item{.calb.name}{column name in dataframe containing calibrated estimates}
 }
 \description{
 Computes point estimates, standard errors, and confidence interval bounds
