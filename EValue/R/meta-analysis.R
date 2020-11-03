@@ -18,9 +18,9 @@ Phat_causal = function( q,
                         B,
                         tail,
 
-                        dat = NA,
-                        yi.name = NA,
-                        vi.name = NA) {
+                        dat,
+                        yi.name,
+                        vi.name) {
   
   if ( ! yi.name %in% names(dat) ) stop("dat does not contain a column named yi.name")
   if ( ! vi.name %in% names(dat) ) stop("dat does not contain a column named vi.name")
@@ -86,6 +86,7 @@ g = Vectorize( function(x) {
   x + sqrt( x^2 - x )
 } )
 
+# @@ needed?
 logHR_to_logRR = function(logRR){
   log( ( 1 - 0.5^sqrt( exp(logRR) ) ) / ( 1 - 0.5^sqrt( 1 / exp(logRR) ) ) )
 }
@@ -253,29 +254,29 @@ confounded_meta = function( method="calibrated",  # for both methods
                             vt2=NA,
                             
                             # only for calibrated
-                            Bmin,  # log scale
-                            Bmax,
+                            # Bmin,  # log scale
+                            # Bmax,
                             give.CI=TRUE,
                             dat,
                             yi.name,
                             vi.name) {
   
   
-  # # test only
-  # method="calibrated"
-  # q=median(d$calib)
-  # tail = "above"
-  # muB=0
-  # r=0.1
-  # R = 250
-  # CI.level = 0.95
-  # 
-  # Bmin = log(1)
-  # Bmax = log(5)
-  # give.CI=TRUE
-  # dat = d
-  # yi.name = "yi"
-  # vi.name = "vyi"
+  # test only
+  method="calibrated"
+  q=median(d$calib)
+  tail = "above"
+  muB=0
+  r=0.1
+  q = 0.2
+  R = 250
+  CI.level = 0.95
+
+
+  give.CI=TRUE
+  dat = d
+  yi.name = "yi"
+  vi.name = "vyi"
   
   ##### PARAMETRIC #####
   if (method=="parametric"){
@@ -433,6 +434,8 @@ confounded_meta = function( method="calibrated",  # for both methods
   ##### CALIBRATED #####
   if( method == "calibrated" ){
     
+    # bm1
+    
     ##### Check for Bad Input #####
     # @@do me
     
@@ -446,13 +449,13 @@ confounded_meta = function( method="calibrated",  # for both methods
     # calib.name = "calib"
     
     # # calibrated method only works for homogeneous bias,
-    # #  so use the common log-bias factor
+    # #  so use the common log-biass factor
     # #  across studies equal to the mean log-bias factor
     # if (tail == "above") calib.t = calib - muB
     # if (tail == "below") calib.t = calib + muB
     # 
     # ##### Phat #####
-    # if ( tail == "above" ) Phat = mean( calib.t > q )
+    # if ( tail == "above"s ) Phat = mean( calib.t > q )
     # if ( tail == "below" ) Phat = mean( calib.t < q )
     
     
