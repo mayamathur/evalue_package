@@ -2,7 +2,7 @@
 
 #' Proportion of studies with causal effects above or below q
 #'
-#' An internal function that estimates the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call 
+#' An internal function that estimates the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call \code{confounded_meta} instead.
 #' @param q True effect size that is the threshold for "scientific significance"
 #' @param B Single value of bias factor (log scale)
 
@@ -29,7 +29,7 @@ Phat_causal = function( q,
                                    sei = sqrt(dat[[vi.name]] ) )
   
   # confounding-adjusted calibrated estimates
-  # always shift the estiamtes in the direction that will DECREASE the proportion
+  # always shift the estimates in the direction that will DECREASE the proportion
   if ( tail == "above" ) calib.t = calib - B
   if ( tail == "below" ) calib.t = calib +B
   
@@ -91,26 +91,26 @@ logHR_to_logRR = function(logRR){
 }
 
 
-
-#' ##### That and Ghat from grid search of Phat values #####
-#' # for each of a vector of bias factors, calculates Phat causal and then finds the one
-#' # that's closest to threshold proportion, .r
-#' helper function for confounded_meta
+#' Minimum common bias factor to reduce proportion of studies with causal effects above or below q t less than r
 #'
-####  #####
-# @@make this an internal fn because warnings come from confounded_meta
-# import MetaUtility
-
-# bm: next up: write docs for this and Phat_causal
-#  then can move onto confounded_meta
-Tmin_causal = function( 
-                        q,
+#' An internal function that estimates; users should call \code{confounded_meta} instead.
+#' @param q True effect size that is the threshold for "scientific significance"
+#' @param r Value to which the proportion of strong effect sizes is to be reduced
+#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
+#' the proportion of effects below \code{q}.
+#' @param dat Dataframe containing studies' point estimates and variances
+#' @param yi.name Name of variable in \code{dat} containing studies' point estimates
+#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates
+#' @import
+#' MetaUtility 
+#' @noRd
+Tmin_causal = function( q,
                         r,
+                        tail,
                         
                         dat,
                         yi.name,
-                        vi.name,
-                        tail ) {
+                        vi.name ) {
 
   # # test only
   # dat = d
@@ -141,12 +141,12 @@ Tmin_causal = function(
   #  to get the possible values that Phat can take
   #  this approach handles ties
   calib = sort( calib_ests( yi = dat[[yi.name]], sei = sqrt(dat[[vi.name]]) ) )
-  ( Phat.options = unique( ecdf(calib)(calib) ) )
+  Phat.options = unique( ecdf(calib)(calib) )
   # always possible to choose 0
-  ( Phat.options = c(Phat.options, 0) )
+  Phat.options = c(Phat.options, 0)
   
   # of Phats that are <= r, find the largest one (i.e., closest to r)
-  ( Phat.target = max( Phat.options[ Phat.options <= r ] ) )
+  Phat.target = max( Phat.options[ Phat.options <= r ] ) 
   
   
   # find calib.star, the calibrated estimate that needs to move to q
@@ -159,23 +159,12 @@ Tmin_causal = function(
   if ( tail == "above" ) calib.star = calib[ k - (k * Phat.target) ]
   if ( tail == "below" ) calib.star = calib[ (k * Phat.target) + 1 ]
   
-  calib.star
-  
   # pick the bias factor that shifts calib.star to q
   #  and then add a tiny bit (0.001) to shift calib.star to just
   # below or above q
   # if multiple calibrated estimates are exactly equal to calib.star, 
   #  all of these will be shifted just below q (if tail == "above")
   ( Tmin = exp( abs(calib.star - q) + 0.001 ) )
-  
-  # # check it: >q case
-  # calib.t = calib - log(Tmin)
-  # mean(calib.t > q)  # should match r or be less than r if there are ties
-  # 
-  # # check it: <q case
-  # calib.t = calib + log(Tmin)
-  # mean(calib.t < q)  # should match Phat.target, which will equal r if 
-  
 
   return(as.numeric(Tmin))
 }
@@ -193,7 +182,7 @@ Tmin_causal = function(
 #' relative risk for both confounding associations (\code{Gmin}).
 #' @param method "calibrated" or "parametric"
 #' @param q True effect size that is the threshold for "scientific significance"
-#' @param r For \code{Tmin} and \code{Gmin}, value to which the proportion of large effect sizes is to be reduced
+#' @param r For \code{Tmin} and \code{Gmin}, value to which the proportion of strong effect sizes is to be reduced
 #' @param muB Mean bias factor on the log scale across studies. When considering bias that of homogeneous strength across studies (i.e., \code{method == "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. 
 #' @param sigB Standard deviation of log bias factor across studies
 #' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
@@ -589,7 +578,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' \code{r} the proportion of true effects more extreme than \code{q}.
 #' @param meas \code{prop}, \code{Tmin}, or \code{Gmin}
 #' @param q True effect size that is the threshold for "scientific significance"
-#' @param r For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of large effect sizes is to be reduced
+#' @param r For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of strong effect sizes is to be reduced
 #' @param muB Mean bias factor on the log scale across studies
 #' @param sigB Standard deviation of log bias factor across studies
 #' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
