@@ -132,42 +132,56 @@ logHR_to_logRR = function(logRR){
   log( ( 1 - 0.5^sqrt( exp(logRR) ) ) / ( 1 - 0.5^sqrt( 1 / exp(logRR) ) ) )
 }
 
+
+
 #' ##### That and Ghat from grid search of Phat values #####
 #' # for each of a vector of bias factors, calculates Phat causal and then finds the one
 #' # that's closest to threshold proportion, .r
 #' helper function for confounded_meta
 #'
 ####  #####
-Tmin_causal = function( calib.name,
+# @@make this an internal fn because warnings come from confounded_meta
+# import MetaUtility
+Tmin_causal = function( 
                         q,
                         r,
-
+                        
                         dat,
                         yi.name,
                         vi.name,
                         tail ) {
   
+  # bm4
   
-  # test only
-  dat = d
-  q = quantile(d$calib, 0.8)
-  r = 0.1
-  yi.name = "yi"
-  vi.name = "vyi"
-  tail = "above"
+  # # test only
+  # dat = d
+  # calib.temp = MetaUtility::calib_ests(yi = d$yi,
+  #                                      sei = sqrt(d$vyi))
+  # q = quantile(calib.temp, 0.8)
+  # r = 0.3
+  # yi.name = "yi"
+  # vi.name = "vyi"
+  # tail = "above"
   
   
   # here, check if any shifting is actually needed
-  
-  
-  # what are the possible Phat values?
-  #Phat.options = 1 / ( 1 : length( unique(calib) ) )
-  # always possible to choose 0
-  #( Phat.options = c(Phat.options, 0) )
+  # current Phat
+  Phatc = Phat_causal(q = q,
+                      B = 0,
+                      tail = tail,
+                      dat = dat,
+                      yi.name = yi.name,
+                      vi.name = vi.name)
+  if ( Phatc <= r ){
+    # this warning is now in confounded_meta
+    #warning("Phat is already less than or equal to r even with no confounding, so Tmin is not applicable. No confounding at all is required to make the specified shift.")
+    return(1)
+  }
   
   # evaluate the ECDF of the unshifted calib at those calib themselves
   #  to get the possible values that Phat can take
   #  this approach handles ties
+  calib = sort( calib_ests( yi = dat[[yi.name]], sei = sqrt(dat[[vi.name]]) ) )
   ( Phat.options = unique( ecdf(calib)(calib) ) )
   # always possible to choose 0
   ( Phat.options = c(Phat.options, 0) )
@@ -182,6 +196,7 @@ Tmin_causal = function( calib.name,
   #  BELOW q after shifting
   # k * Phat.target is the number of calibrated estimates that should remain
   #  ABOVE q after shifting
+  k = length(calib)
   if ( tail == "above" ) calib.star = calib[ k - (k * Phat.target) ]
   if ( tail == "below" ) calib.star = calib[ (k * Phat.target) + 1 ]
   
@@ -194,116 +209,17 @@ Tmin_causal = function( calib.name,
   #  all of these will be shifted just below q (if tail == "above")
   ( Tmin = exp( abs(calib.star - q) + 0.001 ) )
   
-  # check it: >q case
-  calib.t = calib - log(Tmin)
-  mean(calib.t > q)  # should match r or be less than r if there are ties
+  # # check it: >q case
+  # calib.t = calib - log(Tmin)
+  # mean(calib.t > q)  # should match r or be less than r if there are ties
+  # 
+  # # check it: <q case
+  # calib.t = calib + log(Tmin)
+  # mean(calib.t < q)  # should match Phat.target, which will equal r if 
   
-  # check it: <q case
-  calib.t = calib + log(Tmin)
-  mean(calib.t < q)  # should match Phat.target, which will equal r if 
-  
-  
-  
-  # # if the optimal value is very close to the upper range of grid search
-  # #  AND we're still not very close to the target q,
-  # #  that means the optimal value was above eta.grid.hi
-  # if ( abs( Tmin.candidate - exp(B.grid.hi) ) < 0.0001 & abs(Phat.of.Tmin.candidate - r) > 0.0001 ){
-  #   Tmin = paste(">", B.grid.hi)
-  # } else {
-  #   Tmin = Tmin.candidate
-  # }
-  
-  
-  return(Tmin)
-  
+
+  return(as.numeric(Tmin))
 }
-
-
-# Tmin_causal = function( 
-#                         q,
-#                         r,
-#                         B.grid.hi,  # log scale
-#                         dat,
-#                         yi.name,
-#                         vi.name,
-#                         tail ) {
-#   
-#   # test only
-#   dat = d
-#   q = quantile(d$calib, 0.8)
-#   r = 0.1
-#   yi.name = "yi"
-#   vi.name = "vyi"
-#   tail = "above"
-#   B.grid.hi = log(100)
-#   
-#   # test only
-#   Phat_causal( q = q, 
-#                B = log(20),
-#                tail = tail,
-#                dat = dat,
-#                yi.name = yi.name,
-#                vi.name = vi.name )
-#   distance(0)
-#   distance(log(1.5))
-#   distance(B.grid.hi)
-#   
-#   
-# 
-#   # function to optimize
-#   # the distance between a candidate Phat from desired r
-#   distance = function(.B) {
-#     candidate = Phat_causal( q = q, 
-#                              B = .B,
-#                              tail = tail,
-#                              dat = dat,
-#                              yi.name = yi.name,
-#                              vi.name = vi.name )
-#     
-#     # how close is the candidate Phat to the desired proportion, r?
-#     return( abs( candidate - r ) )
-#   }
-#   
-#   dist2 = function(.B) {
-#     if ( .B > log(1.5) & .B < log(2) ) return(0)
-#     else return(5)
-#   }
-#   dist2(log(1.52))
-#   optimize( f = dist2,
-#             interval = c(log(1.4), log(1.6)),
-#             maximum = FALSE )
-#   
-#   optimize( f = dist2,
-#             interval = c(0, log(5)),
-#             maximum = FALSE )
-#   # WTF?
-#   
-#   # WTF?
-# 
-#   opt = optimize( f = dist2,
-#                   interval = c(0, B.grid.hi),
-#                   maximum = FALSE )
-#   Tmin.candidate = opt$minimum
-#   
-#   # discrepancy between the candidate and the desired r
-#   diff = opt$objective
-#   
-#   # bm: stopped here: trying to finish the Tmin function
-#   
-#   
-#   # if the optimal value is very close to the upper range of grid search
-#   #  AND we're still not very close to the target q,
-#   #  that means the optimal value was above eta.grid.hi
-#   if ( abs(Tmin.candidate - B.grid.hi) < 0.0001 & diff > 0.0001 ){
-#     Tmin = paste(">", B.grid.hi)
-#   } else {
-#     Tmin = Tmin.candidate
-#   }
-#   
-#   return(Tmin)
-# }
-# 
-
 
 
 
@@ -397,21 +313,21 @@ confounded_meta = function( method="calibrated",  # for both methods
                             vi.name) {
   
   
-  # test only
-  method="calibrated"
-  q=median(d$calib)
-  tail = "above"
-  muB=0
-  r=0.1
-  R = 250
-  CI.level = 0.95
-  
-  Bmin = log(1)
-  Bmax = log(5)
-  give.CI=TRUE
-  dat = d
-  yi.name = "yi"
-  vi.name = "vyi"
+  # # test only
+  # method="calibrated"
+  # q=median(d$calib)
+  # tail = "above"
+  # muB=0
+  # r=0.1
+  # R = 250
+  # CI.level = 0.95
+  # 
+  # Bmin = log(1)
+  # Bmax = log(5)
+  # give.CI=TRUE
+  # dat = d
+  # yi.name = "yi"
+  # vi.name = "vyi"
   
   ##### PARAMETRIC #####
   if (method=="parametric"){
@@ -446,7 +362,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     if ( is.na(tail) ) tail = ifelse( yr > log(1), "above", "below" )
     
     # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
-    # @make sure Phat_causal is consistent with this
+    # @@make sure Phat_causal is consistent with this
     if ( yr > log(1) ) {
       yr.corr = yr - muB
     } else {
@@ -469,7 +385,7 @@ confounded_meta = function( method="calibrated",  # for both methods
         # the max is there in case no bias is needed
         # (i.e., proportion of effects > q already < r without confounding)
         Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2) - q + yr ) )
-        
+
         # min confounding strength
         # suppress warnings to avoid warnings about NaN when term inside sqrt is negative
         Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
@@ -686,7 +602,12 @@ confounded_meta = function( method="calibrated",  # for both methods
     
   } #closes calibrated method
   
-  # bm
+  # bm5
+  if ( exists("Tmin") & !is.na(Tmin) & Tmin == 1 ) {
+    warning("Phat is already less than or equal to r even with no confounding, so Tmin is not applicable. No confounding at all is required to make the specified shift.")
+  }
+  
+
   #browser()
   ##### Return Results #####
   return( data.frame( Value = c("Prop", "Tmin", "Gmin"), 

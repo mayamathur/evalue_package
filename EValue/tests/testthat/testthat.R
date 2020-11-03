@@ -690,11 +690,181 @@ test_that("Parametric, test set #4, (no bias needed to reduce this Phat to less 
 
 ##### Calibrated Method #####
 
+
+# fix bracket issue
+test_that("Calibrated, Tmin_causal and Phat_causal, test set #1", {
+  
+  library(here())
+  setwd(here())
+  setwd("tests")
+  source("testthat_helper.R")
+  
+  ##### 1 #####
+  # make dataset with lots of ties
+  set.seed(10)
+  yi = rnorm(10, mean = 0, sd = 3)
+  vi = 1
+  yi = sort( sample( yi, size = 30, replace = TRUE) )
+  calib = MetaUtility::calib_ests(yi = yi, sei = sqrt(vi) )
+  # pick a q that's between repeated values
+  q = -2.3
+  r = 0.20
+  tail = "above"
+  d = data.frame( yi, vi )
+  
+  # naive Phat
+  Phat0 = Phat_causal(q = q,
+                      B = 0,
+                      tail = tail,
+                      dat = d,
+                      yi.name = "yi",
+                      vi.name = "vi")
+  
+  expect_equal( Phat0, 
+                mean(calib > q) )
+  
+  # Tmin
+  Tmin = Tmin_causal(q = q,
+                     r = r,
+                     tail = tail,
+                     dat = d,
+                     yi.name = "yi",
+                     vi.name = "vi")
+  
+  # evaluate Phat(B) at Tmin
+  Phat.at.Tmin = Phat_causal(q = q,
+                             B = log(Tmin),
+                             tail = tail,
+                             dat = d,
+                             yi.name = "yi",
+                             vi.name = "vi")
+  
+  # manually find the value of r we should have been targeting
+  calib.t = sort( calib - log(Tmin) )
+  ecdf(calib.t)(calib.t)
+  expect_equal( 0.1666667, Phat.at.Tmin, tol = 0.001)
+  
+  
+  ##### 2 #####
+  # same dataset, but now tail == "below"
+  # pick a q that's between repeated values
+  q = 0.6
+  r = 0.30
+  tail = "below"
+  d = data.frame( yi, vi )
+  
+  # naive Phat
+  Phat0 = Phat_causal(q = q,
+                      B = 0,
+                      tail = tail,
+                      dat = d,
+                      yi.name = "yi",
+                      vi.name = "vi")
+  
+  expect_equal( Phat0, 
+                mean(calib < q) )
+  
+  # Tmin
+  Tmin = Tmin_causal(q = q,
+                     r = r,
+                     tail = tail,
+                     dat = d,
+                     yi.name = "yi",
+                     vi.name = "vi")
+  
+  # evaluate Phat(B) at Tmin
+  Phat.at.Tmin = Phat_causal(q = q,
+                             B = log(Tmin),
+                             tail = tail,
+                             dat = d,
+                             yi.name = "yi",
+                             vi.name = "vi")
+  
+  # manually find the value of r we should have been targeting
+  calib.t = sort( calib - log(Tmin) )
+  ecdf(calib.t)(calib.t)
+  expect_equal( 0.30, Phat.at.Tmin, tol = 0.001)
+  
+  
+  ##### 3 - no confounding needed because Phat0 is already < r without confounding #####
+  # Phat0 is 0.9
+  r = 0.95
+  
+  Tmin = Tmin_causal(q = q,
+                     r = r,
+                     tail = tail,
+                     dat = d,
+                     yi.name = "yi",
+                     vi.name = "vi")
+  
+  expect_equal( 1, Tmin )
+  
+  ##### 4 - no confounding needed because Phat0 is already < r without confounding #####
+  # now tail == "above"
+  library(dplyr)
+  library(ICC)
+  d = sim_data2( k = 100,
+                 m = 100,
+                 b0 = log(1.4), # intercept
+                 bc = 0, # effect of continuous moderator
+                 bb = 0, # effect of binary moderator
+                 V = 0.1, 
+                 Vzeta = 0, # used to calcuate within-cluster variance
+                 
+                 muN = 100,
+                 minN = 100,
+                 sd.w = 1,
+                 true.effect.dist = "expo" )
+  
+  .calib = MetaUtility::calib_ests(yi = d$yi, sei = sqrt(d$vyi) )
+  q = quantile(.calib, 0.8)
+  r = 0.1
+  tail = "above"
+  
+  # choose q such that Phat0 = 0.20
+  # naive Phat
+  Phat0 = Phat_causal(q = q,
+                      B = 0,
+                      tail = tail,
+                      dat = d,
+                      yi.name = "yi",
+                      vi.name = "vyi")
+  
+  expect_equal( Phat0, 
+                0.20 )
+  
+  Tmin = Tmin_causal(q = q,
+                     r = r,
+                     tail = tail,
+                     dat = d,
+                     yi.name = "yi",
+                     vi.name = "vyi")
+  
+  # evaluate Phat(B) at Tmin
+  Phat.at.Tmin = Phat_causal(q = q,
+                             B = log(Tmin),
+                             tail = tail,
+                             dat = d,
+                             yi.name = "yi",
+                             vi.name = "vyi")
+  
+  expect_equal( r, Phat.at.Tmin, tol = 0.001)
+  
+} )
+
+
 test_that("Calibrated, test set #1 (setting q equal to observed mean without bias should yield 50%)", {
   
   # bm
   # @need to source these fns
+  library(here())
+  setwd(here())
+  setwd("tests")
+  source("testthat_helper.R")
   
+  
+  library(dplyr)
+  library(ICC)
   d = sim_data2( k = 100,
                  m = 100,
                  b0 = log(1.4), # intercept
