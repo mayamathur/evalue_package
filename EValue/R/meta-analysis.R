@@ -943,36 +943,3 @@ sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
 
 
 
-
-
-#' #' Estimate proportion of population effect sizes above or below a threshold
-#' #'
-#' #' Estimates the proportion of true effect sizes in a meta-analysis above or below
-#' #' a specified threshold of scientific importance. Effect sizes may be of any type (they need not
-#' #' be relative risks). This is a wrapper for \code{confounded_meta}; it is the special case in
-#' #' which there is no unmeasured confounding. 
-#' #' @param q True effect size that is the threshold for "scientific importance"
-#' #' @param yr Pooled point estimate from meta-analysis
-#' #' @param vyr Estimated variance of pooled point estimate from meta-analysis
-#' #' @param t2 Estimated heterogeneity (tau^2) from meta-analysis
-#' #' @param vt2 Estimated variance of tau^2 from meta-analysis
-#' #' @param CI.level Confidence level as a proportion
-#' #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' #' the proportion of effects below \code{q}.
-#' #' @keywords meta-analysis
-#' #' @export
-#' 
-#' stronger_than = function( q, yr, vyr=NA, t2, vt2=NA,
-#'                           CI.level=0.95, tail ) {
-#'   
-#'   # suppress warnings about lack of info for doing sensitivity analysis
-#'   # since we are not dealing with confounding 
-#'   cm = suppressMessages( confounded_meta( q = q, muB = 0, sigB = 0,
-#'                                           yr = yr, vyr = vyr,
-#'                                           t2 = t2, vt2 = vt2,
-#'                                           CI.level = CI.level,
-#'                                           tail = tail ) )
-#'   
-#'   # return just the first row (proportion) since the rest are for sensitivity analyses
-#'   return( cm[1,] ) 
-#' }

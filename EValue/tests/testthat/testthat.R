@@ -696,7 +696,6 @@ test_that("Parametric, test set #4, (no bias needed to reduce this Phat to less 
 
 ##### Calibrated Method #####
 
-#bm
 
 # test the helper fns
 test_that("Calibrated, Tmin_causal and Phat_causal, test set #1", {
@@ -1142,7 +1141,11 @@ test_that("Calibrated, test set #4, (no bias needed to reduce this Phat to less 
                       yi.name = "yi",
                       vi.name = "vyi")
   
-  expect_equal( x$Est[x$Value == "Prop"], .1 )
+  # calculate the correct Phat
+  # might not be exactly .1 due to ties
+  Phat = mean(calib > q)
+  
+  expect_equal( x$Est[x$Value == "Prop"], Phat )
   expect_equal( x$Est[x$Value == "Tmin"], 1 )
   expect_equal( x$Est[x$Value == "Gmin"], 1 )
   
