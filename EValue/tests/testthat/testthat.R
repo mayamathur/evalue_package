@@ -694,6 +694,7 @@ test_that("Calibrated, test set #1 (setting q equal to observed mean without bia
   
   # bm
   # @need to source these fns
+  
   d = sim_data2( k = 100,
                  m = 100,
                  b0 = log(1.4), # intercept

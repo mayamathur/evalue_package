@@ -27,11 +27,16 @@ Phat_causal = function( q,
                         tail,
                         
                         #give.CI = TRUE,
-                        R = 2000,
+                        #R = 2000,
                         dat = NA,
                         yi.name = NA,
                         vi.name = NA) {
+  
   # bm1
+  
+  if ( ! yi.name %in% names(dat) ) stop("dat does not contain a column named yi.name")
+  if ( ! vi.name %in% names(dat) ) stop("dat does not contain a column named vi.name")
+  
   
   #browser()
   calib = MetaUtility::calib_ests( yi = dat[[yi.name]],
@@ -48,9 +53,9 @@ Phat_causal = function( q,
   
   
   #if ( give.CI == FALSE ) {
-    
-    return(Phat.t)
-    
+  
+  return(Phat.t)
+  
   # } else {
   #   boot.res = suppressWarnings( boot( data = dat,
   #                                      parallel = "multicore",
@@ -132,36 +137,174 @@ logHR_to_logRR = function(logRR){
 #' # that's closest to threshold proportion, .r
 #' helper function for confounded_meta
 #'
-#####  #####
-That_causal = function( calib.name,
-                           q,
-                           r,
-                           B.vec,
+####  #####
+Tmin_causal = function( calib.name,
+                        q,
+                        r,
+
                         dat,
                         yi.name,
                         vi.name,
-                           tail ) {
-
-  Bl = as.list(B.vec)
-  
-  # calculate Phat for a vector of B
-  Phat.vec = unlist( lapply( Bl,
-                               FUN = function(.B) Phat_causal( q = q, 
-                                                              B = B,
-                                                              tail = tail,
-                                                              give.CI = FALSE,
-                                                              dat = dat,
-                                                              #bm3
-                                                              
-                                                              calib = dat[[.calib.name]],
-                                                              tail = .tail,
-                                                              give.CI = FALSE ) ) )
+                        tail ) {
   
   
-  That = .B.vec[ which.min( abs( Phat.t.vec - .r ) ) ]
-  return(That)
+  # test only
+  dat = d
+  q = quantile(d$calib, 0.8)
+  r = 0.1
+  yi.name = "yi"
+  vi.name = "vyi"
+  tail = "above"
+  
+  
+  # here, check if any shifting is actually needed
+  
+  
+  # what are the possible Phat values?
+  #Phat.options = 1 / ( 1 : length( unique(calib) ) )
+  # always possible to choose 0
+  #( Phat.options = c(Phat.options, 0) )
+  
+  # evaluate the ECDF of the unshifted calib at those calib themselves
+  #  to get the possible values that Phat can take
+  #  this approach handles ties
+  ( Phat.options = unique( ecdf(calib)(calib) ) )
+  # always possible to choose 0
+  ( Phat.options = c(Phat.options, 0) )
+  
+  # of Phats that are <= r, find the largest one (i.e., closest to r)
+  ( Phat.target = max( Phat.options[ Phat.options <= r ] ) )
+  
+  
+  # find calib.star, the calibrated estimate that needs to move to q
+  # example for tail == "above":
+  # calib.star is the largest calibrated estimate that needs to move to just
+  #  BELOW q after shifting
+  # k * Phat.target is the number of calibrated estimates that should remain
+  #  ABOVE q after shifting
+  if ( tail == "above" ) calib.star = calib[ k - (k * Phat.target) ]
+  if ( tail == "below" ) calib.star = calib[ (k * Phat.target) + 1 ]
+  
+  calib.star
+  
+  # pick the bias factor that shifts calib.star to q
+  #  and then add a tiny bit (0.001) to shift calib.star to just
+  # below or above q
+  # if multiple calibrated estimates are exactly equal to calib.star, 
+  #  all of these will be shifted just below q (if tail == "above")
+  ( Tmin = exp( abs(calib.star - q) + 0.001 ) )
+  
+  # check it: >q case
+  calib.t = calib - log(Tmin)
+  mean(calib.t > q)  # should match r or be less than r if there are ties
+  
+  # check it: <q case
+  calib.t = calib + log(Tmin)
+  mean(calib.t < q)  # should match Phat.target, which will equal r if 
+  
+  
+  
+  # # if the optimal value is very close to the upper range of grid search
+  # #  AND we're still not very close to the target q,
+  # #  that means the optimal value was above eta.grid.hi
+  # if ( abs( Tmin.candidate - exp(B.grid.hi) ) < 0.0001 & abs(Phat.of.Tmin.candidate - r) > 0.0001 ){
+  #   Tmin = paste(">", B.grid.hi)
+  # } else {
+  #   Tmin = Tmin.candidate
+  # }
+  
+  
+  return(Tmin)
   
 }
+
+
+# Tmin_causal = function( 
+#                         q,
+#                         r,
+#                         B.grid.hi,  # log scale
+#                         dat,
+#                         yi.name,
+#                         vi.name,
+#                         tail ) {
+#   
+#   # test only
+#   dat = d
+#   q = quantile(d$calib, 0.8)
+#   r = 0.1
+#   yi.name = "yi"
+#   vi.name = "vyi"
+#   tail = "above"
+#   B.grid.hi = log(100)
+#   
+#   # test only
+#   Phat_causal( q = q, 
+#                B = log(20),
+#                tail = tail,
+#                dat = dat,
+#                yi.name = yi.name,
+#                vi.name = vi.name )
+#   distance(0)
+#   distance(log(1.5))
+#   distance(B.grid.hi)
+#   
+#   
+# 
+#   # function to optimize
+#   # the distance between a candidate Phat from desired r
+#   distance = function(.B) {
+#     candidate = Phat_causal( q = q, 
+#                              B = .B,
+#                              tail = tail,
+#                              dat = dat,
+#                              yi.name = yi.name,
+#                              vi.name = vi.name )
+#     
+#     # how close is the candidate Phat to the desired proportion, r?
+#     return( abs( candidate - r ) )
+#   }
+#   
+#   dist2 = function(.B) {
+#     if ( .B > log(1.5) & .B < log(2) ) return(0)
+#     else return(5)
+#   }
+#   dist2(log(1.52))
+#   optimize( f = dist2,
+#             interval = c(log(1.4), log(1.6)),
+#             maximum = FALSE )
+#   
+#   optimize( f = dist2,
+#             interval = c(0, log(5)),
+#             maximum = FALSE )
+#   # WTF?
+#   
+#   # WTF?
+# 
+#   opt = optimize( f = dist2,
+#                   interval = c(0, B.grid.hi),
+#                   maximum = FALSE )
+#   Tmin.candidate = opt$minimum
+#   
+#   # discrepancy between the candidate and the desired r
+#   diff = opt$objective
+#   
+#   # bm: stopped here: trying to finish the Tmin function
+#   
+#   
+#   # if the optimal value is very close to the upper range of grid search
+#   #  AND we're still not very close to the target q,
+#   #  that means the optimal value was above eta.grid.hi
+#   if ( abs(Tmin.candidate - B.grid.hi) < 0.0001 & diff > 0.0001 ){
+#     Tmin = paste(">", B.grid.hi)
+#   } else {
+#     Tmin = Tmin.candidate
+#   }
+#   
+#   return(Tmin)
+# }
+# 
+
+
 
 
 #' Estimates and inference for sensitivity analyses
@@ -244,7 +387,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                             vyr=NA,
                             t2,
                             vt2=NA,
- 
+                            
                             # only for calibrated
                             Bmin,  # log scale
                             Bmax,
@@ -262,7 +405,7 @@ confounded_meta = function( method="calibrated",  # for both methods
   r=0.1
   R = 250
   CI.level = 0.95
-
+  
   Bmin = log(1)
   Bmax = log(5)
   give.CI=TRUE
@@ -428,7 +571,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     ##### Check for Bad Input #####
     # @@do me
-   
+    
     
     # # add calibrated estimates (without adjustment for confounding)
     # #  to dat
@@ -448,7 +591,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     # if ( tail == "above" ) Phat = mean( calib.t > q )
     # if ( tail == "below" ) Phat = mean( calib.t < q )
     
-
+    
     Phat = Phat_causal( q = q, 
                         B = muB,
                         tail = tail,
@@ -463,13 +606,12 @@ confounded_meta = function( method="calibrated",  # for both methods
     Bl = as.list(B.vec)
     
     Phat.vec = lapply( Bl,
-                         FUN = function(.B) Phat_causal( q = q, 
-                                                         B = .B,
-                                                         tail = tail,
-                                                         dat = dat,
-                                                         yi.name = yi.name,
-                                                         vi.name = vi.name,
-                                                         give.CI = FALSE ) )
+                       FUN = function(.B) Phat_causal( q = q, 
+                                                       B = .B,
+                                                       tail = tail,
+                                                       dat = dat,
+                                                       yi.name = yi.name,
+                                                       vi.name = vi.name ) )
     
     res = data.frame( B = B.vec,
                       Phat.t = unlist(Phat.vec) )
@@ -495,7 +637,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                                          parallel = "multicore",
                                          R = R, 
                                          statistic = function(original, indices) {
-                                       
+                                           
                                            # draw bootstrap sample
                                            b = original[indices,]
                                            
@@ -510,8 +652,8 @@ confounded_meta = function( method="calibrated",  # for both methods
                                            return(Phatb)
                                          } ) )
       
-     
-
+      
+      
       
       # Tmin and Gmin
       boot.res = suppressWarnings( boot( data = dat,
@@ -532,7 +674,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       lo.T = max(1, bootCIs$bca[4])  # bias factor can't be < 1
       hi.T = bootCIs$bca[5]  # but has no upper bound
       SE.T = sd(boot.res$t)
-    
+      
       
       ##### Gmin #####
       lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
@@ -548,10 +690,10 @@ confounded_meta = function( method="calibrated",  # for both methods
   #browser()
   ##### Return Results #####
   return( data.frame( Value = c("Prop", "Tmin", "Gmin"), 
-                    Est = c( Phat, Tmin, Gmin ),
-                    SE = c(SE.Phat, SE.T, SE.G),
-                    CI.lo = c(lo.Phat, lo.T, lo.G), 
-                    CI.hi = c(hi.Phat, hi.T, hi.G) ) )
+                      Est = c( Phat, Tmin, Gmin ),
+                      SE = c(SE.Phat, SE.T, SE.G),
+                      CI.lo = c(lo.Phat, lo.T, lo.G), 
+                      CI.hi = c(hi.Phat, hi.T, hi.G) ) )
   
 } # closes confounded_meta function
 
