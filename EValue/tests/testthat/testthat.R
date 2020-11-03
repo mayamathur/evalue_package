@@ -691,7 +691,6 @@ test_that("Parametric, test set #4, (no bias needed to reduce this Phat to less 
 ##### Calibrated Method #####
 
 
-# fix bracket issue
 test_that("Calibrated, Tmin_causal and Phat_causal, test set #1", {
   
   library(here())

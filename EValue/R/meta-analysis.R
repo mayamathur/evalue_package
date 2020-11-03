@@ -1,14 +1,6 @@
 ############################ META-ANALYSIS FUNCTIONS ############################ 
 
-#' ###### Phat after shifting by bias factor B and using calibrated estimates #####
-#' .dat needs to have a column called "calib"
-#' helper function for confounded_meta
-#' 
-#' 
-#' 
-
-
-#' Proportion of studies with true effects above or below q
+#' Proportion of studies with causal effects above or below q
 #'
 #' An internal function that estimates the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call 
 #' @param q True effect size that is the threshold for "scientific significance"
@@ -16,29 +8,23 @@
 
 #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
 #' the proportion of effects below \code{q}.
-#' @param calib Calibrated estimates on logRR scale
-#' @param give.CI Logical. If TRUE, bootstrap confidence intervals provided
-#' @param R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).
+#' @param dat Dataframe containing studies' point estimates and variances
+#' @param yi.name Name of variable in \code{dat} containing studies' point estimates
+#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates
 #' @import
 #' boot 
 #' @noRd
 Phat_causal = function( q,
                         B,
                         tail,
-                        
-                        #give.CI = TRUE,
-                        #R = 2000,
+
                         dat = NA,
                         yi.name = NA,
                         vi.name = NA) {
   
-  # bm1
-  
   if ( ! yi.name %in% names(dat) ) stop("dat does not contain a column named yi.name")
   if ( ! vi.name %in% names(dat) ) stop("dat does not contain a column named vi.name")
   
-  
-  #browser()
   calib = MetaUtility::calib_ests( yi = dat[[yi.name]],
                                    sei = sqrt(dat[[vi.name]] ) )
   
@@ -51,35 +37,7 @@ Phat_causal = function( q,
   if ( tail == "above" ) Phat.t = mean( calib.t > q )
   if ( tail == "below" ) Phat.t = mean( calib.t < q )
   
-  
-  #if ( give.CI == FALSE ) {
-  
   return(Phat.t)
-  
-  # } else {
-  #   boot.res = suppressWarnings( boot( data = dat,
-  #                                      parallel = "multicore",
-  #                                      R = R, 
-  #                                      statistic = Phat_causal_bt,
-  #                                      # below arguments are being passed to get_stat
-  #                                      .calib.name = calib.name,
-  #                                      .q = q,
-  #                                      .B = B,
-  #                                      .tail = tail ) )
-  #   
-  #   bootCIs = boot.ci(boot.res,
-  #                     type="bca",
-  #                     conf = CI.level )
-  #   
-  #   lo = bootCIs$bca[4]
-  #   hi = bootCIs$bca[5]
-  #   SE = sd(boot.res$t)
-  #   
-  #   return( data.frame( Est = Phat.t,
-  #                       SE = SE,
-  #                       lo = lo, 
-  #                       hi = hi ) )
-  # }
 }
 
 
@@ -142,6 +100,9 @@ logHR_to_logRR = function(logRR){
 ####  #####
 # @@make this an internal fn because warnings come from confounded_meta
 # import MetaUtility
+
+# bm: next up: write docs for this and Phat_causal
+#  then can move onto confounded_meta
 Tmin_causal = function( 
                         q,
                         r,
@@ -150,9 +111,7 @@ Tmin_causal = function(
                         yi.name,
                         vi.name,
                         tail ) {
-  
-  # bm4
-  
+
   # # test only
   # dat = d
   # calib.temp = MetaUtility::calib_ests(yi = d$yi,
@@ -545,7 +504,6 @@ confounded_meta = function( method="calibrated",  # for both methods
       ##### Confidence Intervals for All Three #####
       require(boot)
       
-      # bm2
       # Phat
       
       # CI for Phat
@@ -602,7 +560,6 @@ confounded_meta = function( method="calibrated",  # for both methods
     
   } #closes calibrated method
   
-  # bm5
   if ( exists("Tmin") & !is.na(Tmin) & Tmin == 1 ) {
     warning("Phat is already less than or equal to r even with no confounding, so Tmin is not applicable. No confounding at all is required to make the specified shift.")
   }
