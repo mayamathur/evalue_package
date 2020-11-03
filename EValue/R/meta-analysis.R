@@ -192,8 +192,7 @@ Tmin_causal = function( q,
 #' @param vt2 Estimated variance of tau^2 from confounded meta-analysis
 #' @param CI.level Confidence level as a proportion
 #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' the proportion of effects below \code{q}. By default, is set to \code{above} for relative risks (@@check if true)
-#' above 1 and to \code{below} for relative risks below 1.
+#' the proportion of effects below \code{q}. By default, is set to \code{above} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{below} otherwise.
 #' @param Bmin Lower limit of bias factor (used for "calibrated" method only)
 #' @param Bmax Upper limit of bias factor (used for "calibrated" method only)
 #' @param give.CI Logical. If TRUE, bootstrap confidence intervals provided
@@ -254,29 +253,37 @@ confounded_meta = function( method="calibrated",  # for both methods
                             vt2=NA,
                             
                             # only for calibrated
-                            # Bmin,  # log scale
-                            # Bmax,
-                            give.CI=TRUE,
+                            give.CI = TRUE,
                             dat,
                             yi.name,
                             vi.name) {
   
   
-  # test only
-  method="calibrated"
-  q=median(d$calib)
-  tail = "above"
-  muB=0
-  r=0.1
-  q = 0.2
-  R = 250
-  CI.level = 0.95
-
-
-  give.CI=TRUE
-  dat = d
-  yi.name = "yi"
-  vi.name = "vyi"
+  # # test only
+  # method="calibrated"
+  # q=median(d$calib)
+  # tail = "above"
+  # muB=0
+  # r=0.1
+  # q = 0.2
+  # R = 250
+  # CI.level = 0.95
+  # 
+  # give.CI=TRUE
+  # dat = d
+  # yi.name = "yi"
+  # vi.name = "vyi"
+  
+  
+  
+  
+  ##### Check for Bad Input - Common to Parametric and Calibrated Methods #####
+  if ( ! is.na(r) ) {
+    if (r < 0 | r > 1) stop("r must be between 0 and 1")
+  }
+  
+  if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
+  
   
   ##### PARAMETRIC #####
   if (method=="parametric"){
@@ -296,19 +303,17 @@ confounded_meta = function( method="calibrated",  # for both methods
       if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
     }
     
-    if ( ! is.na(r) ) {
-      if (r < 0 | r > 1) stop("r must be between 0 and 1")
-    }
-    
     if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
     
     ##### Messages When Not All Output Can Be Computed #####
     if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
-    if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
     
     ##### Point Estimates: Causative Case #####
     # if tail isn't provided, assume user wants the more extreme one (away from the null)
-    if ( is.na(tail) ) tail = ifelse( yr > log(1), "above", "below" )
+    if ( is.na(tail) ) {
+      tail = ifelse( yr > log(1), "above", "below" )
+      warning( paste( "Assuming you want tail =", tail, "sbecause it wasn't specified") )
+    }
     
     # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
     # @@make sure Phat_causal is consistent with this
@@ -420,16 +425,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       SE.T = SE.G = lo.T = lo.G = hi.T = hi.G = NA
     }
     
-    
-    # # return results
-    # res = data.frame( Value = c("Prop", "Tmin", "Gmin"), 
-    #                   Est = c( Phat, Tmin, Gmin ),
-    #                   SE = c(SE, SE.T, SE.G),
-    #                   CI.lo = c(lo.Phat, lo.T, lo.G), 
-    #                   CI.hi = c(hi.Phat, hi.T, hi.G) )
-    # 
-    # return(res)
-  } ## closes parametric method
+  } # closes parametric method
   
   ##### CALIBRATED #####
   if( method == "calibrated" ){
@@ -439,26 +435,21 @@ confounded_meta = function( method="calibrated",  # for both methods
     ##### Check for Bad Input #####
     # @@do me
     
-    
-    # # add calibrated estimates (without adjustment for confounding)
-    # #  to dat
-    # dat$calib = MetaUtility::calib_ests( yi = dat[[yi.name]],
-    #                                           sei=sqrt( dat[[vi.name]] ) )
-    # calib = dat$calib
-    # # for use with later bootstrapping fns
-    # calib.name = "calib"
-    
-    # # calibrated method only works for homogeneous bias,
-    # #  so use the common log-biass factor
-    # #  across studies equal to the mean log-bias factor
-    # if (tail == "above") calib.t = calib - muB
-    # if (tail == "below") calib.t = calib + muB
-    # 
-    # ##### Phat #####
-    # if ( tail == "above"s ) Phat = mean( calib.t > q )
-    # if ( tail == "below" ) Phat = mean( calib.t < q )
+    # if tail isn't provided, assume user wants the more extreme one (away from the null)
+    if ( is.na(tail) ) {
+      calib = calib_ests( yi = dat[[yi.name]], 
+                          sei = sqrt( dat[[vi.name]] ) )
+      
+      tail = ifelse( median(calib) > log(1), "above", "below" )
+      warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
+    }
     
     
+    # initialize
+    Phat = Tmin = Gmin = SE.Phat = SE.T = SE.G = lo.Phat = lo.T = lo.G = hi.Phat = hi.T = hi.G = NA
+    
+    
+    ##### All Three Point Estimates #####
     Phat = Phat_causal( q = q, 
                         B = muB,
                         tail = tail,
@@ -466,40 +457,27 @@ confounded_meta = function( method="calibrated",  # for both methods
                         yi.name = yi.name,
                         vi.name = vi.name )
     
-    ##### Tmin and Gmin Via Grid Search #####
-    # calculate Phat causal at each value of B.vec
-    # vector and list of bias factors
-    B.vec = seq(Bmin, Bmax, .01)
-    Bl = as.list(B.vec)
-    
-    Phat.vec = lapply( Bl,
-                       FUN = function(.B) Phat_causal( q = q, 
-                                                       B = .B,
-                                                       tail = tail,
-                                                       dat = dat,
-                                                       yi.name = yi.name,
-                                                       vi.name = vi.name ) )
-    
-    res = data.frame( B = B.vec,
-                      Phat.t = unlist(Phat.vec) )
-    
-    Tmin = exp( res$B[ which.min( abs( res$Phat - r ) ) ] )
-    Gmin = g(Tmin)
-    
-    
-    if ( give.CI == FALSE ) {
+    if ( !is.na(r) ) {
+      Tmin = Tmin_causal(q = q,
+                         r = r,
+                         tail = tail,
+                         dat = dat,
+                         yi.name = yi.name,
+                         vi.name = vi.name)
       
-      SE.Phat = SE.T = SE.G = lo.Phat = lo.T = lo.G = hi.Phat = hi.T = hi.G = NA
       
-    } else {
+      Gmin = g(Tmin)
+    }
+    
+
+    
+    ##### All Three Confidence Intervals #####
+    if ( give.CI == TRUE ) {
       
-      ##### Confidence Intervals for All Three #####
       require(boot)
       
-      # Phat
-      
       # CI for Phat
-      boot.res = suppressWarnings( boot( data = dat,
+      boot.res.Phat = suppressWarnings( boot( data = dat,
                                          parallel = "multicore",
                                          R = R, 
                                          statistic = function(original, indices) {
@@ -509,55 +487,64 @@ confounded_meta = function( method="calibrated",  # for both methods
                                            
                                            Phatb = Phat_causal( q = q, 
                                                                 B = muB,
+                                                                tail = tail,
                                                                 dat = b,
                                                                 yi.name = yi.name,
-                                                                vi.name = vi.name,
-                                                                R = R,
-                                                                tail = tail,
-                                                                give.CI = FALSE)
+                                                                vi.name = vi.name)
                                            return(Phatb)
                                          } ) )
       
+      bootCIs.Phat = boot.ci(boot.res.Phat,
+                             type="bca",
+                             conf = CI.level )
       
+      lo.Phat = bootCIs.Phat$bca[4]
+      hi.Phat = bootCIs.Phat$bca[5]
+      SE.Phat = sd(boot.res.Phat$t)
       
-      
-      # Tmin and Gmin
-      boot.res = suppressWarnings( boot( data = dat,
-                                         parallel = "multicore",
-                                         R = R, 
-                                         statistic = That_causal_bt,
-                                         # below arguments are being passed to get_stat
-                                         .calib.name = calib.name,
-                                         .q = q,
-                                         .r = r,
-                                         .B.vec = B.vec,
-                                         .tail = tail ) )
-      
-      bootCIs = boot.ci(boot.res,
-                        type="bca",
-                        conf = CI.level )
-      
-      lo.T = max(1, bootCIs$bca[4])  # bias factor can't be < 1
-      hi.T = bootCIs$bca[5]  # but has no upper bound
-      SE.T = sd(boot.res$t)
-      
-      
-      ##### Gmin #####
-      lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
-      hi.G = g(hi.T)  # but has no upper bound
-      SE.G = NA  # in principle, could bootstrap this one as well, but seems a waste of time
-    }
-    
-    
-    
-  } #closes calibrated method
   
+      # Tmin and Gmin
+      if ( !is.na(r) ) {
+        boot.res.Tmin = suppressWarnings( boot( data = dat,
+                                                parallel = "multicore",
+                                                R = R, 
+                                                statistic = function(original, indices) {
+                                                  
+                                                  # draw bootstrap sample
+                                                  b = original[indices,]
+                                                  
+                                                  Tminb = Tmin_causal(q = q,
+                                                                      r = r,
+                                                                      tail = tail,
+                                                                      dat = b,
+                                                                      yi.name = yi.name,
+                                                                      vi.name = vi.name)
+                                                  return(Tminb)
+                                                } ) )
+        
+        bootCIs.Tmin = boot.ci(boot.res.Tmin,
+                               type="bca",
+                               conf = CI.level )
+        
+        lo.T = max(1, bootCIs.Tmin$bca[4])  # bias factor can't be < 1
+        hi.T = bootCIs.Tmin$bca[5]  # but has no upper bound
+        SE.T = sd(boot.res.Tmin$t)
+        
+        
+        ##### Gmin #####
+        lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
+        hi.G = g(hi.T)  # but has no upper bound
+        SE.G = sd( g(boot.res.Tmin$t) )
+      }
+    }  # closes "if ( !is.na(r) )"
+
+  } # closes calibrated method
+  
+  ##### Messages about Results #####
   if ( exists("Tmin") & !is.na(Tmin) & Tmin == 1 ) {
-    warning("Phat is already less than or equal to r even with no confounding, so Tmin is not applicable. No confounding at all is required to make the specified shift.")
+    warning("Phat is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
   }
   
-
-  #browser()
   ##### Return Results #####
   return( data.frame( Value = c("Prop", "Tmin", "Gmin"), 
                       Est = c( Phat, Tmin, Gmin ),
@@ -958,34 +945,34 @@ sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
 
 
 
-#' Estimate proportion of population effect sizes above or below a threshold
-#'
-#' Estimates the proportion of true effect sizes in a meta-analysis above or below
-#' a specified threshold of scientific importance. Effect sizes may be of any type (they need not
-#' be relative risks). This is a wrapper for \code{confounded_meta}; it is the special case in
-#' which there is no unmeasured confounding. 
-#' @param q True effect size that is the threshold for "scientific importance"
-#' @param yr Pooled point estimate from meta-analysis
-#' @param vyr Estimated variance of pooled point estimate from meta-analysis
-#' @param t2 Estimated heterogeneity (tau^2) from meta-analysis
-#' @param vt2 Estimated variance of tau^2 from meta-analysis
-#' @param CI.level Confidence level as a proportion
-#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' the proportion of effects below \code{q}.
-#' @keywords meta-analysis
-#' @export
-
-stronger_than = function( q, yr, vyr=NA, t2, vt2=NA,
-                          CI.level=0.95, tail ) {
-  
-  # suppress warnings about lack of info for doing sensitivity analysis
-  # since we are not dealing with confounding 
-  cm = suppressMessages( confounded_meta( q = q, muB = 0, sigB = 0,
-                                          yr = yr, vyr = vyr,
-                                          t2 = t2, vt2 = vt2,
-                                          CI.level = CI.level,
-                                          tail = tail ) )
-  
-  # return just the first row (proportion) since the rest are for sensitivity analyses
-  return( cm[1,] ) 
-}
+#' #' Estimate proportion of population effect sizes above or below a threshold
+#' #'
+#' #' Estimates the proportion of true effect sizes in a meta-analysis above or below
+#' #' a specified threshold of scientific importance. Effect sizes may be of any type (they need not
+#' #' be relative risks). This is a wrapper for \code{confounded_meta}; it is the special case in
+#' #' which there is no unmeasured confounding. 
+#' #' @param q True effect size that is the threshold for "scientific importance"
+#' #' @param yr Pooled point estimate from meta-analysis
+#' #' @param vyr Estimated variance of pooled point estimate from meta-analysis
+#' #' @param t2 Estimated heterogeneity (tau^2) from meta-analysis
+#' #' @param vt2 Estimated variance of tau^2 from meta-analysis
+#' #' @param CI.level Confidence level as a proportion
+#' #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
+#' #' the proportion of effects below \code{q}.
+#' #' @keywords meta-analysis
+#' #' @export
+#' 
+#' stronger_than = function( q, yr, vyr=NA, t2, vt2=NA,
+#'                           CI.level=0.95, tail ) {
+#'   
+#'   # suppress warnings about lack of info for doing sensitivity analysis
+#'   # since we are not dealing with confounding 
+#'   cm = suppressMessages( confounded_meta( q = q, muB = 0, sigB = 0,
+#'                                           yr = yr, vyr = vyr,
+#'                                           t2 = t2, vt2 = vt2,
+#'                                           CI.level = CI.level,
+#'                                           tail = tail ) )
+#'   
+#'   # return just the first row (proportion) since the rest are for sensitivity analyses
+#'   return( cm[1,] ) 
+#' }

@@ -4,6 +4,12 @@ library(devtools)
 library(dplyr)
 library(ICC)
 
+# for simulating meta-analysis data
+library(here())
+setwd(here())
+setwd("tests")
+source("testthat_helper.R")
+
 ###################### EVALUE: ANNALS PAPER EXAMPLES ###################### 
 
 test_that("Annals case #1", {
@@ -512,7 +518,7 @@ test_that("Reject negative outcomes", {
 
 
 
-###################### CONFOUNDEDMETA ###################### 
+###################### CONFOUNDED_META ###################### 
 
 ##### Parametric Method #####
 test_that("Parametric, test set #1 (setting q equal to observed mean without bias should yield 50%)", {
@@ -690,13 +696,12 @@ test_that("Parametric, test set #4, (no bias needed to reduce this Phat to less 
 
 ##### Calibrated Method #####
 
+#bm
 
+# test the helper fns
 test_that("Calibrated, Tmin_causal and Phat_causal, test set #1", {
   
-  library(here())
-  setwd(here())
-  setwd("tests")
-  source("testthat_helper.R")
+  
   
   ##### 1 #####
   # make dataset with lots of ties
@@ -854,13 +859,11 @@ test_that("Calibrated, Tmin_causal and Phat_causal, test set #1", {
 
 test_that("Calibrated, test set #1 (setting q equal to observed mean without bias should yield 50%)", {
   
-  # bm
-  # @need to source these fns
+  # fns for generating data
   library(here())
   setwd(here())
   setwd("tests")
   source("testthat_helper.R")
-  
   
   library(dplyr)
   library(ICC)
@@ -889,30 +892,262 @@ test_that("Calibrated, test set #1 (setting q equal to observed mean without bia
                       tail = "above",
                       muB=0,
                       
-                      Bmin = 1,  
-                      Bmax = 5,
-                      give.CI=TRUE,
+                      give.CI=FALSE,
                       dat = d,
                       yi.name = "yi",
                       vi.name = "vyi")
   
-
-  expect_equal( 0.5, confounded_meta(method="calibrated",
-                                     q=q,
-                                     muB=0,
-        
-                                     Bmin = 1,  
-                                     Bmax = 5,
-                                     give.CI=TRUE,
-                                     dat = d) )
+  expect_equal( 0.5, x$Est[x$Value == "Prop"] )
   
-  expect_equal( 0.5, confounded_meta(method="parametric",
-                                     q=log(0.5),
-                                     muB=0,
-                                     sigB=0,
-                                     yr=log(0.5),
-                                     t2=0.1 )[1,2] )
 })
+
+
+test_that("Calibrated, test set #2 (causative)", {
+  
+  
+  d = sim_data2( k = 20,
+                 m = 20,
+                 b0 = log(2), # intercept
+                 bc = 0, # effect of continuous moderator
+                 bb = 0, # effect of binary moderator
+                 V = 0.1, 
+                 Vzeta = 0, # used to calcuate within-cluster variance
+                 
+                 muN = 100,
+                 minN = 100,
+                 sd.w = 1,
+                 true.effect.dist = "expo" )
+  
+  q = log(1.8)
+  r = .2
+  muB = log(1.1)
+  
+  # hand-calculate the calibrated estimates and their median
+  calib = MetaUtility::calib_ests(yi = d$yi,
+                                    sei = sqrt(d$vyi) )
+  mean(calib > q)
+  
+  #bm
+  
+  # don't specify tail
+
+  
+  # expect warning about setting tail because not specified
+  expect_warning( confounded_meta(method="calibrated",
+                                  q = q,
+                                  r = r,
+                                  #tail = "above",
+                                  muB = muB,
+                                  
+                                  give.CI=FALSE,
+                                  dat = d,
+                                  yi.name = "yi",
+                                  vi.name = "vyi") )
+  
+  # repeat to capture the object
+  x = confounded_meta(method="calibrated",
+                      q = q,
+                      r = r,
+                      #tail = "above",
+                      muB = muB,
+                      
+                      give.CI=FALSE,
+                      dat = d,
+                      yi.name = "yi",
+                      vi.name = "vyi")
+  
+  # check Phat
+  Phat.t = mean( calib - muB > q ) 
+  expect_equal( Phat.t, x$Est[ x$Value == "Prop" ])
+  
+  # check Tmin and Gmin
+  # Tmin_causal received its own tests (above)
+  Tmin = Tmin_causal(q = q,
+                     r = r,
+                     tail = "above",
+                     dat = d,
+                     yi.name = "yi",
+                     vi.name = "vyi")
+  expect_equal( Tmin, x$Est[ x$Value == "Tmin" ])
+  expect_equal( g(Tmin), x$Est[ x$Value == "Gmin" ])
+  
+  # fail to provide r
+  # expect warning about setting tail because not specified
+  expect_warning( confounded_meta(method="calibrated",
+                                  q = q,
+                                  #r = r,
+                                  tail = "above",
+                                  muB = muB,
+                                  
+                                  give.CI=FALSE,
+                                  dat = d,
+                                  yi.name = "yi",
+                                  vi.name = "vyi") )
+
+  
+  # # look at CIs, though we can't really check them
+  # x = confounded_meta(method="calibrated",
+  #                     q = q,
+  #                     r = r,
+  #                     #tail = "above",
+  #                     muB = muB,
+  #                     
+  #                     give.CI=TRUE,
+  #                     dat = d,
+  #                     yi.name = "yi",
+  #                     vi.name = "vyi")
+  
+})
+
+
+
+
+test_that("Parametric, test set #3 (preventive)", {
+  
+  # data with ties
+  d = sim_data2( k = 20,
+                 m = 20,
+                 b0 = log(.9), # intercept
+                 bc = 0, # effect of continuous moderator
+                 bb = 0, # effect of binary moderator
+                 V = 1, 
+                 Vzeta = 0, # used to calcuate within-cluster variance
+                 
+                 muN = 100,
+                 minN = 100,
+                 sd.w = 1,
+                 true.effect.dist = "expo" )
+  
+  ind = sample( 1: nrow(d), size = 40, replace = TRUE )
+  
+  d = d[ ind, ]
+  
+  q = log(0.9)
+  r = .2
+  muB = log(2)
+  
+  # hand-calculate the calibrated estimates and their median
+  calib = MetaUtility::calib_ests(yi = d$yi,
+                                  sei = sqrt(d$vyi) )
+  mean(calib < q)
+  
+  
+  # expect warning about setting tail because not specified
+  expect_warning( confounded_meta(method="calibrated",
+                                  q = q,
+                                  r = r,
+                                  #tail = "above",
+                                  muB = muB,
+                                  
+                                  give.CI=FALSE,
+                                  dat = d,
+                                  yi.name = "yi",
+                                  vi.name = "vyi") )
+  
+  # repeat to capture the object
+  x = confounded_meta(method="calibrated",
+                      q = q,
+                      r = r,
+                      #tail = "above",
+                      muB = muB,
+                      
+                      give.CI=FALSE,
+                      dat = d,
+                      yi.name = "yi",
+                      vi.name = "vyi")
+  
+  # check Phat
+  Phat.t = mean( calib + muB < q ) 
+  expect_equal( Phat.t, x$Est[ x$Value == "Prop" ])
+  
+  # check Tmin and Gmin
+  # Tmin_causal received its own tests (above)
+  Tmin = Tmin_causal(q = q,
+                     r = r,
+                     tail = "below",
+                     dat = d,
+                     yi.name = "yi",
+                     vi.name = "vyi")
+  expect_equal( Tmin, x$Est[ x$Value == "Tmin" ])
+  expect_equal( g(Tmin), x$Est[ x$Value == "Gmin" ])
+  
+  # fail to provide r
+  expect_message( confounded_meta(method="calibrated",
+                                  q = q,
+                                  #r = r,
+                                  tail = "below",
+                                  muB = muB,
+                                  
+                                  give.CI=FALSE,
+                                  dat = d,
+                                  yi.name = "yi",
+                                  vi.name = "vyi") )
+  
+  
+  # # look at CIs, though we can't really check them
+  # x = confounded_meta(method="calibrated",
+  #                     q = q,
+  #                     r = r,
+  #                     #tail = "above",
+  #                     muB = muB,
+  # 
+  #                     give.CI=TRUE,
+  #                     dat = d,
+  #                     yi.name = "yi",
+  #                     vi.name = "vyi")
+  
+})
+
+
+
+
+test_that("Calibrated, test set #4, (no bias needed to reduce this Phat to less than r)", {
+  
+  # data with ties
+  d = sim_data2( k = 20,
+                 m = 20,
+                 b0 = log(.9), # intercept
+                 bc = 0, # effect of continuous moderator
+                 bb = 0, # effect of binary moderator
+                 V = 1, 
+                 Vzeta = 0, # used to calcuate within-cluster variance
+                 
+                 muN = 100,
+                 minN = 100,
+                 sd.w = 1,
+                 true.effect.dist = "normal" )
+  
+  ind = sample( 1: nrow(d), size = 40, replace = TRUE )
+  
+  d = d[ ind, ]
+  
+  r = .2
+  muB = log(2)
+  
+  # choose q to be the 10th percentile of naive calibrated estimates
+  # so that no confounding should be needed
+  calib = MetaUtility::calib_ests(yi = d$yi,
+                                    sei = sqrt(d$vyi) )
+  
+  q = quantile(calib, .9)
+  
+  x = confounded_meta(method="calibrated",
+                      q=q,
+                      r=r,
+                      tail = "above",
+                      muB=0,
+                      
+                      give.CI=FALSE,
+                      dat = d,
+                      yi.name = "yi",
+                      vi.name = "vyi")
+  
+  expect_equal( x$Est[x$Value == "Prop"], .1 )
+  expect_equal( x$Est[x$Value == "Tmin"], 1 )
+  expect_equal( x$Est[x$Value == "Gmin"], 1 )
+  
+})
+
 
 
 
@@ -1647,66 +1882,66 @@ test_that("True = est, no CI, preventive", {
 })
 
 
-##### stronger_than function #####
-
-test_that("stronger_than #1", {
-  
-  # proportion above and below should sum to 1
-  expect_equal( 1,
-                stronger_than( q = .5, yr = .6, vyr = .07, t2 = 0.2, vt2=0.02,
-                               CI.level=0.95, tail = "above" )$Est +
-                  stronger_than( q = .5, yr = .6, vyr = .07, t2 = 0.2, vt2=0.02,
-                                 CI.level=0.95, tail = "below" )$Est                 
-                  )
-
-  q = 0.5
-  yr = 0.6
-  vyr = 0.07
-  t2 = 0.2
-  vt2 = 0.02
-  CI.level = 0.9
-  
-  st = stronger_than( q = q, yr = yr, vyr = vyr, t2 = t2, vt2=vt2,
-                      CI.level=CI.level, tail = "above" )
-  
-  expect_equal( 1 - pnorm( ( q - yr ) / sqrt( t2 ) ), st$Est )
-  
-  expect_equal( sqrt( (vyr / t2) + ( ( vt2 * (q - yr)^2 ) / ( 4 * t2^3 ) ) ) * dnorm( ( q - yr ) / sqrt( t2 ) ),
-                st$SE )
-  
-  alpha = 1 - CI.level
-  crit = qnorm( 1 - alpha/2 )
-  
-  expect_equal( min( 1, st$Est + st$SE * crit ), st$CI.hi )
-  expect_equal( max( 0, st$Est - st$SE * crit ), st$CI.lo )
-    
-})
-
-
-test_that("stronger_than #2", {
-  
- # proportion below a preventive effect
-  q = 0.6
-  yr = -0.2
-  vyr = 0.002
-  t2 = 0.4
-  vt2 = 0.02
-  CI.level = 0.75
-  
-  st = stronger_than( q = q, yr = yr, vyr = vyr, t2 = t2, vt2=vt2,
-                      CI.level=CI.level, tail = "below" )
-  
-  expect_equal( pnorm( ( q - yr ) / sqrt( t2 ) ), st$Est )
-  
-  expect_equal( sqrt( (vyr / t2) + ( ( vt2 * (q - yr)^2 ) / ( 4 * t2^3 ) ) ) * dnorm( ( q - yr ) / sqrt( t2 ) ),
-                st$SE )
-  
-  alpha = 1 - CI.level
-  crit = qnorm( 1 - alpha/2 )
-  
-  expect_equal( min( 1, st$Est + st$SE * crit ), st$CI.hi )
-  expect_equal( max( 0, st$Est - st$SE * crit ), st$CI.lo )
-  
-})
-
-
+# ##### stronger_than function #####
+# 
+# test_that("stronger_than #1", {
+#   
+#   # proportion above and below should sum to 1
+#   expect_equal( 1,
+#                 stronger_than( q = .5, yr = .6, vyr = .07, t2 = 0.2, vt2=0.02,
+#                                CI.level=0.95, tail = "above" )$Est +
+#                   stronger_than( q = .5, yr = .6, vyr = .07, t2 = 0.2, vt2=0.02,
+#                                  CI.level=0.95, tail = "below" )$Est                 
+#                   )
+# 
+#   q = 0.5
+#   yr = 0.6
+#   vyr = 0.07
+#   t2 = 0.2
+#   vt2 = 0.02
+#   CI.level = 0.9
+#   
+#   st = stronger_than( q = q, yr = yr, vyr = vyr, t2 = t2, vt2=vt2,
+#                       CI.level=CI.level, tail = "above" )
+#   
+#   expect_equal( 1 - pnorm( ( q - yr ) / sqrt( t2 ) ), st$Est )
+#   
+#   expect_equal( sqrt( (vyr / t2) + ( ( vt2 * (q - yr)^2 ) / ( 4 * t2^3 ) ) ) * dnorm( ( q - yr ) / sqrt( t2 ) ),
+#                 st$SE )
+#   
+#   alpha = 1 - CI.level
+#   crit = qnorm( 1 - alpha/2 )
+#   
+#   expect_equal( min( 1, st$Est + st$SE * crit ), st$CI.hi )
+#   expect_equal( max( 0, st$Est - st$SE * crit ), st$CI.lo )
+#     
+# })
+# 
+# 
+# test_that("stronger_than #2", {
+#   
+#  # proportion below a preventive effect
+#   q = 0.6
+#   yr = -0.2
+#   vyr = 0.002
+#   t2 = 0.4
+#   vt2 = 0.02
+#   CI.level = 0.75
+#   
+#   st = stronger_than( q = q, yr = yr, vyr = vyr, t2 = t2, vt2=vt2,
+#                       CI.level=CI.level, tail = "below" )
+#   
+#   expect_equal( pnorm( ( q - yr ) / sqrt( t2 ) ), st$Est )
+#   
+#   expect_equal( sqrt( (vyr / t2) + ( ( vt2 * (q - yr)^2 ) / ( 4 * t2^3 ) ) ) * dnorm( ( q - yr ) / sqrt( t2 ) ),
+#                 st$SE )
+#   
+#   alpha = 1 - CI.level
+#   crit = qnorm( 1 - alpha/2 )
+#   
+#   expect_equal( min( 1, st$Est + st$SE * crit ), st$CI.hi )
+#   expect_equal( max( 0, st$Est - st$SE * crit ), st$CI.lo )
+#   
+# })
+# 
+# 
