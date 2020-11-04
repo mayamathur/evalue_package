@@ -210,9 +210,9 @@ function(input, output, session) {
       q = log(input$calibrated_q)
       r = input$calibrated_r
       tail = input$calibrated_tail
-      B = input$calibrated_B
-      yr = input$calibrated_yr
-      vyr = input$calibrated_vyr
+      muB = input$calibrated_muB
+      yi.name = input$calibrated_yi.name
+      vi.name = input$calibrated_vi.name
       
       method = input$calibrated_method
       Bmin = input$calibrated_Bmin
@@ -227,9 +227,9 @@ function(input, output, session) {
         q = input$calibrated_q
         r = input$calibrated_r
         tail = input$calibrated_tail
-        yr = input$calibrated_yr
-        vyr = input$calibrated_vyr
-        B = input$calibrated_B
+        muB = input$calibrated_muB
+        yi.name = input$calibrated_yi.name
+        vi.name = input$calibrated_vi.name
 
         method = input$calibrated_method
         Bmin = input$calibrated_Bmin
@@ -266,12 +266,12 @@ function(input, output, session) {
       # calib.name = "calib.logRR"
       withProgress(message="calculating proportion...", value=1,{
       
-      cm = suppressWarnings(confounded_meta(method=method, muB=B,q=q, r=r, yr=yr, vyr=vyr,
-                                            Bmin=Bmin, Bmax=Bmax, tail=tail, .give.CI=TRUE, .R=R, .dat=dat))
+      cm = suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
+                                            tail=tail, give.CI=TRUE, R=R, dat=dat))
 
-      p = round( as.numeric(cm$Est[which(cm$Value=="Phat.t")]), 3 )
-      p_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Phat.t")]), 3 )
-      p_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="Phat.t")]), 3 )
+      p = round( as.numeric(cm$Est[which(cm$Value=="Prop")]), 3 )
+      p_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Prop")]), 3 )
+      p_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="Prop")]), 3 )
 
 
       ##### Create String for UI #####
@@ -284,13 +284,13 @@ function(input, output, session) {
     
     output$calibrated_text2 = renderText({
       withProgress(message="calculating minimum bias factor...", value=1,{
-        cm = suppressWarnings(confounded_meta(method=method, muB=B,q=q, r=r, yr=yr, vyr=vyr,
-                                              Bmin=Bmin, Bmax=Bmax, tail=tail, .give.CI=TRUE, .R=R, .dat=dat))
-      
-      p = round( as.numeric(cm$Est[which(cm$Value=="Phat.t" )]), 3 )
-      Tmin = round( as.numeric(cm$Est[which(cm$Value=="That" )]), 3 )
-      Tmin_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="That" )]), 3 )
-      Tmin_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="That" )]), 3 )
+        cm = suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
+                                              tail=tail, give.CI=TRUE, R=R, dat=dat))
+
+      p = round( as.numeric(cm$Est[which(cm$Value=="Prop" )]), 3 )
+      Tmin = round( as.numeric(cm$Est[which(cm$Value=="Tmin" )]), 3 )
+      Tmin_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Tmin" )]), 3 )
+      Tmin_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="Tmin" )]), 3 )
       
       
       ##### Create String for UI ##### 
@@ -303,13 +303,13 @@ function(input, output, session) {
     
     output$calibrated_text3 = renderText({
       withProgress(message="calculating minimum confounding strength...", value=1,{
-        cm = suppressWarnings(confounded_meta(method=method, muB=B,q=q, r=r, yr=yr, vyr=vyr,
-                                              Bmin=Bmin, Bmax=Bmax, tail=tail, .give.CI=TRUE, .R=R, .dat=dat))
+        cm = suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
+                                              tail=tail, give.CI=TRUE, R=R, dat=dat))
       
-      p = round( as.numeric(cm$Est[ which(cm$Value=="Phat.t") ]), 3 )
-      Gmin = round( as.numeric(cm$Est[ which(cm$Value=="Ghat") ]), 3 )
-      Gmin_lo = round( as.numeric(cm$CI.lo[ which(cm$Value=="Ghat") ]), 3 )
-      Gmin_hi = round( as.numeric(cm$CI.hi[ which(cm$Value=="Ghat") ]), 3 )
+      p = round( as.numeric(cm$Est[ which(cm$Value=="Prop") ]), 3 )
+      Gmin = round( as.numeric(cm$Est[ which(cm$Value=="Gmin") ]), 3 )
+      Gmin_lo = round( as.numeric(cm$CI.lo[ which(cm$Value=="Gmin") ]), 3 )
+      Gmin_hi = round( as.numeric(cm$CI.hi[ which(cm$Value=="Gmin") ]), 3 )
       
       
       ##### Create String for UI ##### 
@@ -322,7 +322,7 @@ function(input, output, session) {
     
     output$calibrated_plot1 <- renderPlot({
       withProgress(message="generating plot...", value=1,{
-      suppressWarnings(sens_plot(method=method, type="line", muB=B, q=q, r=r, yr=yr, vyr=vyr, Bmin=Bmin, Bmax=Bmax, tail=tail, .give.CI=TRUE, .R=R, .dat=dat ))
+      suppressWarnings(sens_plot(method=method, type="line", muB=muB, q=q, r=r, yi.name=yi.name, vi.name=vi.name, Bmin=Bmin, Bmax=Bmax, tail=tail, give.CI=TRUE, R=R, dat=dat ))
   }) ## closes withProgress
     }) ## closes calibrated_plot1
   }) ## closes calibrated_output
@@ -391,8 +391,8 @@ function(input, output, session) {
     # method_2 = "parametric"
     
     output$parametric_text1 = renderText({
-      cm = suppressWarnings(confounded_meta(method=method_2,q=q_2, r = r_2, muB = muB_2, sigB = sigB_2, yr = yr_2, vyr = vyr_2,
-                                            t2 = t2_2, vt2 = vt2_2, CI.level = 0.95, tail = tail_2))
+      cm = suppressWarnings(confounded_meta(method=method_2,q=q_2, r=r_2, muB=muB_2, sigB=sigB_2, yr=yr_2, vyr=vyr_2,
+                                            t2=t2_2, vt2=vt2_2, CI.level=0.95, tail=tail_2))
       
       p = round( as.numeric(cm$Est[which(cm$Value=="Prop")]), 3 )
       p_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Prop")]), 3 )
@@ -406,8 +406,8 @@ function(input, output, session) {
     }) ## closes parametric_text1
     
     output$parametric_text2 = renderText({
-      cm = suppressWarnings(confounded_meta(method=method_2,q=q_2, r = r_2, muB = muB_2, sigB = sigB_2, yr = yr_2, vyr = vyr_2,
-                                            t2 = t2_2, vt2 = vt2_2, CI.level = 0.95, tail = tail_2))
+      cm = suppressWarnings(confounded_meta(method=method_2,q=q_2, r=r_2, muB=muB_2, sigB=sigB_2, yr=yr_2, vyr=vyr_2,
+                                            t2=t2_2, vt2=vt2_2, CI.level=0.95, tail=tail_2))
       
       p = round( as.numeric(cm$Est[which(cm$Value=="Prop" )]), 3 )
       Tmin = round( as.numeric(cm$Est[which(cm$Value=="Tmin" )]), 3 )
@@ -422,8 +422,8 @@ function(input, output, session) {
     }) ## closes parametric_text2
     
     output$parametric_text3 = renderText({
-      cm = suppressWarnings(confounded_meta(method=method_2,q=q_2, r = r_2, muB = muB_2, sigB = sigB_2, yr = yr_2, vyr = vyr_2,
-                                            t2 = t2_2, vt2 = vt2_2, CI.level = 0.95, tail = tail_2))
+      cm = suppressWarnings(confounded_meta(method=method_2,q=q_2, r=r_2, muB=muB_2, sigB=sigB_2, yr=yr_2, vyr=vyr_2,
+                                            t2=t2_2, vt2=vt2_2, CI.level=0.95, tail=tail_2))
       
       p = round( as.numeric(cm$Est[ which(cm$Value=="Prop") ]), 3 )
       Gmin = round( as.numeric(cm$Est[ which(cm$Value=="Gmin") ]), 3 )
@@ -446,8 +446,8 @@ function(input, output, session) {
     }) ## closes parametric_kwarn_2
     
     output$parametric_phatwarn <- reactive({
-      cm = suppressWarnings(confounded_meta(method=method_2,q=q_2, r = r_2, muB = muB_2, sigB = sigB_2, yr = yr_2, vyr = vyr_2,
-                                            t2 = t2_2, vt2 = vt2_2, CI.level = 0.95, tail = tail_2))
+      cm = suppressWarnings(confounded_meta(method=method_2,q=q_2, r=r_2, muB=muB_2, sigB=sigB_2, yr=yr_2, vyr=vyr_2,
+                                            t2=t2_2, vt2=vt2_2, CI.level=0.95, tail=tail_2))
       
       p = round( cm$Est[ cm$Value=="Prop" ], 3 )
       ifelse(p<0.15 | p>0.85,

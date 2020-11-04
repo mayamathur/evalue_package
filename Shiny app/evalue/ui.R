@@ -220,7 +220,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                     shinydashboard::box(width=6,
                                                         title= strong("User-chosen sensitivity parameters and thresholds"),
                                                         column(width=10,
-                                                               numericInput('calibrated_B', 'User provided bias factor', 1.5, min = 0, max = Inf, step = 0.01) %>%
+                                                               numericInput('calibrated_muB', 'User provided bias factor', 1.5, min = 0, max = Inf, step = 0.01) %>%
                                                                  shinyInput_label_embed(
                                                                    shiny_iconlink() %>%
                                                                      bs_embed_popover(title = 'Used to adjust proportion by the provided bias factor')),
@@ -233,15 +233,16 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                                    shiny_iconlink() %>%
                                                                      bs_embed_popover(title = 'For the second two metrics, the value to which the proportion of meaningfully strong effects is to be reduced')),
                                                                
-                                                                                   h3("Range of bias factors to search"),
-                                                                                   numericInput('calibrated_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0, max=Inf, step=0.1) %>%
-                                                                                     shinyInput_label_embed(
-                                                                                       shiny_iconlink() %>%
-                                                                                         bs_embed_popover(title = 'used for "calibrated" method only')),
-                                                                                   numericInput('calibrated_Bmax', 'Upper limit of bias factor (Bmax)', 4, min=0, max=Inf, step=0.1) %>%
-                                                                                     shinyInput_label_embed(
-                                                                                       shiny_iconlink() %>%
-                                                                                         bs_embed_popover(title = 'used for "calibrated" method only'))
+                                                               ### used for plot only
+                                                               h3("Range of bias factors to search"),
+                                                               numericInput('calibrated_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0, max=Inf, step=0.1) %>%
+                                                                 shinyInput_label_embed(
+                                                                   shiny_iconlink() %>%
+                                                                     bs_embed_popover(title = 'used for plot only')),
+                                                               numericInput('calibrated_Bmax', 'Upper limit of bias factor (Bmax)', 4, min=0, max=Inf, step=0.1) %>%
+                                                                 shinyInput_label_embed(
+                                                                   shiny_iconlink() %>%
+                                                                     bs_embed_popover(title = 'used for plot only'))
                                                                
                                                         )
                                     ),
@@ -254,18 +255,14 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                                    shiny_iconlink() %>%
                                                                      bs_embed_popover(title = 'data file -- need to add more here')),
                                                        column(width=5,
-                                                              textInput('calibrated_yr', 'Variable name in csv data containing point estimates', placeholder = 'yi') %>%
+                                                              textInput('calibrated_yi.name', "Name of variable in data containing studies' point estimates", placeholder = 'yi.name') %>%
                                                                 shinyInput_label_embed(
                                                                   shiny_iconlink() %>%
                                                                     bs_embed_popover(title = 'For calibrated method, please supply variable name')),
-                                                              textInput('calibrated_vyr', 'Variable name in csv data containing variance of point estimates', placeholder = "vyi") %>%
+                                                              textInput('calibrated_vi.name', "Name of variable in data containing studies' variance estimates", placeholder = 'vi.name') %>%
                                                                 shinyInput_label_embed(
                                                                   shiny_iconlink() %>%
                                                                     bs_embed_popover(title = 'For calibrated method, please supply variable name'))
-                                                              # textInput('calibrated_calib.name', label = 'Variable name in csv data containing calibrated estimates (optional)', placeholder = 'calib.logRR') %>%
-                                                              #   shinyInput_label_embed(
-                                                              #     shiny_iconlink() %>%
-                                                              #       bs_embed_popover(title = 'only use if calibrated estimates already available in loaded csv filed'))
                                                        ),
                                                        column(width=5,
                                                                selectInput('calibrated_tail', 'Tail', choices = c('above', 'below'), selectize = FALSE, size = 2, selected = 'below') %>%
@@ -276,9 +273,11 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                                  shinyInput_label_embed(
                                                                    shiny_iconlink() %>%
                                                                      bs_embed_popover(title = 'Number of bootstrap or simulation iterates'))
-                                                        ),
-                                                       actionButton(inputId = 'calibrated_calculate', label='Generate calibrated confounded_meta results')
-                                    )
+                                                        )
+                                    ),
+                                    column(width=10,
+                                           actionButton(inputId = 'calibrated_calculate', label='Generate calibrated confounded_meta results')
+                                           )
                                     )
                                     
                                   ),
@@ -302,6 +301,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
 
 
                                   mainPanel(
+                                    "jl don't have plot working yet with Maya fixed confounded_meta",
                                     plotOutput('calibrated_plot1')
                                   )
                                   
@@ -381,7 +381,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                         column(width=6,
                                                                shinydashboard::box(width=6,
                                                                                    title=strong("Bias factor range to include in plot"),
-                                                                                   numericInput('parametric_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0, max=Inf, step=0.1) %>%
+                                                                                   numericInput('parametric_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0.1, max=Inf, step=0.1) %>%
                                                                                      shinyInput_label_embed(
                                                                                        shiny_iconlink() %>%
                                                                                          bs_embed_popover(title = 'used for plot only')),
