@@ -608,6 +608,9 @@ test_that("Parametric, test set #2 (causative)", {
   # CI limits
   expect_equal( max(1, cm[3,2] - SE*qnorm(0.975)), cm[3,4] )
   expect_equal( cm[3,2] + SE*qnorm(0.975), cm[3,5] )
+  
+  ##### sens_plot
+  
 })
 
 
@@ -926,11 +929,7 @@ test_that("Calibrated, test set #2 (causative)", {
                                     sei = sqrt(d$vyi) )
   mean(calib > q)
   
-  #bm
-  
-  # don't specify tail
 
-  
   # expect warning about setting tail because not specified
   expect_warning( confounded_meta(method="calibrated",
                                   q = q,
@@ -1850,6 +1849,11 @@ test_that("Calibrated, test set #4, (no bias needed to reduce this Phat to less 
 # })
 
 
+
+
+
+
+##### sens_plot
 
 
 

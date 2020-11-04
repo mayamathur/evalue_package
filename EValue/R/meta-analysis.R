@@ -17,7 +17,7 @@
 Phat_causal = function( q,
                         B,
                         tail,
-
+                        
                         dat,
                         yi.name,
                         vi.name) {
@@ -78,7 +78,7 @@ Phat_causal = function( q,
 
 
 #' define transformation in a way that is monotonic over the effective range of B (>1)
-#' to avoid ggplot errors
+#' to avoid ggplot errors in sens_plot
 #' helper function for confounded_meta
 #' 
 g = Vectorize( function(x) {
@@ -86,10 +86,10 @@ g = Vectorize( function(x) {
   x + sqrt( x^2 - x )
 } )
 
-# @@ needed?
-logHR_to_logRR = function(logRR){
-  log( ( 1 - 0.5^sqrt( exp(logRR) ) ) / ( 1 - 0.5^sqrt( 1 / exp(logRR) ) ) )
-}
+# # @@ needed?
+# logHR_to_logRR = function(logRR){
+#   log( ( 1 - 0.5^sqrt( exp(logRR) ) ) / ( 1 - 0.5^sqrt( 1 / exp(logRR) ) ) )
+# }
 
 
 #' Minimum common bias factor to reduce proportion of studies with causal effects above or below q t less than r
@@ -112,7 +112,7 @@ Tmin_causal = function( q,
                         dat,
                         yi.name,
                         vi.name ) {
-
+  
   # # test only
   # dat = d
   # calib.temp = MetaUtility::calib_ests(yi = d$yi,
@@ -166,7 +166,7 @@ Tmin_causal = function( q,
   # if multiple calibrated estimates are exactly equal to calib.star, 
   #  all of these will be shifted just below q (if tail == "above")
   ( Tmin = exp( abs(calib.star - q) + 0.001 ) )
-
+  
   return(as.numeric(Tmin))
 }
 
@@ -218,89 +218,91 @@ Tmin_causal = function( q,
 
 #'                  
 
-# work on the examples
+# @@warn when user provides input that's being ignored based on the chosen method
+# @@check that they provided all needed input based on chosen method
+# @@work on the examples
 # bms
-d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
-                    ci=cpos, di=cneg, data=metafor::dat.bcg)
-
-
-# obtaining all three estimators and inference
-# number of bootstrap iterates
-# should be larger in practice
-R = 100
-confounded_meta( method="calibrated",  # for both methods
-                q = log(0.90),
-                r = 0.20,
-                tail="below",
-                muB = log(1.5),
-                dat = d,
-                yi.name = "yi",
-                vi.name = "vi",
-                R = 100 )  
-
-# passing only arguments needed for prop point estimate
-confounded_meta( method="calibrated", 
-                 q = log(0.90),
-                 tail="below",
-                 muB = log(1.5),
-                 give.CI = FALSE,
-                 dat = d,
-                 yi.name = "yi",
-                 vi.name = "vi" )  
-
-# passing only arguments needed for Tmin, Gmin point estimates
-confounded_meta( method="calibrated", 
-                 q = log(0.90),
-                 r = 0.10,
-                 tail="below",
-                 give.CI = FALSE,
-                 dat = d,
-                 yi.name = "yi",
-                 vi.name = "vi" ) 
-
-
-### parametric
-
-m = metafor::rma.uni(yi= d$yi, vi=d$vi, knha=FALSE,
-                     measure="RR", method="DL" ) 
-yr = as.numeric(m$b)  # metafor returns on log scale
-vyr = as.numeric(m$vb)
-t2 = m$tau2
-vt2 = m$se.tau2^2 
-
-# obtaining all three estimators and inference
-# now the proportion considers heterogeneous bias
-confounded_meta( method = "parametric",
-                 q=log(0.90),
-                 r=0.20,
-                 tail = "below",
-                 muB=log(1.5),
-                 sigB=0.1,
-                 yr=yr,
-                 vyr=vyr,
-                 t2=t2,
-                 vt2=vt2,
-                 CI.level=0.95 )
-
-# passing only arguments needed for prop point estimate
-confounded_meta( method = "parametric",
-                 q=log(0.90),
-                 tail = "below",
-                 muB=log(1.5),
-                 sigB = 0,
-                 yr=yr,
-                 t2=t2,
-                 CI.level=0.95 )
-
-# passing only arguments needed for Tmin, Gmin point estimates
-# @@why is this requiring sigB?
-# @@return to this
-confounded_meta( method = "parametric",
-                 q=log(0.90),
-                 tail = "below",
-                 yr=yr,
-                 t2=t2,
-                 CI.level=0.95 )
+# d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
+#                     ci=cpos, di=cneg, data=metafor::dat.bcg)
+# 
+# 
+# # obtaining all three estimators and inference
+# # number of bootstrap iterates
+# # should be larger in practice
+# R = 100
+# confounded_meta( method="calibrated",  # for both methods
+#                 q = log(0.90),
+#                 r = 0.20,
+#                 tail="below",
+#                 muB = log(1.5),
+#                 dat = d,
+#                 yi.name = "yi",
+#                 vi.name = "vi",
+#                 R = 100 )  
+# 
+# # passing only arguments needed for prop point estimate
+# confounded_meta( method="calibrated", 
+#                  q = log(0.90),
+#                  tail="below",
+#                  muB = log(1.5),
+#                  give.CI = FALSE,
+#                  dat = d,
+#                  yi.name = "yi",
+#                  vi.name = "vi" )  
+# 
+# # passing only arguments needed for Tmin, Gmin point estimates
+# confounded_meta( method="calibrated", 
+#                  q = log(0.90),
+#                  r = 0.10,
+#                  tail="below",
+#                  give.CI = FALSE,
+#                  dat = d,
+#                  yi.name = "yi",
+#                  vi.name = "vi" ) 
+# 
+# 
+# ### parametric
+# 
+# m = metafor::rma.uni(yi= d$yi, vi=d$vi, knha=FALSE,
+#                      measure="RR", method="DL" ) 
+# yr = as.numeric(m$b)  # metafor returns on log scale
+# vyr = as.numeric(m$vb)
+# t2 = m$tau2
+# vt2 = m$se.tau2^2 
+# 
+# # obtaining all three estimators and inference
+# # now the proportion considers heterogeneous bias
+# confounded_meta( method = "parametric",
+#                  q=log(0.90),
+#                  r=0.20,
+#                  tail = "below",
+#                  muB=log(1.5),
+#                  sigB=0.1,
+#                  yr=yr,
+#                  vyr=vyr,
+#                  t2=t2,
+#                  vt2=vt2,
+#                  CI.level=0.95 )
+# 
+# # passing only arguments needed for prop point estimate
+# confounded_meta( method = "parametric",
+#                  q=log(0.90),
+#                  tail = "below",
+#                  muB=log(1.5),
+#                  sigB = 0,
+#                  yr=yr,
+#                  t2=t2,
+#                  CI.level=0.95 )
+# 
+# # passing only arguments needed for Tmin, Gmin point estimates
+# # @@why is this requiring sigB?
+# # @@return to this
+# confounded_meta( method = "parametric",
+#                  q=log(0.90),
+#                  tail = "below",
+#                  yr=yr,
+#                  t2=t2,
+#                  CI.level=0.95 )
 
 
 
@@ -406,7 +408,7 @@ confounded_meta = function( method="calibrated",  # for both methods
         # the max is there in case no bias is needed
         # (i.e., proportion of effects > q already < r without confounding)
         Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2) - q + yr ) )
-
+        
         # min confounding strength
         # suppress warnings to avoid warnings about NaN when term inside sqrt is negative
         Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
@@ -536,7 +538,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       Gmin = g(Tmin)
     }
     
-
+    
     
     ##### All Three Confidence Intervals #####
     if ( give.CI == TRUE ) {
@@ -545,21 +547,21 @@ confounded_meta = function( method="calibrated",  # for both methods
       
       # CI for Phat
       boot.res.Phat = suppressWarnings( boot( data = dat,
-                                         parallel = "multicore",
-                                         R = R, 
-                                         statistic = function(original, indices) {
-                                           
-                                           # draw bootstrap sample
-                                           b = original[indices,]
-                                           
-                                           Phatb = Phat_causal( q = q, 
-                                                                B = muB,
-                                                                tail = tail,
-                                                                dat = b,
-                                                                yi.name = yi.name,
-                                                                vi.name = vi.name)
-                                           return(Phatb)
-                                         } ) )
+                                              parallel = "multicore",
+                                              R = R, 
+                                              statistic = function(original, indices) {
+                                                
+                                                # draw bootstrap sample
+                                                b = original[indices,]
+                                                
+                                                Phatb = Phat_causal( q = q, 
+                                                                     B = muB,
+                                                                     tail = tail,
+                                                                     dat = b,
+                                                                     yi.name = yi.name,
+                                                                     vi.name = vi.name)
+                                                return(Phatb)
+                                              } ) )
       
       bootCIs.Phat = boot.ci(boot.res.Phat,
                              type="bca",
@@ -569,7 +571,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       hi.Phat = bootCIs.Phat$bca[5]
       SE.Phat = sd(boot.res.Phat$t)
       
-  
+      
       # Tmin and Gmin
       if ( !is.na(r) ) {
         boot.res.Tmin = suppressWarnings( boot( data = dat,
@@ -604,7 +606,7 @@ confounded_meta = function( method="calibrated",  # for both methods
         SE.G = sd( g(boot.res.Tmin$t) )
       }
     }  # closes "if ( !is.na(r) )"
-
+    
   } # closes calibrated method
   
   ##### Messages about Results #####
@@ -785,44 +787,74 @@ sens_plot = function(method="calibrated",
                      type,
                      q,
                      r=NA,
+                     
                      muB,
+                     
                      Bmin,
                      Bmax,
+                     
                      sigB,
                      yr,
                      vyr=NA,
                      t2,
                      vt2=NA,
+                     
                      breaks.x1=NA,
                      breaks.x2=NA,
                      CI.level=0.95,
                      tail=NA,
-                     # .calib, 
-                     .give.CI=TRUE,
-                     .R=2000,
-                     .dat
-                     # , .calib.name
-) {
+                     give.CI=TRUE,
+                     R=2000,
+                     dat ) {
   
-  ##### Check for Bad Input ######
+  # # test only
+  # method="calibrated"
+  # type = "line"
+  # q=median(d$calib)
+  # tail = "above"
+  # muB=0
+  # r=0.1
+  # q = 0.2
+  # R = 250
+  # CI.level = 0.95
+  # 
+  # give.CI=TRUE
+  # dat = d
+  # yi.name = "yi"
+  # vi.name = "vi"
+  # Bmin = log(1)
+  # Bmax = log(5)
+  # CI.level = 0.95
+  # tail = "above"
+  # breaks.x1 = NA
+  # breaks.x2 = NA
+  
+  # method = "parametric"
+  # type = "line"
+  # q = log(1.1)
+  # muB = log(2)
+  # sigB = 0.1
+  # yr = log(1.4)
+  # vyr = 0.5
+  # t2 = 0.3
+  # vt2 = 0.02
+  # r = 0.1
+  # Bmin = log(1)
+  # Bmax = log(5)
+  # CI.level = 0.95
+  # tail = "above"
+  # breaks.x1 = NA
+  # breaks.x2 = NA
+  
+  ##### Distribution Plot ######
   if ( type=="dist" ) {
     
+    # check for bad input
     if( is.na(muB) ) stop("For type='dist', must provide muB")
     
     if ( ( length(muB) > 1 ) | ( length(sigB) > 1 ) ) {
       stop( "For type='dist', muB and sigB must be length 1")
     }
-  }
-  
-  if ( type=="line" ) {
-    
-    if ( is.na(vyr) | is.na(vt2) ) {
-      message( "No confidence interval because vyr or vt2 is NULL")
-    }
-  }
-  
-  ##### Distribution Plot ######
-  if ( type=="dist" ) {
     
     # simulate confounded distribution
     reps = 10000
@@ -854,43 +886,57 @@ sens_plot = function(method="calibrated",
   
   ##### Line Plot ######
   if ( type=="line" ) {
-    if(method=="parametric"){
-      # get mean bias factor values for a bunch of different B's
+    
+    # compute axis tick points for both X-axes
+    if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
+    if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
+    
+    
+    if ( method=="parametric" ) {
+      
+      if ( is.na(vyr) | is.na(vt2) ) {
+        message( "No confidence interval because vyr or vt2 is NULL")
+      }
+      
+      
+      # get mean bias factor values for a vector of B's from Bmin to Bmax
       t = data.frame( B = seq(Bmin, Bmax, .01), phat = NA, lo = NA, hi = NA )
       t$eB = exp(t$B)
       
       for ( i in 1:dim(t)[1] ) {
         # r is irrelevant here
-        cm = confounded_meta(method=method,q=q, r=r, muB=t$B[i], sigB=sigB,
-                             yr=yr, vyr=vyr, t2=t2, vt2=vt2,
-                             CI.level=CI.level, tail=tail)
+        cm = confounded_meta( method=method,
+                              q=q,
+                              r=r,
+                              muB=t$B[i],
+                              sigB=sigB,
+                              yr=yr,
+                              vyr=vyr,
+                              t2=t2,
+                              vt2=vt2,
+                              CI.level=CI.level,
+                              tail=tail )
+        
         t$phat[i] = cm$Est[ cm$Value=="Prop" ]
         t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
         t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
       }
       
-      # compute values of g for the dual X-axis
-      if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
-      if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
+      # # compute axis tick points for both X-axes
+      # if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
+      # if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
       
-      # define transformation in a way that is monotonic over the effective range of B (>1)
-      # to avoid ggplot errors
-      g = Vectorize( function(x) {
-        if (x < 1) return( x / 1e10 )
-        x + sqrt( x^2 - x )
-      } )
-      
-      p = ggplot2::ggplot( t, aes(x=t$eB, y=t$phat ) ) + theme_bw() +
+      p = ggplot2::ggplot( t, aes(x=t$eB,
+                                  y=t$phat ) ) +
+        theme_bw() +
         scale_y_continuous( limits=c(0,1),
-                            breaks=seq(0, 1, .1) ) +
-        scale_x_continuous(  limits = c(min(breaks.x1), 
-                                        max(breaks.x1)),
-                             breaks = breaks.x1,
-                             sec.axis = sec_axis( ~ g(.),  # confounding strength axis
-                                                  name = "Minimum strength of both confounding RRs",
-                                                  breaks=breaks.x2 ) ) +
+                            
+                            breaks = seq(0, 1, .1),
+                            sec.axis = sec_axis( ~ g(.),  # confounding strength axis
+                                                 name = "Minimum strength of both confounding RRs",
+                                                 breaks=breaks.x2 ) ) +
         geom_line(lwd=1.2) +
-        xlab("Bias factor (RR scale)") +
+        xlab("Hypothetical average bias factor across studies (RR scale)") +
         ylab( paste( ifelse( tail=="above",
                              paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
                              paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) )
@@ -898,129 +944,113 @@ sens_plot = function(method="calibrated",
       # can't compute a CI if the bounds aren't there
       no.CI = any( is.na(t$lo) ) | any( is.na(t$hi) )
       
-      if ( no.CI ) graphics::plot(p)
-      else p + ggplot2::geom_ribbon( aes(ymin=t$lo, ymax=t$hi), alpha=0.15 )   
+      if ( no.CI ) graphics::plot(p) else p + ggplot2::geom_ribbon( aes(ymin=t$lo, ymax=t$hi), alpha=0.15 )   
     } ## closes method=="parametric"
     
-    else {if(method=="calibrated"){
+    
+    if ( method == "calibrated" ) {
       
-      require(boot)
-      .B.vec = seq(Bmin, Bmax, .01)
+      res = data.frame( B = seq(Bmin, Bmax, .01) )
       
-      .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yr]],
-                                                sei=sqrt(.dat[[vyr]]))
-      .calib=.dat$calib
-      .calib.name="calib"
       
-      .B=muB
+      # evaluate Phat causal at each value of B
+      res = res %>% rowwise() %>%
+        mutate( Phat = Phat_causal( q = q, 
+                                    B = B,
+                                    tail = tail,
+                                    dat = dat,
+                                    yi.name = yi.name,
+                                    vi.name = vi.name ) ) 
       
-      if(tail == "above") calib.t = .calib - log(.B)
-      if(tail == "below") calib.t = .calib + log(.B)
-      
-      # confounding-adjusted Phat
-      if ( tail == "above" ) Phat.t = mean( calib.t > q )
-      if ( tail == "below" ) Phat.t = mean( calib.t < q )
-      
-      if ( .give.CI == FALSE ) {
-        
-        return(Phat.t)
-        
-      } else {
-        boot.res = suppressWarnings( boot( data = .dat,
-                                           parallel = "multicore",
-                                           R = .R, 
-                                           statistic = Phat_causal_bt,
-                                           # below arguments are being passed to get_stat
-                                           .calib.name = .calib.name,
-                                           .q = q,
-                                           .B = .B.vec,
-                                           .tail = tail ) )
-        
-        bootCIs = boot.ci(boot.res,
-                          type="bca",
-                          conf = 0.95 )
-        
-        lo_Phat = bootCIs$bca[4]
-        hi_Phat = bootCIs$bca[5]
-        SE_Phat = sd(boot.res$t)
-        Bl = as.list(.B.vec)
-        
-        Phat.t.vec = lapply( Bl,
-                             FUN = function(B) Phat_causal( .q = q, 
-                                                            .B = B,
-                                                            .calib = .calib,
-                                                            .tail = tail,
-                                                            .give.CI = FALSE ) )
-        
-        res = data.frame( B = .B.vec,
-                          Phat.t = unlist(Phat.t.vec) )
-        
-        That = res$B[ which.min( abs( res$Phat.t - r ) ) ]
-        
+      if ( give.CI == TRUE ) {
+        require(boot)
         # look at just the values of B at which Phat jumps
         #  this will not exceed the number of point estimates in the meta-analysis
-        res.short = res[ diff(res$Phat.t) != 0, ]
+        # first entry should definitely be bootstrapped, so artificially set its diff to nonzero value
+        diffs = c( 1, diff(res$Phat) )  
+        res.short = res[ diffs != 0, ]
         
-        library(dplyr)
+        require(dplyr)
+        
         
         # bootstrap a CI for each entry in res.short
-        temp = res.short %>% rowwise() %>%
-          do( Phat_causal( .q = q, 
-                           .B = .$B,
-                           .calib = .calib,
-                           .tail = tail,
-                           .give.CI = TRUE,
-                           .dat = .dat,
-                           .R = .R,
-                           .calib.name = .calib.name ) )
+        res.short = res.short %>% rowwise() %>%
+          mutate( Phat_CI_lims(B) )
         
         # merge this with the full-length res dataframe, merging by Phat itself
-        res = merge( res, temp, by.x = "Phat.t", by.y = "Est")
-        
-        ##### Make Plot #####
-        library(ggplot2)
-        
-        ggplot( data = res,
-                aes( x = B,
-                     y = Phat.t ) ) +
-          theme_bw() +
-          
-          # proprtion "r" line
-          geom_hline( yintercept = r, 
-                      lty = 2,
-                      color = "red" ) +
-          
-          # That line
-          geom_vline( xintercept = That, 
-                      lty = 2,
-                      color = "black" ) +
-          
-          scale_y_continuous( limits=c(0,1), breaks=seq(0, 1, .1)) +
-          scale_x_continuous(  breaks = seq(1, 20, .1),
-                               sec.axis = sec_axis( ~ g(.),  # confounding strength axis
-                                                    name = "Minimum strength of both confounding RRs",
-                                                    breaks = seq(1, 8, .5 )) ) +
-          geom_line(lwd=1.2) +
-          
-          # # parametric estimate for comparison
-          # geom_line( data = res,
-          #            aes( x = B,
-          #                 y = Est.param ),
-          #            lwd = 1.2,
-          #            color = "blue") +
-          
-          xlab("Hypothetical bias factor in all studies (RR scale)") +
-          ylab( paste( ifelse( tail=="above",
-                               paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
-                               paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) ) +
-          
-          
-          geom_ribbon( aes(ymin=res$lo, ymax=res$hi), alpha=0.15, fill = "black" ) 
-        
+        res = merge( res, res.short, by = "Phat", all.x = TRUE )
       }
-    } ## closes method="calibrated
-    }} ## closes type=="line"
+      
+      #bm
+      p = ggplot2::ggplot( data = res,
+                           aes( x = B.x,
+                                y = Phat ) ) +
+        theme_bw() +
+        
+        
+        scale_y_continuous( limits=c(0,1),
+                            breaks=seq(0, 1, .1)) +
+        scale_x_continuous(  breaks = breaks.x1,
+                             sec.axis = sec_axis( ~ g(.),  # confounding strength axis
+                                                  name = "Minimum strength of both confounding RRs",
+                                                  breaks = breaks.x2) ) +
+        geom_line(lwd=1.2) +
+        
+        xlab("Hypothetical bias factor in all studies (RR scale)") +
+        ylab( paste( ifelse( tail=="above",
+                             paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
+                             paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) ) +
+        
+        
+        # @@only do this if give.CI==TRUE
+        geom_ribbon( aes(ymin=lo, ymax=hi), alpha=0.15, fill = "black" ) 
+      
+      #bm
+      
+      graphics::plot(p)
+    }  # closes method == "calibrated"
+    
+  } ## closes type=="line"
 } ## closes sens_plot function
 
 
+
+
+# fn of B; everything else is taken as a global var
+# @put as separate internal fn
+Phat_CI_lims = function(.B) {
+  
+  tryCatch({
+    boot.res = suppressWarnings( boot( data = dat,
+                                       parallel = "multicore",
+                                       R = R, 
+                                       statistic = function(original, indices) {
+                                         
+                                         # draw bootstrap sample
+                                         b = original[indices,]
+                                         
+                                         Phatb = Phat_causal( q = q, 
+                                                              B = .B,
+                                                              tail = tail,
+                                                              dat = b,
+                                                              yi.name = yi.name,
+                                                              vi.name = vi.name)
+                                         return(Phatb)
+                                       } ) )
+    
+    bootCIs = boot.ci(boot.res,
+                      type="bca",
+                      conf = CI.level )
+    
+    lo = bootCIs$bca[4]
+    hi = bootCIs$bca[5]
+    
+  }, error = function(err) {
+    lo <<- NA
+    hi <<- NA
+  })
+  
+  # return as data frame to play well with rowwise() and mutate()
+  return( data.frame( lo, hi ) )
+}
 
