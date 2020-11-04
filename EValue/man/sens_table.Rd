@@ -11,7 +11,7 @@ sens_table(meas, q, r = seq(0.1, 0.9, 0.1), muB = NA, sigB = NA, yr, t2)
 
 \item{q}{True effect size that is the threshold for "scientific significance"}
 
-\item{r}{For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of large effect sizes is to be reduced}
+\item{r}{For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of strong effect sizes is to be reduced}
 
 \item{muB}{Mean bias factor on the log scale across studies}
 

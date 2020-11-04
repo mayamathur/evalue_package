@@ -8,21 +8,19 @@ confounded_meta(
   method = "calibrated",
   q,
   r = NA,
+  CI.level = 0.95,
+  tail = NA,
   muB,
+  R = 2000,
   sigB,
   yr,
   vyr = NA,
   t2,
   vt2 = NA,
-  CI.level = 0.95,
-  tail = NA,
-  Bmin,
-  Bmax,
-  .calib,
-  .give.CI = TRUE,
-  .R = 2000,
-  .dat,
-  .calib.name
+  give.CI = TRUE,
+  dat,
+  yi.name,
+  vi.name
 )
 }
 \arguments{
@@ -30,9 +28,16 @@ confounded_meta(
 
 \item{q}{True effect size that is the threshold for "scientific significance"}
 
-\item{r}{For \code{Tmin} and \code{Gmin}, value to which the proportion of large effect sizes is to be reduced}
+\item{r}{For \code{Tmin} and \code{Gmin}, value to which the proportion of strong effect sizes is to be reduced}
 
-\item{muB}{Mean bias factor on the log scale across studies}
+\item{CI.level}{Confidence level as a proportion}
+
+\item{tail}{\code{above} for the proportion of effects above \code{q}; \code{below} for
+the proportion of effects below \code{q}. By default, is set to \code{above} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{below} otherwise.}
+
+\item{muB}{Mean bias factor on the log scale across studies. When considering bias that of homogeneous strength across studies (i.e., \code{method == "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study.}
+
+\item{R}{Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.}
 
 \item{sigB}{Standard deviation of log bias factor across studies}
 
@@ -44,23 +49,13 @@ confounded_meta(
 
 \item{vt2}{Estimated variance of tau^2 from confounded meta-analysis}
 
-\item{CI.level}{Confidence level as a proportion}
-
-\item{tail}{\code{above} for the proportion of effects above \code{q}; \code{below} for
-the proportion of effects below \code{q}. By default, is set to \code{above} for relative risks
-above 1 and to \code{below} for relative risks below 1.}
+\item{give.CI}{Logical. If TRUE, bootstrap confidence intervals provided}
 
 \item{Bmin}{Lower limit of bias factor (used for "calibrated" method only)}
 
 \item{Bmax}{Upper limit of bias factor (used for "calibrated" method only)}
 
-\item{.calib}{Calibrated estimates on logRR scale}
-
-\item{.give.CI}{Logical. If TRUE, bootstrap confidence intervals provided}
-
-\item{.R}{Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.}
-
-\item{.calb.name}{column name in dataframe containing calibrated estimates}
+\item{calib.name}{column name in dataframe containing calibrated estimates}
 }
 \description{
 Computes point estimates, standard errors, and confidence interval bounds

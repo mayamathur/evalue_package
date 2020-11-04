@@ -170,7 +170,9 @@ Tmin_causal = function( q,
   return(as.numeric(Tmin))
 }
 
-
+# @@ in docs below, talk about homogeneous vs. heterogeneous bias and which args need
+#  to be passed for each method
+# also warn about which arguments are being ignored for each method (e.g., calibrated ignores sigB)
 
 #' Estimates and inference for sensitivity analyses
 #' 
@@ -213,44 +215,109 @@ Tmin_causal = function( q,
 #' MetaUtility
 #' boot
 #' @examples
-#' d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
-#' ci=cpos, di=cneg, data=metafor::dat.bcg)
-#' 
-#' m = metafor::rma.uni(yi= d$yi, vi=d$vi, knha=FALSE,
-#'                      measure="RR", method="DL" ) 
-#' yr = as.numeric(m$b)  # metafor returns on log scale
-#' vyr = as.numeric(m$vb)
-#' t2 = m$tau2
-#' vt2 = m$se.tau2^2 
-#' 
-#' # obtaining all three estimators and inference
-#' confounded_meta( q=log(0.90), r=0.20, muB=log(1.5), sigB=0.1,
-#'                  yr=yr, vyr=vyr, t2=t2, vt2=vt2,
-#'                  CI.level=0.95 )
-#' 
-#' # passing only arguments needed for prop point estimate
-#' confounded_meta( q=log(0.90), muB=log(1.5),
-#'                  yr=yr, t2=t2, CI.level=0.95 )
-#' 
-#' # passing only arguments needed for Tmin, Gmin point estimates
-#' confounded_meta( q=log(0.90), r=0.20,
-#'                  yr=yr, t2=t2, CI.level=0.95 )
+
+#'                  
+
+# work on the examples
+# bms
+d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
+                    ci=cpos, di=cneg, data=metafor::dat.bcg)
+
+
+# obtaining all three estimators and inference
+# number of bootstrap iterates
+# should be larger in practice
+R = 100
+confounded_meta( method="calibrated",  # for both methods
+                q = log(0.90),
+                r = 0.20,
+                tail="below",
+                muB = log(1.5),
+                dat = d,
+                yi.name = "yi",
+                vi.name = "vi",
+                R = 100 )  
+
+# passing only arguments needed for prop point estimate
+confounded_meta( method="calibrated", 
+                 q = log(0.90),
+                 tail="below",
+                 muB = log(1.5),
+                 give.CI = FALSE,
+                 dat = d,
+                 yi.name = "yi",
+                 vi.name = "vi" )  
+
+# passing only arguments needed for Tmin, Gmin point estimates
+confounded_meta( method="calibrated", 
+                 q = log(0.90),
+                 r = 0.10,
+                 tail="below",
+                 give.CI = FALSE,
+                 dat = d,
+                 yi.name = "yi",
+                 vi.name = "vi" ) 
+
+
+### parametric
+
+m = metafor::rma.uni(yi= d$yi, vi=d$vi, knha=FALSE,
+                     measure="RR", method="DL" ) 
+yr = as.numeric(m$b)  # metafor returns on log scale
+vyr = as.numeric(m$vb)
+t2 = m$tau2
+vt2 = m$se.tau2^2 
+
+# obtaining all three estimators and inference
+# now the proportion considers heterogeneous bias
+confounded_meta( method = "parametric",
+                 q=log(0.90),
+                 r=0.20,
+                 tail = "below",
+                 muB=log(1.5),
+                 sigB=0.1,
+                 yr=yr,
+                 vyr=vyr,
+                 t2=t2,
+                 vt2=vt2,
+                 CI.level=0.95 )
+
+# passing only arguments needed for prop point estimate
+confounded_meta( method = "parametric",
+                 q=log(0.90),
+                 tail = "below",
+                 muB=log(1.5),
+                 sigB = 0,
+                 yr=yr,
+                 t2=t2,
+                 CI.level=0.95 )
+
+# passing only arguments needed for Tmin, Gmin point estimates
+# @@why is this requiring sigB?
+# @@return to this
+confounded_meta( method = "parametric",
+                 q=log(0.90),
+                 tail = "below",
+                 yr=yr,
+                 t2=t2,
+                 CI.level=0.95 )
+
 
 
 confounded_meta = function( method="calibrated",  # for both methods
                             q,
-                            r=NA,
-                            CI.level=0.95,
-                            tail=NA,
-                            muB,
-                            R=2000,
+                            r = NA,
+                            CI.level = 0.95,
+                            tail = NA,
+                            muB = NA,
+                            R = 2000,
                             
                             # only for parametric
-                            sigB,
+                            sigB = NA,
                             yr,
-                            vyr=NA,
+                            vyr = NA,
                             t2,
-                            vt2=NA,
+                            vt2 = NA,
                             
                             # only for calibrated
                             give.CI = TRUE,
@@ -291,7 +358,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     ##### Check for Bad Input #####
     if ( t2 < 0 ) stop("Heterogeneity cannot be negative")
-    if ( sigB < 0 ) stop("Bias factor variance cannot be negative")
+    if ( !is.na(sigB) & sigB < 0 ) stop("Bias factor variance cannot be negative")
     
     # the second condition is needed for Shiny app:
     #  if user deletes the input in box, then it's NA instead of NULL
@@ -312,7 +379,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     # if tail isn't provided, assume user wants the more extreme one (away from the null)
     if ( is.na(tail) ) {
       tail = ifelse( yr > log(1), "above", "below" )
-      warning( paste( "Assuming you want tail =", tail, "sbecause it wasn't specified") )
+      warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
     }
     
     # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
@@ -714,12 +781,26 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' #           yr=log(0.7), t2=0.2 )
 
 
-sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
-                     yr, vyr=NA, t2, vt2=NA,
-                     breaks.x1=NA, breaks.x2=NA,
-                     CI.level=0.95, tail=NA,
+sens_plot = function(method="calibrated",
+                     type,
+                     q,
+                     r=NA,
+                     muB,
+                     Bmin,
+                     Bmax,
+                     sigB,
+                     yr,
+                     vyr=NA,
+                     t2,
+                     vt2=NA,
+                     breaks.x1=NA,
+                     breaks.x2=NA,
+                     CI.level=0.95,
+                     tail=NA,
                      # .calib, 
-                     .give.CI=TRUE, .R=2000, .dat
+                     .give.CI=TRUE,
+                     .R=2000,
+                     .dat
                      # , .calib.name
 ) {
   
