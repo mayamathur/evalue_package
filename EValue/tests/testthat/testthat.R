@@ -518,7 +518,7 @@ test_that("Reject negative outcomes", {
 
 
 
-###################### CONFOUNDED_META ###################### 
+###################### CONFOUNDED_META AND SENS_PLOT ###################### 
 
 ##### Parametric Method #####
 test_that("Parametric, test set #1 (setting q equal to observed mean without bias should yield 50%)", {
@@ -535,6 +535,7 @@ test_that("Parametric, test set #1 (setting q equal to observed mean without bia
                                      sigB=0,
                                      yr=log(0.5),
                                      t2=0.1 )[1,2] )
+  
 })
 
 

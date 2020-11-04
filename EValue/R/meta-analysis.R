@@ -316,16 +316,16 @@ confounded_meta = function( method="calibrated",  # for both methods
                             
                             # only for parametric
                             sigB = NA,
-                            yr,
+                            yr = NA,
                             vyr = NA,
-                            t2,
+                            t2 = NA,
                             vt2 = NA,
                             
                             # only for calibrated
                             give.CI = TRUE,
-                            dat,
-                            yi.name,
-                            vi.name) {
+                            dat = NA,
+                            yi.name = NA,
+                            vi.name = NA) {
   
   
   # # test only
@@ -610,9 +610,12 @@ confounded_meta = function( method="calibrated",  # for both methods
   } # closes calibrated method
   
   ##### Messages about Results #####
-  if ( exists("Tmin") & !is.na(Tmin) & Tmin == 1 ) {
-    warning("Phat is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
-  }
+  if ( exists("Tmin") ) {
+    if ( !is.na(Tmin) & Tmin == 1 ) {
+      warning("Phat is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
+    }
+  }  
+    
   
   ##### Return Results #####
   return( data.frame( Value = c("Prop", "Tmin", "Gmin"), 
@@ -760,52 +763,109 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' @export
 #' @import ggplot2 
 #' @examples
-#' # with variable bias and with confidence band
-#' sens_plot( type="line", q=log(1.1), Bmin=log(1), Bmax=log(4), sigB=0.1,
-#'            yr=log(1.3), vyr=0.005, t2=0.4, vt2=0.03 )
 #' 
-#' # with fixed bias and without confidence band
-#' sens_plot( type="line", q=log(1.1), Bmin=log(1), Bmax=log(4),
-#'            yr=log(1.3), t2=0.4 )
 #' 
-#' # apparently preventive
-#' sens_plot( type="line", q=log(0.90), Bmin=log(1), Bmax=log(4),
-#'            yr=log(0.6), vyr=0.005, t2=0.4, vt2=0.04 )
-#' 
-#' # distribution plot: apparently causative
-#' # commented out because takes 5-10 seconds to run
-#' # sens_plot( type="dist", q=log(1.1), muB=log(2),
-#' #           yr=log(1.3), t2=0.4 )
-#'            
-#' # distribution plot: apparently preventive
-#' # commented out because takes 5-10 seconds to run
-#' # sens_plot( type="dist", q=log(0.90), muB=log(1.5),
-#' #           yr=log(0.7), t2=0.2 )
+
+
+##### Calibrated Line Plots #####
+# bm
+d = metafor::escalc(measure="RR",
+                    ai=tpos,
+                    bi=tneg,
+                    ci=cpos,
+                    di=cneg,
+                    data=metafor::dat.bcg)
+
+# without confidence band
+sens_plot( method = "calibrated",
+           type="line",
+           q=log(1.1),
+           Bmin=log(1),
+           Bmax=log(4),
+           dat = d,
+           yi.name = "yi",
+           vi.name = "vi",
+           give.CI = FALSE )
+
+# with confidence band
+# commented out because  it takes a while
+# this example gives bootstrap warnings because of its small sample size
+# sens_plot( method = "calibrated",
+#            type="line",
+#            q=log(1.1),
+#            Bmin=log(1),
+#            Bmax=log(4),
+#            R =500,
+#            dat = d,
+#            yi.name = "yi",
+#            vi.name = "vi",
+#            give.CI = TRUE )
+
+##### Parametric Line Plots #####
+# with heterogeneous bias across studies and with confidence band
+#bm: stopped here. was getting a weird error where tail is  getting set to "yi" at very beginning of sens_plot
+sens_plot( method = "parametric",
+           type="line",
+           q=log(1.1),
+           yr=log(1.3),
+           t2=0.4,
+           sigB = 0.1,
+           Bmin=log(1),
+           Bmax=log(4),
+           dat,
+           yi.name,
+           vi.name )
+
+# with fixed bias and without confidence band
+sens_plot( type="line", q=log(1.1), Bmin=log(1), Bmax=log(4),
+           yr=log(1.3), t2=0.4 )
+
+# apparently preventive
+sens_plot( type="line", q=log(0.90), Bmin=log(1), Bmax=log(4),
+           yr=log(0.6), vyr=0.005, t2=0.4, vt2=0.04 )
+
+# distribution plot: apparently causative
+# commented out because takes 5-10 seconds to run
+# sens_plot( type="dist", q=log(1.1), muB=log(2),
+#           yr=log(1.3), t2=0.4 )
+
+# distribution plot: apparently preventive
+# commented out because takes 5-10 seconds to run
+# sens_plot( type="dist", q=log(0.90), muB=log(1.5),
+#           yr=log(0.7), t2=0.2 )
+
+
+
 
 
 sens_plot = function(method="calibrated",
                      type,
                      q,
-                     r=NA,
-                     
-                     muB,
-                     
+                     #r=NA,
+                     CI.level=0.95,
+                     tail=NA,
+                     give.CI=TRUE,
                      Bmin,
                      Bmax,
+                     breaks.x1=NA,
+                     breaks.x2=NA,
                      
+                     # for plot type "dist"
+                     muB,
+                     
+                     # for type "line" and method "parametric"
                      sigB,
                      yr,
                      vyr=NA,
                      t2,
                      vt2=NA,
                      
-                     breaks.x1=NA,
-                     breaks.x2=NA,
-                     CI.level=0.95,
-                     tail=NA,
-                     give.CI=TRUE,
+                     
+                     # for type "line" and method "calibrated"
                      R=2000,
-                     dat ) {
+                     dat = NA,
+                     yi.name = NA,
+                     vi.name = NA) {
   
   # # test only
   # method="calibrated"
@@ -887,6 +947,7 @@ sens_plot = function(method="calibrated",
   ##### Line Plot ######
   if ( type=="line" ) {
     
+    
     # compute axis tick points for both X-axes
     if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
     if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
@@ -894,10 +955,16 @@ sens_plot = function(method="calibrated",
     
     if ( method=="parametric" ) {
       
+      
+      
+      if ( is.na(tail) ) {
+        tail = ifelse( yr > log(1), "above", "below" )
+        warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
+      }
+      
       if ( is.na(vyr) | is.na(vt2) ) {
         message( "No confidence interval because vyr or vt2 is NULL")
       }
-      
       
       # get mean bias factor values for a vector of B's from Bmin to Bmax
       t = data.frame( B = seq(Bmin, Bmax, .01), phat = NA, lo = NA, hi = NA )
@@ -905,17 +972,19 @@ sens_plot = function(method="calibrated",
       
       for ( i in 1:dim(t)[1] ) {
         # r is irrelevant here
-        cm = confounded_meta( method=method,
-                              q=q,
-                              r=r,
-                              muB=t$B[i],
-                              sigB=sigB,
-                              yr=yr,
-                              vyr=vyr,
-                              t2=t2,
-                              vt2=vt2,
-                              CI.level=CI.level,
-                              tail=tail )
+        # suppress warnings about Phat being close to 0 or 1
+        browser()
+        cm = suppressWarnings( confounded_meta( method=method,
+                                                q=q,
+                                                r=r,
+                                                muB=t$B[i],
+                                                sigB=sigB,
+                                                yr=yr,
+                                                vyr=vyr,
+                                                t2=t2,
+                                                vt2=vt2,
+                                                CI.level=CI.level,
+                                                tail=tail ) )
         
         t$phat[i] = cm$Est[ cm$Value=="Prop" ]
         t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
@@ -926,15 +995,18 @@ sens_plot = function(method="calibrated",
       # if ( any( is.na(breaks.x1) ) ) breaks.x1 = seq( exp(Bmin), exp(Bmax), .5 )
       # if ( any( is.na(breaks.x2) ) ) breaks.x2 = round( breaks.x1 + sqrt( breaks.x1^2 - breaks.x1 ), 2)
       
-      p = ggplot2::ggplot( t, aes(x=t$eB,
-                                  y=t$phat ) ) +
+      p = ggplot2::ggplot( t, aes(x=eB,
+                                  y=phat ) ) +
         theme_bw() +
+        
         scale_y_continuous( limits=c(0,1),
-                            
-                            breaks = seq(0, 1, .1),
-                            sec.axis = sec_axis( ~ g(.),  # confounding strength axis
-                                                 name = "Minimum strength of both confounding RRs",
-                                                 breaks=breaks.x2 ) ) +
+                            breaks=seq(0, 1, .1)) +
+        
+        scale_x_continuous(  breaks = breaks.x1,
+                             sec.axis = sec_axis( ~ g(.),  # confounding strength axis
+                                                  name = "Minimum strength of both confounding RRs",
+                                                  breaks = breaks.x2) ) +
+        
         geom_line(lwd=1.2) +
         xlab("Hypothetical average bias factor across studies (RR scale)") +
         ylab( paste( ifelse( tail=="above",
@@ -942,75 +1014,105 @@ sens_plot = function(method="calibrated",
                              paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) )
       
       # can't compute a CI if the bounds aren't there
-      no.CI = any( is.na(t$lo) ) | any( is.na(t$hi) )
+      no.CI = any( is.na(t$lo) ) | any( is.na(t$hi) ) | (give.CI == FALSE)
       
-      if ( no.CI ) graphics::plot(p) else p + ggplot2::geom_ribbon( aes(ymin=t$lo, ymax=t$hi), alpha=0.15 )   
-    } ## closes method=="parametric"
-    
-    
-    if ( method == "calibrated" ) {
-      
-      res = data.frame( B = seq(Bmin, Bmax, .01) )
-      
-      
-      # evaluate Phat causal at each value of B
-      res = res %>% rowwise() %>%
-        mutate( Phat = Phat_causal( q = q, 
-                                    B = B,
-                                    tail = tail,
-                                    dat = dat,
-                                    yi.name = yi.name,
-                                    vi.name = vi.name ) ) 
-      
-      if ( give.CI == TRUE ) {
-        require(boot)
-        # look at just the values of B at which Phat jumps
-        #  this will not exceed the number of point estimates in the meta-analysis
-        # first entry should definitely be bootstrapped, so artificially set its diff to nonzero value
-        diffs = c( 1, diff(res$Phat) )  
-        res.short = res[ diffs != 0, ]
+      if ( no.CI ){
+        graphics::plot(p)
+      } else {
+        graphics::plot( p + ggplot2::geom_ribbon( aes(ymin=lo, ymax=hi), alpha=0.15 ) )
         
-        require(dplyr)
-        
-        
-        # bootstrap a CI for each entry in res.short
-        res.short = res.short %>% rowwise() %>%
-          mutate( Phat_CI_lims(B) )
-        
-        # merge this with the full-length res dataframe, merging by Phat itself
-        res = merge( res, res.short, by = "Phat", all.x = TRUE )
+        warning("Calculating parametric confidence intervals in the plot. For values of Phat that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
       }
-      
-      #bm
-      p = ggplot2::ggplot( data = res,
-                           aes( x = B.x,
-                                y = Phat ) ) +
-        theme_bw() +
-        
-        
-        scale_y_continuous( limits=c(0,1),
-                            breaks=seq(0, 1, .1)) +
-        scale_x_continuous(  breaks = breaks.x1,
-                             sec.axis = sec_axis( ~ g(.),  # confounding strength axis
-                                                  name = "Minimum strength of both confounding RRs",
-                                                  breaks = breaks.x2) ) +
-        geom_line(lwd=1.2) +
-        
-        xlab("Hypothetical bias factor in all studies (RR scale)") +
-        ylab( paste( ifelse( tail=="above",
-                             paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
-                             paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) ) +
-        
-        
-        # @@only do this if give.CI==TRUE
-        geom_ribbon( aes(ymin=lo, ymax=hi), alpha=0.15, fill = "black" ) 
-      
-      #bm
-      
-      graphics::plot(p)
-    }  # closes method == "calibrated"
     
-  } ## closes type=="line"
+    
+  } ## closes method=="parametric"
+  
+  
+  if ( method == "calibrated" ) {
+    
+    # if tail isn't provided, assume user wants the more extreme one (away from the null)
+    if ( is.na(tail) ) {
+      calib = calib_ests( yi = dat[[yi.name]], 
+                          sei = sqrt( dat[[vi.name]] ) )
+      
+      tail = ifelse( median(calib) > log(1), "above", "below" )
+      warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
+    }
+    
+    res = data.frame( B = seq(Bmin, Bmax, .01) )
+    
+    # evaluate Phat causal at each value of B
+    res = res %>% rowwise() %>%
+      mutate( Phat = Phat_causal( q = q, 
+                                  B = B,
+                                  tail = tail,
+                                  dat = dat,
+                                  yi.name = yi.name,
+                                  vi.name = vi.name ) ) 
+    
+    if ( give.CI == TRUE ) {
+      require(boot)
+      # look at just the values of B at which Phat jumps
+      #  this will not exceed the number of point estimates in the meta-analysis
+      # first entry should definitely be bootstrapped, so artificially set its diff to nonzero value
+      diffs = c( 1, diff(res$Phat) )  
+      res.short = res[ diffs != 0, ]
+      
+      require(dplyr)
+      
+      
+      # bootstrap a CI for each entry in res.short
+      res.short = res.short %>% rowwise() %>%
+        mutate( Phat_CI_lims(.B = B,
+                             q = q,
+                             tail = tail,
+                             dat = dat,
+                             yi.name = yi.name,
+                             vi.name = vi.name ) )
+      
+      # merge this with the full-length res dataframe, merging by Phat itself
+      res = merge( res, res.short, by = "Phat", all.x = TRUE )
+      
+      res = res %>% rename( B = B.x )
+      
+      # @@need to test
+      if ( any( res$lo > res$Phat ) | any( res$hi < res$Phat ) ) {
+        warning( paste( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." ) )
+      }
+    }
+    
+    #browser()
+    
+    #bm
+    p = ggplot2::ggplot( data = res,
+                         aes( x = B,
+                              y = Phat ) ) +
+      theme_bw() +
+      
+      
+      scale_y_continuous( limits=c(0,1),
+                          breaks=seq(0, 1, .1)) +
+      scale_x_continuous(  breaks = breaks.x1,
+                           sec.axis = sec_axis( ~ g(.),  # confounding strength axis
+                                                name = "Minimum strength of both confounding RRs",
+                                                breaks = breaks.x2) ) +
+      geom_line(lwd=1.2) +
+      
+      xlab("Hypothetical bias factor in all studies (RR scale)") +
+      ylab( paste( ifelse( tail=="above",
+                           paste( "Estimated proportion of studies with true RR >", round( exp(q), 3 ) ),
+                           paste( "Estimated proportion of studies with true RR <", round( exp(q), 3 ) ) ) ) )
+    
+    
+    
+    if ( give.CI == TRUE ) {
+      p = p + geom_ribbon( aes(ymin=lo, ymax=hi), alpha=0.15, fill = "black" )
+    }
+      
+    graphics::plot(p)
+  }  # closes method == "calibrated"
+  
+} ## closes type=="line"
 } ## closes sens_plot function
 
 
@@ -1018,7 +1120,12 @@ sens_plot = function(method="calibrated",
 
 # fn of B; everything else is taken as a global var
 # @put as separate internal fn
-Phat_CI_lims = function(.B) {
+Phat_CI_lims = function(.B,
+                        q,
+                        tail,
+                        dat,
+                        yi.name,
+                        vi.name) {
   
   tryCatch({
     boot.res = suppressWarnings( boot( data = dat,
@@ -1029,12 +1136,12 @@ Phat_CI_lims = function(.B) {
                                          # draw bootstrap sample
                                          b = original[indices,]
                                          
-                                         Phatb = Phat_causal( q = q, 
-                                                              B = .B,
-                                                              tail = tail,
-                                                              dat = b,
-                                                              yi.name = yi.name,
-                                                              vi.name = vi.name)
+                                         Phatb = suppressWarnings( Phat_causal( q = q, 
+                                                                                B = .B,
+                                                                                tail = tail,
+                                                                                dat = b,
+                                                                                yi.name = yi.name,
+                                                                                vi.name = vi.name) )
                                          return(Phatb)
                                        } ) )
     
