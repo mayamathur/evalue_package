@@ -26,73 +26,32 @@ library(boot)
 ###helper functions (Phat_causal, That_causal, That_causal_bt, g, logHR_to_logRR) from Maya code:
 #' helper function for confounded_meta
 #' 
-Phat_causal = function( .q,
-                        .B,
-                        .calib, # assumed on log scale
-                        .tail,
+Phat_causal = function( q,
+                        B,
+                        tail,
                         
-                        .give.CI = TRUE,
-                        .R = 2000,
-                        .dat = NA,
-                        .calib.name = NA ) {
+                        dat,
+                        yi.name,
+                        vi.name) {
   
-  if(.tail == "above") calib.t = .calib - log(.B)
-  if(.tail == "below") calib.t = .calib + log(.B)
+  if ( ! yi.name %in% names(dat) ) stop("dat does not contain a column named yi.name")
+  if ( ! vi.name %in% names(dat) ) stop("dat does not contain a column named vi.name")
+  
+  calib = MetaUtility::calib_ests( yi = dat[[yi.name]],
+                                   sei = sqrt(dat[[vi.name]] ) )
+  
+  # confounding-adjusted calibrated estimates
+  # always shift the estimates in the direction that will DECREASE the proportion
+  if ( tail == "above" ) calib.t = calib - B
+  if ( tail == "below" ) calib.t = calib +B
   
   # confounding-adjusted Phat
-  if ( .tail == "above" ) Phat.t = mean( calib.t > .q )
-  if ( .tail == "below" ) Phat.t = mean( calib.t < .q )
-
-  if ( .give.CI == FALSE ) {
-    
-    return(Phat.t)
-    
-  } else {
-    boot.res = suppressWarnings( boot( data = .dat,
-                                       parallel = "multicore",
-                                       R = .R, 
-                                       statistic = Phat_causal_bt,
-                                       # below arguments are being passed to get_stat
-                                       .calib.name = .calib.name,
-                                       .q = .q,
-                                       .B = .B,
-                                       .tail = .tail ) )
-    
-    bootCIs = boot.ci(boot.res,
-                      type="bca",
-                      conf = 0.95 )
-    
-    lo = bootCIs$bca[4]
-    hi = bootCIs$bca[5]
-    SE = sd(boot.res$t)
-    
-    
-    return( data.frame( Est = Phat.t,
-                        SE = SE,
-                        lo = lo, 
-                        hi = hi ) )
-  }
+  if ( tail == "above" ) Phat.t = mean( calib.t > q )
+  if ( tail == "below" ) Phat.t = mean( calib.t < q )
+  
+  return(Phat.t)
 }
 
-
-
-###### Simplified version of above for boot to call #####
-Phat_causal_bt = function( original,
-                           indices,
-                           .calib.name,
-                           .q,
-                           .B,
-                           .tail ) {
-  
-  b = original[indices,]
-  
-  phatb = Phat_causal( .q = .q, 
-                       .B = .B,
-                       .calib = b[[.calib.name]], 
-                       .tail = .tail,
-                       .give.CI = FALSE)
-  return(phatb)
-}
 
 #' define transformation in a way that is monotonic over the effective range of B (>1)
 #' to avoid ggplot errors
@@ -103,46 +62,126 @@ g = Vectorize( function(x) {
   x + sqrt( x^2 - x )
 } )
 
+# @@ needed?
 logHR_to_logRR = function(logRR){
   log( ( 1 - 0.5^sqrt( exp(logRR) ) ) / ( 1 - 0.5^sqrt( 1 / exp(logRR) ) ) )
 }
 
-#' ##### That and Ghat from grid search of Phat values #####
-#' # for each of a vector of bias factors, calculates Phat causal and then finds the one
-#' # that's closest to threshold proportion, .r
-#' helper function for confounded_meta
-#'
-##### Simplified version of the above for boot to call #####
-That_causal_bt = function( original,
-                           indices, 
-                           .calib.name,
-                           .q,
-                           .r,
-                           .B.vec,
-                           .tail ) {
-  b = original[indices,]
+Tmin_causal = function( q,
+                        r,
+                        tail,
+                        
+                        dat,
+                        yi.name,
+                        vi.name ) {
   
-  Bl = as.list(.B.vec)
-  
-  # calculate Phat for a vector of B
-  Phat.t.vec = unlist( lapply( Bl,
-                               FUN = function(B) Phat_causal( .q = .q, 
-                                                              .B = B,
-                                                              .calib = b[[.calib.name]],
-                                                              .tail = .tail,
-                                                              .give.CI = FALSE ) ) )
+  # # test only
+  # dat = d
+  # calib.temp = MetaUtility::calib_ests(yi = d$yi,
+  #                                      sei = sqrt(d$vyi))
+  # q = quantile(calib.temp, 0.8)
+  # r = 0.3
+  # yi.name = "yi"
+  # vi.name = "vyi"
+  # tail = "above"
   
   
-  That = .B.vec[ which.min( abs( Phat.t.vec - .r ) ) ]
-  return(That)
+  # here, check if any shifting is actually needed
+  # current Phat
+  Phatc = Phat_causal(q = q,
+                      B = 0,
+                      tail = tail,
+                      dat = dat,
+                      yi.name = yi.name,
+                      vi.name = vi.name)
+  if ( Phatc <= r ){
+    # this warning is now in confounded_meta
+    #warning("Phat is already less than or equal to r even with no confounding, so Tmin is not applicable. No confounding at all is required to make the specified shift.")
+    return(1)
+  }
   
+  # evaluate the ECDF of the unshifted calib at those calib themselves
+  #  to get the possible values that Phat can take
+  #  this approach handles ties
+  calib = sort( calib_ests( yi = dat[[yi.name]], sei = sqrt(dat[[vi.name]]) ) )
+  Phat.options = unique( ecdf(calib)(calib) )
+  # always possible to choose 0
+  Phat.options = c(Phat.options, 0)
+  
+  # of Phats that are <= r, find the largest one (i.e., closest to r)
+  Phat.target = max( Phat.options[ Phat.options <= r ] ) 
+  
+  
+  # find calib.star, the calibrated estimate that needs to move to q
+  # example for tail == "above":
+  # calib.star is the largest calibrated estimate that needs to move to just
+  #  BELOW q after shifting
+  # k * Phat.target is the number of calibrated estimates that should remain
+  #  ABOVE q after shifting
+  k = length(calib)
+  if ( tail == "above" ) calib.star = calib[ k - (k * Phat.target) ]
+  if ( tail == "below" ) calib.star = calib[ (k * Phat.target) + 1 ]
+  
+  # pick the bias factor that shifts calib.star to q
+  #  and then add a tiny bit (0.001) to shift calib.star to just
+  # below or above q
+  # if multiple calibrated estimates are exactly equal to calib.star, 
+  #  all of these will be shifted just below q (if tail == "above")
+  ( Tmin = exp( abs(calib.star - q) + 0.001 ) )
+  
+  return(as.numeric(Tmin))
 }
 
-confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
-                            yr, vyr=NA, t2, vt2=NA,
-                            CI.level=0.95, tail=NA, Bmin, Bmax,
-                            .calib, .give.CI=TRUE, .R=2000, .dat, .calib.name ) {
-  ### for parametric
+
+confounded_meta = function( method="calibrated",  # for both methods
+                            q,
+                            r=NA,
+                            CI.level=0.95,
+                            tail=NA,
+                            muB,
+                            R=2000,
+                            
+                            # only for parametric
+                            sigB,
+                            yr,
+                            vyr=NA,
+                            t2,
+                            vt2=NA,
+                            
+                            # only for calibrated
+                            give.CI = TRUE,
+                            dat,
+                            yi.name,
+                            vi.name) {
+  
+  
+  # # test only
+  # method="calibrated"
+  # q=median(d$calib)
+  # tail = "above"
+  # muB=0
+  # r=0.1
+  # q = 0.2
+  # R = 250
+  # CI.level = 0.95
+  # 
+  # give.CI=TRUE
+  # dat = d
+  # yi.name = "yi"
+  # vi.name = "vyi"
+  
+  
+  
+  
+  ##### Check for Bad Input - Common to Parametric and Calibrated Methods #####
+  if ( ! is.na(r) ) {
+    if (r < 0 | r > 1) stop("r must be between 0 and 1")
+  }
+  
+  if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
+  
+  
+  ##### PARAMETRIC #####
   if (method=="parametric"){
     
     
@@ -160,34 +199,34 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
       if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
     }
     
-    if ( ! is.na(r) ) {
-      if (r < 0 | r > 1) stop("r must be between 0 and 1")
-    }
-    
     if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
     
     ##### Messages When Not All Output Can Be Computed #####
     if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
-    if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
     
     ##### Point Estimates: Causative Case #####
-    
     # if tail isn't provided, assume user wants the more extreme one (away from the null)
-    if ( is.na(tail) ) tail = ifelse( yr > log(1), "above", "below" )
+    if ( is.na(tail) ) {
+      tail = ifelse( yr > log(1), "above", "below" )
+      warning( paste( "Assuming you want tail =", tail, "sbecause it wasn't specified") )
+    }
     
     # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
+    # @@make sure Phat_causal is consistent with this
     if ( yr > log(1) ) {
       yr.corr = yr - muB
-    }else{ yr.corr = yr + muB}
+    } else {
+      yr.corr = yr + muB
+    }
     
     if ( tail == "above" ) {
       
       if ( !is.na(muB) ) {
         # prop above
         Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
-        phat = 1 - pnorm(Z) 
+        Phat = 1 - pnorm(Z) 
       } else {
-        phat = NA
+        Phat = NA
       }
       
       if ( !is.na(r) ) {
@@ -211,9 +250,9 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
       if ( !is.na(muB) ) {
         # prop below
         Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
-        phat = pnorm(Z) 
+        Phat = pnorm(Z) 
       } else {
-        phat = NA
+        Phat = NA
       }
       
       if ( !is.na(r) ) {
@@ -239,18 +278,19 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
       term1 = sqrt( term1.1 + term1.2 )
       
       Z = num.term / sqrt( t2 - sigB^2 )
-      SE = term1 * dnorm(Z)
+      SE.Phat = term1 * dnorm(Z)
       
       # confidence interval
       tail.prob = ( 1 - CI.level ) / 2
-      lo.phat = max( 0, phat + qnorm( tail.prob )*SE )
-      hi.phat = min( 1, phat - qnorm( tail.prob )*SE )
+      lo.Phat = max( 0, Phat + qnorm( tail.prob )*SE.Phat )
+      hi.Phat = min( 1, Phat - qnorm( tail.prob )*SE.Phat )
       
       # warn if bootstrapping needed
-      if ( phat < 0.15 | phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
+      # @ change to recommending calibrated?
+      if ( Phat < 0.15 | Phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
       
     } else {
-      SE = lo.phat = hi.phat = NA
+      SE.Phat = lo.Phat = hi.Phat = NA
     }
     
     ##### Delta Method Inference: Tmin and Gmin #####
@@ -281,126 +321,157 @@ confounded_meta = function( method="calibrated", q, r=NA, muB, sigB,
       SE.T = SE.G = lo.T = lo.G = hi.T = hi.G = NA
     }
     
-    
-    # return results
-    res = data.frame( Value = c("Prop", "Tmin", "Gmin"), 
-                      Est = c( phat, Tmin, Gmin ),
-                      SE = c(SE, SE.T, SE.G),
-                      CI.lo = c(lo.phat, lo.T, lo.G), 
-                      CI.hi = c(hi.phat, hi.T, hi.G) 
-    )
-    
-    return(res)
-  } ## closes parametric method
+  } # closes parametric method
   
-  ## for calibrated
-  if(method=="calibrated"){
-    require(boot)
-    .B.vec = seq(Bmin, Bmax, .01)
+  ##### CALIBRATED #####
+  if( method == "calibrated" ){
+    
+    # # test only
+    # method="calibrated"
+    # q=median(d$calib)
+    # tail = "above"
+    # muB=0
+    # r=0.1
+    # q = 0.2
+    # R = 250
+    # CI.level = 0.95
+    # 
+    # give.CI=TRUE
+    # dat = d
+    # yi.name = "yi"
+    # vi.name = "vyi"
 
-    .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yr]],
-                                      sei=sqrt(.dat[[vyr]]))
-    .calib=.dat$calib
-    .calib.name="calib"
     
-    .B=muB
+    # bm1
     
-    if(tail == "above") calib.t = .calib - log(.B)
-    if(tail == "below") calib.t = .calib + log(.B)
-
-    # confounding-adjusted Phat
-    if ( tail == "above" ) Phat.t = mean( calib.t > q )
-    if ( tail == "below" ) Phat.t = mean( calib.t < q )
+    ##### Check for Bad Input #####
+    # @@do me
+    
+    # if tail isn't provided, assume user wants the more extreme one (away from the null)
+    if ( is.na(tail) ) {
+      calib = calib_ests( yi = dat[[yi.name]], 
+                          sei = sqrt( dat[[vi.name]] ) )
+      
+      tail = ifelse( median(calib) > log(1), "above", "below" )
+      warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
+    }
     
     
-    if ( .give.CI == FALSE ) {
+    # initialize
+    Phat = Tmin = Gmin = SE.Phat = SE.T = SE.G = lo.Phat = lo.T = lo.G = hi.Phat = hi.T = hi.G = NA
+    
+    
+    ##### All Three Point Estimates #####
+    Phat = Phat_causal( q = q, 
+                        B = muB,
+                        tail = tail,
+                        dat = dat,
+                        yi.name = yi.name,
+                        vi.name = vi.name )
+    
+    if ( !is.na(r) ) {
+      Tmin = Tmin_causal(q = q,
+                         r = r,
+                         tail = tail,
+                         dat = dat,
+                         yi.name = yi.name,
+                         vi.name = vi.name)
       
-      return(Phat.t)
       
-    } else {
-      boot.res = suppressWarnings( boot( data = .dat,
-                                         parallel = "multicore",
-                                         R = .R, 
-                                         statistic = Phat_causal_bt,
-                                         # below arguments are being passed to get_stat
-                                         .calib.name = .calib.name,
-                                         .q = q,
-                                         .B = .B.vec,
-                                         .tail = tail ) )
-      
-      bootCIs = boot.ci(boot.res,
-                        type="bca",
-                        conf = 0.95 )
-      
-      lo_Phat = bootCIs$bca[4]
-      hi_Phat = bootCIs$bca[5]
-      SE_Phat = sd(boot.res$t)
-      Bl = as.list(.B.vec)
-      
-      Phat.t.vec = lapply( Bl,
-                           FUN = function(B) Phat_causal( .q = q, 
-                                                          .B = B,
-                                                          .calib = .calib,
-                                                          .tail = tail,
-                                                          .give.CI = FALSE ) )
-      
-      res = data.frame( B = .B.vec,
-                        Phat.t = unlist(Phat.t.vec) )
-      
-      That = res$B[ which.min( abs( res$Phat.t - r ) ) ]
-      Ghat = g(That)
-      
-      if ( .give.CI == FALSE ) {
-        
-        return( data.frame( That, Ghat ) )
-        
-      } else {
-        boot.res = suppressWarnings( boot( data = .dat,
-                                           parallel = "multicore",
-                                           R = .R, 
-                                           statistic = That_causal_bt,
-                                           # below arguments are being passed to get_stat
-                                           .calib.name = .calib.name,
-                                           .q = q,
-                                           .r = r,
-                                           .B.vec = .B.vec,
-                                           .tail = tail ) )
-        
-        bootCIs = boot.ci(boot.res,
-                          type="bca",
-                          conf = 0.95 )
-        
-        lo = bootCIs$bca[4]
-        hi = bootCIs$bca[5]
-        SE = sd(boot.res$t)
-        
-        # return results
-        res = data.frame( Value = c("Phat.t", "That", "Ghat"), 
-                          Est = c(Phat.t, That, Ghat),
-                          SE = c(SE_Phat, SE, NA),  # ~~ for latter, could replace with delta method
-                          CI.lo = c(lo_Phat, lo, g(lo)), 
-                          CI.hi = c(hi_Phat, hi, g(hi)),
-                          Meaning = c(NA, "Bias factor required", "Confounding strength required")
-        )
-        
-        return(res)
-      }
+      Gmin = g(Tmin)
     }
     
     
     
-  } #closes calibrated method
+    ##### All Three Confidence Intervals #####
+    if ( give.CI == TRUE ) {
+      
+      require(boot)
+      
+      # CI for Phat
+      boot.res.Phat = suppressWarnings( boot( data = dat,
+                                              parallel = "multicore",
+                                              R = R, 
+                                              statistic = function(original, indices) {
+                                                
+                                                # draw bootstrap sample
+                                                b = original[indices,]
+                                                
+                                                Phatb = Phat_causal( q = q, 
+                                                                     B = muB,
+                                                                     tail = tail,
+                                                                     dat = b,
+                                                                     yi.name = yi.name,
+                                                                     vi.name = vi.name)
+                                                return(Phatb)
+                                              } ) )
+      
+      bootCIs.Phat = boot.ci(boot.res.Phat,
+                             type="bca",
+                             conf = CI.level )
+      
+      lo.Phat = bootCIs.Phat$bca[4]
+      hi.Phat = bootCIs.Phat$bca[5]
+      SE.Phat = sd(boot.res.Phat$t)
+      
+      
+      # Tmin and Gmin
+      if ( !is.na(r) ) {
+        boot.res.Tmin = suppressWarnings( boot( data = dat,
+                                                parallel = "multicore",
+                                                R = R, 
+                                                statistic = function(original, indices) {
+                                                  
+                                                  # draw bootstrap sample
+                                                  b = original[indices,]
+                                                  
+                                                  Tminb = Tmin_causal(q = q,
+                                                                      r = r,
+                                                                      tail = tail,
+                                                                      dat = b,
+                                                                      yi.name = yi.name,
+                                                                      vi.name = vi.name)
+                                                  return(Tminb)
+                                                } ) )
+        
+        bootCIs.Tmin = boot.ci(boot.res.Tmin,
+                               type="bca",
+                               conf = CI.level )
+        
+        lo.T = max(1, bootCIs.Tmin$bca[4])  # bias factor can't be < 1
+        hi.T = bootCIs.Tmin$bca[5]  # but has no upper bound
+        SE.T = sd(boot.res.Tmin$t)
+        
+        
+        ##### Gmin #####
+        lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
+        hi.G = g(hi.T)  # but has no upper bound
+        SE.G = sd( g(boot.res.Tmin$t) )
+      }
+    }  # closes "if ( !is.na(r) )"
+    
+  } # closes calibrated method
   
-} #closes confounded_meta function
+  ##### Messages about Results #####
+  if ( exists("Tmin") & !is.na(Tmin) & Tmin == 1 ) {
+    warning("Phat is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
+  }
+  
+  ##### Return Results #####
+  return( data.frame( Value = c("Prop", "Tmin", "Gmin"), 
+                      Est = c( Phat, Tmin, Gmin ),
+                      SE = c(SE.Phat, SE.T, SE.G),
+                      CI.lo = c(lo.Phat, lo.T, lo.G), 
+                      CI.hi = c(hi.Phat, hi.T, hi.G) ) )
+  
+} # closes confounded_meta function
 
 
 sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
                              yr, vyr=NA, t2, vt2=NA,
                              breaks.x1=NA, breaks.x2=NA,
-                             CI.level=0.95, tail=NA,
-                             # .calib, 
-                             .give.CI=TRUE, .R=2000, .dat
-                             # , .calib.name
+                             CI.level=0.95, tail=NA, yi.name, vi.name,
+                             give.CI=TRUE, R=2000, dat
                              ) {
   
   ##### Check for Bad Input ######
@@ -506,8 +577,8 @@ sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
       require(boot)
       .B.vec = seq(Bmin, Bmax, .01)
       
-      .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yr]],
-                                                sei=sqrt(.dat[[vyr]]))
+      .dat[["calib"]] = MetaUtility::calib_ests(yi=.dat[[yi.name]],
+                                                sei=sqrt(.dat[[vi.name]]))
       .calib=.dat$calib
       .calib.name="calib"
       
@@ -620,3 +691,217 @@ sens_plot = function(method="calibrated", type, q, r=NA, muB, Bmin, Bmax, sigB,
     } ## closes method="calibrated
     }} ## closes type=="line"
 } ## closes sens_plot function
+
+
+
+
+
+### look at output of Maya's updated confounded_meta:
+# sim_data2 = function( k, # total number of studies
+#                       m = k, # number of clusters (m=k implies no clustering)
+#                       b0, # intercept
+#                       bc, # effect of continuous moderator
+#                       bb, # effect of binary moderator
+#                       V,  # TOTAL residual heterogeneity after conditioning on moderators (including within- and between-cluster variance)
+#                       Vzeta = 0, # between-cluster variance (must be less than V)
+#                       muN,
+#                       minN,
+#                       sd.w,
+#                       true.effect.dist) {
+# 
+#   # # @test for m=k case
+#   # # TEST ONLY
+#   # k = 3
+#   # m = 3
+#   # b0 = 0 # intercept
+#   # bc = 0 # effect of continuous moderator
+#   # bb = 0 # effect of binary moderator
+#   # V = .5
+#   # Vzeta = 0.25
+#   # muN = 100
+#   # minN = 50
+#   # sd.w = 1
+#   # true.effect.dist = "expo"
+# 
+# 
+#   if ( Vzeta > V ) stop( "Vzeta must be less than or equal to V" )
+# 
+# 
+#   # assign studies to clusters
+#   # each in own cluster:
+#   if (m == k) cluster = 1:k  # each in its own cluster
+#   # k not divisble by m:
+#   # fine if k isn't divisible by m (number of clusters); clusters will just be unbalanced and actual number of cluster might be less than m
+#   #if ( m < k ) cluster = sample( 1:m, size = k, replace = TRUE )
+#   # k not divisible by m: assign each observation to a cluster chosen at random (unbalanced clusters)
+#   if ( m < k & (k %% m != 0) ) cluster = sample( 1:m, size = k, replace = TRUE )
+#   # k divisible by m: assign observations to clusters in a balanced way
+#   if ( m < k & (k %% m == 0) ) cluster = rep(1:m, each = k/m)
+# 
+#   if (m > k) stop("m must be <= k")
+# 
+#   cluster = sort(cluster)
+# 
+#   # generate cluster random intercepts (zeta)
+#   # these are normal even when true effect dist is exponential
+#   zeta1 = rnorm( n = m, mean = 0, sd = sqrt( Vzeta ) )  # one entry per cluster
+#   zeta1i = zeta1[cluster]  # one entry per study
+# 
+# 
+#   # simulate k studies
+#   for (i in 1:k) {
+#     study = sim_one_study2( b0, # intercept
+#                             bc, # effect of continuous moderator
+#                             bb, # effect of binary moderator
+#                             V = V,
+#                             Vzeta = Vzeta,
+#                             zeta1 = zeta1i[i], # cluster random intercept for this study's cluster
+#                             muN = muN,
+#                             minN = minN,
+#                             sd.w = sd.w,
+#                             true.effect.dist = true.effect.dist)
+# 
+#     if ( i == 1 ) d = study else d = rbind( d, study )
+#   }
+# 
+#   # add cluster indicator
+#   d = d %>% mutate( cluster, .before = 1)
+# 
+#   # ICC of study population effects within clusters (will be static for dataset)
+#   d$icc = ICCbareF( x = as.factor(d$cluster),
+#                     y = d$Mi )
+# 
+#   return(d)
+# }
+# 
+# # potentially with clustering
+# sim_one_study2 = function(b0, # intercept
+#                           bc, # effect of continuous moderator
+#                           bb, # effect of binary moderator
+#                           V,
+#                           Vzeta, # used to calcuate within-cluster variance
+#                           zeta1,  # scalar cluster random intercept for this study's cluster
+#                           muN,
+#                           minN,
+#                           sd.w,
+#                           true.effect.dist = "normal"
+# ) {
+# 
+#   # # @test for m=1 case
+#   # # TEST ONLY
+#   # b0 = 0.5 # intercept
+#   # bc = 0.5 # effect of continuous moderator
+#   # bb = 1 # effect of binary moderator
+#   # V = .5
+#   # Vzeta = 0.25
+#   # zeta1 = -0.2
+#   # muN = 100
+#   # minN = 50
+#   # sd.w = 1
+#   # true.effect.dist = "normal"
+# 
+#   if( !true.effect.dist %in% c("normal", "expo") ) stop("True effect dist not recognized")
+# 
+#   ##### Simulate Sample Size and Fixed Design Matrix for This Study #####
+#   # simulate total N for this study
+#   N = round( runif( n = 1, min = minN, max = minN + 2*( muN - minN ) ) ) # draw from uniform centered on muN
+# 
+#   # simulate study-level moderators (each a scalar)
+#   Zc = rnorm( n = 1, mean = 0, sd = 1)
+#   Zb = rbinom( n = 1, size = 1, prob = 0.5)
+# 
+#   # mean (i.e., linear predictor) conditional on the moderators and cluster membership
+#   mu = b0 + zeta1 + bc*Zc + bb*Zb
+#   # all that follows is that same as in NPPhat, except incorporating clustering as in SAPB
+# 
+#   ##### Draw a Single Population True Effect for This Study #####
+#   if ( true.effect.dist == "normal" ) {
+#     Mi = rnorm( n=1, mean=mu, sd=sqrt(V - Vzeta) )
+#   }
+#   if ( true.effect.dist == "expo" ) {
+#     # within-cluster variance = total - between
+#     Vwithin = V - Vzeta
+#     # set the rate so the heterogeneity is correct
+#     Mi = rexp( n = 1, rate = sqrt(1/Vwithin) )
+#     # now the mean is sqrt(V) rather than mu
+#     # shift to have the correct mean (in expectation)
+#     Mi = Mi + (mu - sqrt(Vwithin))
+#   }
+# 
+#   ###### Simulate Data For Individual Subjects ######
+#   # group assignments
+#   X = c( rep( 0, N/2 ), rep( 1, N/2 ) )
+# 
+#   # simulate continuous outcomes
+#   # 2-group study of raw mean difference with means 0 and Mi in each group
+#   # and same SD
+#   Y = c( rnorm( n = N/2, mean = 0, sd = sd.w ),
+#          rnorm( n = N/2, mean = Mi, sd = sd.w ) )
+# 
+#   # calculate ES for this study using metafor (see Viechtbauer "Conducting...", pg 10)
+#   require(metafor)
+#   ES = escalc( measure="SMD",
+#                n1i = N/2,
+#                n2i = N/2,
+#                m1i = mean( Y[X==1] ),
+#                m2i = mean( Y[X==0] ),
+#                sd1i = sd( Y[X==1] ),
+#                sd2i = sd( Y[X==0] ) )
+#   yi = ES$yi
+#   vyi = ES$vi
+# 
+#   return( data.frame( Mi, # study's true effect size; if within-cluster heterogeneity is zero, will be equal to mu
+#                       mu, # study's linear predictor conditional on the moderators and cluster membership
+#                       zeta1,
+#                       Zc,
+#                       Zb,
+#                       yi,
+#                       vyi ) )
+# }
+# 
+# require(ICC)
+# d = sim_data2( k = 20,
+#                m = 20,
+#                b0 = log(.9), # intercept
+#                bc = 0, # effect of continuous moderator
+#                bb = 0, # effect of binary moderator
+#                V = 1,
+#                Vzeta = 0, # used to calcuate within-cluster variance
+# 
+#                muN = 100,
+#                minN = 100,
+#                sd.w = 1,
+#                true.effect.dist = "normal" )
+# 
+# ind = sample( 1: nrow(d), size = 40, replace = TRUE )
+# 
+# d = d[ ind, ]
+# 
+# r = .2
+# muB = log(2)
+# 
+# # choose q to be the 10th percentile of naive calibrated estimates
+# # so that no confounding should be needed
+# calib = MetaUtility::calib_ests(yi = d$yi,
+#                                 sei = sqrt(d$vyi) )
+# 
+# q = quantile(calib, .9)
+# 
+# x = confounded_meta(method="calibrated",
+#                     q=q,
+#                     r=r,
+#                     tail = "above",
+#                     muB=0,
+#                     
+#                     give.CI=FALSE,
+#                     dat = d,
+#                     yi.name = "yi",
+#                     vi.name = "vyi")
+# 
+# # calculate the correct Phat
+# # might not be exactly .1 due to ties
+# Phat = mean(calib > q)
+# 
+# expect_equal( x$Est[x$Value == "Prop"], Phat )
+# expect_equal( x$Est[x$Value == "Tmin"], 1 )
+# expect_equal( x$Est[x$Value == "Gmin"], 1 )
