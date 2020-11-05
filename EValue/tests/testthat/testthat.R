@@ -1157,8 +1157,6 @@ test_that("Calibrated, test set #4, (no bias needed to reduce this Phat to less 
 
 
 
-
-
 # ### jl testing calibrated confounded_meta 1 ###
 # test_that("calibrated confounded_meta compared to That_causal results in analysis.R",{
 #   ### packages and functions from Maya's old code:
