@@ -325,7 +325,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                             CI.level = 0.95,
                             tail = NA,
                             muB = NA,
-                            R = 2000,
+                            R = 1000,
                             
                             # only for parametric
                             sigB = NA,
@@ -810,7 +810,7 @@ sens_plot = function(method="calibrated",
                      
                      
                      # for type "line" and method "calibrated"
-                     R=2000,
+                     R=1000,
                      dat = NA,
                      yi.name = NA,
                      vi.name = NA) {
@@ -1040,7 +1040,7 @@ sens_plot = function(method="calibrated",
       
       #bm
       p = ggplot2::ggplot( data = res,
-                           aes( x = B,
+                           aes( x = exp(B),
                                 y = Phat ) ) +
         theme_bw() +
         
