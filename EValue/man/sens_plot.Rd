@@ -8,22 +8,23 @@ sens_plot(
   method = "calibrated",
   type,
   q,
-  r = NA,
-  muB,
+  CI.level = 0.95,
+  tail = NA,
+  give.CI = TRUE,
   Bmin,
   Bmax,
+  breaks.x1 = NA,
+  breaks.x2 = NA,
+  muB,
   sigB,
   yr,
   vyr = NA,
   t2,
   vt2 = NA,
-  breaks.x1 = NA,
-  breaks.x2 = NA,
-  CI.level = 0.95,
-  tail = NA,
-  .give.CI = TRUE,
-  .R = 2000,
-  .dat
+  R = 1000,
+  dat = NA,
+  yi.name = NA,
+  vi.name = NA
 )
 }
 \arguments{
@@ -31,11 +32,17 @@ sens_plot(
 
 \item{q}{True effect size that is the threshold for "scientific significance"}
 
-\item{muB}{Single mean bias factor on log scale (only needed for distribution plot)}
+\item{CI.level}{Pointwise confidence level as a proportion}
 
 \item{Bmin}{Lower limit of lower X-axis on the log scale (only needed for line plot)}
 
 \item{Bmax}{Upper limit of lower X-axis on the log scale (only needed for line plot)}
+
+\item{breaks.x1}{Breaks for lower X-axis (bias factor) on RR scale (optional for line plot; not used for distribution plot)}
+
+\item{breaks.x2}{Breaks for upper X-axis (confounding strength) on RR scale (optional for line plot; not used for distribution plot)}
+
+\item{muB}{Single mean bias factor on log scale (only needed for distribution plot)}
 
 \item{sigB}{Standard deviation of log bias factor across studies (length 1)}
 
@@ -46,12 +53,6 @@ sens_plot(
 \item{t2}{Estimated heterogeneity (tau^2) from confounded meta-analysis}
 
 \item{vt2}{Estimated variance of tau^2 from confounded meta-analysis}
-
-\item{breaks.x1}{Breaks for lower X-axis (bias factor) on RR scale (optional for line plot; not used for distribution plot)}
-
-\item{breaks.x2}{Breaks for upper X-axis (confounding strength) on RR scale (optional for line plot; not used for distribution plot)}
-
-\item{CI.level}{Pointwise confidence level as a proportion}
 }
 \description{
 Produces line plots (\code{type="line"}) showing the bias factor on the relative risk (RR) scale vs. the proportion
@@ -66,27 +67,108 @@ Arguments \code{vyr} and \code{vt2} can be left \code{NA}, in which case no conf
 band will appear on the line plot.
 }
 \examples{
-# with variable bias and with confidence band
-sens_plot( type="line", q=log(1.1), Bmin=log(1), Bmax=log(4), sigB=0.1,
-           yr=log(1.3), vyr=0.005, t2=0.4, vt2=0.03 )
 
-# with fixed bias and without confidence band
-sens_plot( type="line", q=log(1.1), Bmin=log(1), Bmax=log(4),
-           yr=log(1.3), t2=0.4 )
+##### Example 1: Calibrated Line Plots #####
 
-# apparently preventive
-sens_plot( type="line", q=log(0.90), Bmin=log(1), Bmax=log(4),
-           yr=log(0.6), vyr=0.005, t2=0.4, vt2=0.04 )
+# simulated dataset with exponentially distributed 
+#  population effects
+# we will use the calibrated method to avoid normality assumption
+data(toyMeta)
+
+# without confidence band
+sens_plot( method = "calibrated",
+           type="line",
+           q=log(.9),
+           tail = "below",
+           Bmin=log(1),
+           Bmax=log(4),
+           dat = toyMeta,
+           yi.name = "est",
+           vi.name = "var",
+           give.CI = FALSE )
+
+
+# # with confidence band and a different threshold, q
+# # commented out because takes a while too run
+# sens_plot( method = "calibrated",
+#            type="line",
+#            q=log(1),
+#            tail = "below",
+#            Bmin=log(1),
+#            Bmax=log(4),
+#            dat = toyMeta,
+#            yi.name = "est",
+#            vi.name = "var",
+#            give.CI = TRUE,
+#            R = 300 ) # should be higher in practice
+
+
+##### Example 2: Calibrated and Parametric Line Plots #####
+
+# example dataset
+d = metafor::escalc(measure="RR",
+                    ai=tpos,
+                    bi=tneg,
+                    ci=cpos,
+                    di=cneg,
+                    data=metafor::dat.bcg)
+
+# without confidence band
+sens_plot( method = "calibrated",
+           type="line",
+           tail = "below",
+           q=log(1.1),
+           Bmin=log(1),
+           Bmax=log(4),
+           dat = d,
+           yi.name = "yi",
+           vi.name = "vi",
+           give.CI = FALSE )
+
+# # with confidence band
+# # commented out because  it takes a while
+# # this example gives bootstrap warnings because of its small sample size
+# sens_plot( method = "calibrated",
+#            type="line",
+#            q=log(1.1),
+#            Bmin=log(1),
+#            Bmax=log(4),
+#            R = 500,  # should be higher in practice (e.g., 1000)
+#            dat = d,
+#            yi.name = "yi",
+#            vi.name = "vi",
+#            give.CI = TRUE )
+
+
+# now with heterogeneous bias across studies (via sigB) and with confidence band
+sens_plot( method = "parametric",
+           type="line",
+           q=log(1.1),
+           yr=log(1.3),
+           vyr = .05,
+           vt2 = .001,
+           t2=0.4,
+           sigB = 0.1,
+           Bmin=log(1),
+           Bmax=log(4) )
+
+##### Distribution Line Plot #####
 
 # distribution plot: apparently causative
-# commented out because takes 5-10 seconds to run
-# sens_plot( type="dist", q=log(1.1), muB=log(2),
-#           yr=log(1.3), t2=0.4 )
-           
+sens_plot( type="dist",
+           q=log(1.1),
+           muB=log(2),
+           sigB = 0.1,
+           yr=log(1.3),
+           t2=0.4 )
+
 # distribution plot: apparently preventive
-# commented out because takes 5-10 seconds to run
-# sens_plot( type="dist", q=log(0.90), muB=log(1.5),
-#           yr=log(0.7), t2=0.2 )
+sens_plot( type="dist",
+           q=log(0.90),
+           muB=log(1.5),
+           sigB = 0.1,
+           yr=log(0.7),
+           t2=0.2 )
 }
 \keyword{confounding}
 \keyword{meta-analysis}

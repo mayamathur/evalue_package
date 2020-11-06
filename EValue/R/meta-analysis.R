@@ -1,4 +1,5 @@
 
+############################ EXAMPLE DATASETS ############################ 
 
 #' An example meta-analysis
 #'
@@ -29,7 +30,6 @@
 Phat_causal = function( q,
                         B,
                         tail,
-                        
                         dat,
                         yi.name,
                         vi.name) {
@@ -54,11 +54,16 @@ Phat_causal = function( q,
 
 
 
-#' define transformation in a way that is monotonic over the effective range of B (>1)
-#' to avoid ggplot errors in sens_plot
-#' helper function for confounded_meta
-#' 
+#' Transformation from bias factor to confounding strength scale
+#'
+#' An internal function. 
+#' @param x Bias factor (RR scale) to be transformed
+#' @noRd
+
 g = Vectorize( function(x) {
+  # define transformation in a way that is monotonic over the effective range of B (>1)
+  # to avoid ggplot errors in sens_plot
+  # helper function for confounded_meta
   if (x < 1) return( x / 1e10 )
   x + sqrt( x^2 - x )
 } )
@@ -188,94 +193,101 @@ Tmin_causal = function( q,
 #' MetaUtility
 #' boot
 #' @examples
+#' 
+#' ##### Using Calibrated Method #####
+#' d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
+#'                     ci=cpos, di=cneg, data=metafor::dat.bcg)
+#' 
+#' 
+#' # obtaining all three estimators and inference
+#' # number of bootstrap iterates
+#' # should be larger in practice
+#' R = 100
+#' confounded_meta( method="calibrated",  # for both methods
+#'                  q = log(0.90),
+#'                  r = 0.20,
+#'                  tail="below",
+#'                  muB = log(1.5),
+#'                  dat = d,
+#'                  yi.name = "yi",
+#'                  vi.name = "vi",
+#'                  R = 100 )
+#' 
+#' # passing only arguments needed for prop point estimate
+#' confounded_meta( method="calibrated",
+#'                  q = log(0.90),
+#'                  tail="below",
+#'                  muB = log(1.5),
+#'                  give.CI = FALSE,
+#'                  dat = d,
+#'                  yi.name = "yi",
+#'                  vi.name = "vi" )
+#' 
+#' # passing only arguments needed for Tmin, Gmin point estimates
+#' confounded_meta( method="calibrated",
+#'                  q = log(0.90),
+#'                  r = 0.10,
+#'                  tail="below",
+#'                  give.CI = FALSE,
+#'                  dat = d,
+#'                  yi.name = "yi",
+#'                  vi.name = "vi" )
+#' 
+#' ##### Using Parametric Method #####
+#' # fit random-effects meta-analysis
+#' m = metafor::rma.uni(yi= d$yi,
+#'                      vi=d$vi,
+#'                      knha=TRUE,
+#'                      measure="RR",
+#'                      method="REML" )
+#' 
+#' yr = as.numeric(m$b)  # metafor returns on log scale
+#' vyr = as.numeric(m$vb)
+#' t2 = m$tau2
+#' vt2 = m$se.tau2^2
+#' 
+#' # obtaining all three estimators and inference
+#' # now the proportion considers heterogeneous bias
+#' confounded_meta( method = "parametric",
+#'                  q=log(0.90),
+#'                  r=0.20,
+#'                  tail = "below",
+#'                  muB=log(1.5),
+#'                  sigB=0.1,
+#'                  yr=yr,
+#'                  vyr=vyr,
+#'                  t2=t2,
+#'                  vt2=vt2,
+#'                  CI.level=0.95 )
+#' 
+#' # passing only arguments needed for prop point estimate
+#' confounded_meta( method = "parametric",
+#'                  q=log(0.90),
+#'                  tail = "below",
+#'                  muB=log(1.5),
+#'                  sigB = 0,
+#'                  yr=yr,
+#'                  t2=t2,
+#'                  CI.level=0.95 )
+#' 
+#' # passing only arguments needed for Tmin, Gmin point estimates
+#' confounded_meta( method = "parametric",
+#'                  q=log(0.90),
+#'                  r = 0.10,
+#'                  tail = "below",
+#'                  yr=yr,
+#'                  t2=t2,
+#'                  CI.level=0.95 )
 
-#'                  
+
+
+
 
 # @@warn when user provides input that's being ignored based on the chosen method
 # @@check that they provided all needed input based on chosen method
 # @@work on the examples
 # bms
-# d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
-#                     ci=cpos, di=cneg, data=metafor::dat.bcg)
-# 
-# 
-# # obtaining all three estimators and inference
-# # number of bootstrap iterates
-# # should be larger in practice
-# R = 100
-# confounded_meta( method="calibrated",  # for both methods
-#                 q = log(0.90),
-#                 r = 0.20,
-#                 tail="below",
-#                 muB = log(1.5),
-#                 dat = d,
-#                 yi.name = "yi",
-#                 vi.name = "vi",
-#                 R = 100 )  
-# 
-# # passing only arguments needed for prop point estimate
-# confounded_meta( method="calibrated", 
-#                  q = log(0.90),
-#                  tail="below",
-#                  muB = log(1.5),
-#                  give.CI = FALSE,
-#                  dat = d,
-#                  yi.name = "yi",
-#                  vi.name = "vi" )  
-# 
-# # passing only arguments needed for Tmin, Gmin point estimates
-# confounded_meta( method="calibrated", 
-#                  q = log(0.90),
-#                  r = 0.10,
-#                  tail="below",
-#                  give.CI = FALSE,
-#                  dat = d,
-#                  yi.name = "yi",
-#                  vi.name = "vi" ) 
-# 
-# 
-# ### parametric
-# 
-# m = metafor::rma.uni(yi= d$yi, vi=d$vi, knha=FALSE,
-#                      measure="RR", method="DL" ) 
-# yr = as.numeric(m$b)  # metafor returns on log scale
-# vyr = as.numeric(m$vb)
-# t2 = m$tau2
-# vt2 = m$se.tau2^2 
-# 
-# # obtaining all three estimators and inference
-# # now the proportion considers heterogeneous bias
-# confounded_meta( method = "parametric",
-#                  q=log(0.90),
-#                  r=0.20,
-#                  tail = "below",
-#                  muB=log(1.5),
-#                  sigB=0.1,
-#                  yr=yr,
-#                  vyr=vyr,
-#                  t2=t2,
-#                  vt2=vt2,
-#                  CI.level=0.95 )
-# 
-# # passing only arguments needed for prop point estimate
-# confounded_meta( method = "parametric",
-#                  q=log(0.90),
-#                  tail = "below",
-#                  muB=log(1.5),
-#                  sigB = 0,
-#                  yr=yr,
-#                  t2=t2,
-#                  CI.level=0.95 )
-# 
-# # passing only arguments needed for Tmin, Gmin point estimates
-# # @@why is this requiring sigB?
-# # @@return to this
-# confounded_meta( method = "parametric",
-#                  q=log(0.90),
-#                  tail = "below",
-#                  yr=yr,
-#                  t2=t2,
-#                  CI.level=0.95 )
+
 
 
 
@@ -343,7 +355,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
     }
     
-    if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
+    if ( !is.na(sigB) & t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
     
     ##### Messages When Not All Output Can Be Computed #####
     if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
