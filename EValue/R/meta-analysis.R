@@ -16,10 +16,10 @@
 #' Proportion of studies with causal effects above or below q
 #'
 #' An internal function that estimates the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call \code{confounded_meta} instead.
-#' @param q True effect size that is the threshold for "scientific significance"
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
 #' @param B Single value of bias factor (log scale)
 
-#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
+#' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
 #' the proportion of effects below \code{q}.
 #' @param dat Dataframe containing studies' point estimates and variances
 #' @param yi.name Name of variable in \code{dat} containing studies' point estimates
@@ -73,7 +73,7 @@ g = Vectorize( function(x) {
 #' Minimum common bias factor to reduce proportion of studies with causal effects above or below q t less than r
 #'
 #' An internal function that estimates; users should call \code{confounded_meta} instead.
-#' @param q True effect size that is the threshold for "scientific significance"
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
 #' @param r Value to which the proportion of strong effect sizes is to be reduced
 #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
 #' the proportion of effects below \code{q}.
@@ -148,50 +148,69 @@ Tmin_causal = function( q,
   return(as.numeric(Tmin))
 }
 
-# @@ in docs below, talk about homogeneous vs. heterogeneous bias and which args need
-#  to be passed for each method
-# also warn about which arguments are being ignored for each method (e.g., calibrated ignores sigB)
 
-#' Estimates and inference for sensitivity analyses
+#' Sensitivity analysis for unmeasured confounding in meta-analyses
 #' 
-#' Computes point estimates, standard errors, and confidence interval bounds
-#' for (1) \code{prop}, the proportion of studies with true effect sizes above \code{q} (or below
-#' \code{q} for an apparently preventive \code{yr}) as a function of the bias parameters;
+#' This function implements the sensitivity analyses of Mathur & VanderWeele (2019) and Mathur & VanderWeele (2020). It computes point estimates, standard errors, and confidence interval bounds
+#' for (1) \code{prop}, the proportion of studies with true causal effect sizes above or below a chosen threshold \code{q} as a function of the bias parameters;
 #' (2) the minimum bias factor on the relative risk scale (\code{Tmin}) required to reduce to
-#' less than \code{r} the proportion of studies with true effect sizes more extreme than
+#' less than \code{r} the proportion of studies with true causal effect sizes more extreme than
 #' \code{q}; and (3) the counterpart to (2) in which bias is parameterized as the minimum
 #' relative risk for both confounding associations (\code{Gmin}).
-#' @param method "calibrated" or "parametric"
-#' @param q True effect size that is the threshold for "scientific significance"
-#' @param r For \code{Tmin} and \code{Gmin}, value to which the proportion of strong effect sizes is to be reduced
-#' @param muB Mean bias factor on the log scale across studies. When considering bias that of homogeneous strength across studies (i.e., \code{method == "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. 
-#' @param sigB Standard deviation of log bias factor across studies
-#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
-#' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis
-#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis
-#' @param vt2 Estimated variance of tau^2 from confounded meta-analysis
-#' @param CI.level Confidence level as a proportion
-#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' the proportion of effects below \code{q}. By default, is set to \code{above} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{below} otherwise.
-#' @param Bmin Lower limit of bias factor (used for "calibrated" method only)
-#' @param Bmax Upper limit of bias factor (used for "calibrated" method only)
-#' @param give.CI Logical. If TRUE, bootstrap confidence intervals provided
-#' @param R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.
-#' @param calib.name column name in dataframe containing calibrated estimates
+#' 
+#' @param method \code{"calibrated"} or \code{"parametric"}. See Details. 
+#' 
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect.
+#' 
+#' @param r For \code{Tmin} and \code{Gmin}, value to which the proportion of meaningfully strong effect sizes is to be reduced.
+#' 
+#' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
+#' the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.
+#' 
+#' @param CI.level Confidence level as a proportion (e.g., 0.95).
+#' 
+#' @param give.CI Logical. If \code{TRUE}, confidence intervals are provided. Otherwise, only point estimates are provided.
+#' 
+#' @param R Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}. 
+#' 
+#' @param muB Mean bias factor on the log scale across studies. When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. 
+#' 
+#' @param dat Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.
+#' @param yi.name Name of variable in \code{dat} containing studies' point estimates. Only used if \code{method = "calibrated"}.
+#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates. Only used if \code{method = "calibrated"}.
+#' 
+#' @param sigB Standard deviation of log bias factor across studies. Only used if \code{method = "parametric"}.
+#' 
+#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' 
+#' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' 
+#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' 
+#' @param vt2 Estimated variance of tau^2 from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' 
 #' @export
 #' @details
-#' To compute all three point estimates (\code{prop, Tmin, and Gmin}) and inference, all
-#' arguments must be non-\code{NA}. To compute only a point estimate for \code{prop},
-#' arguments \code{r, vyr}, and \code{vt2} can be left \code{NA}. To compute only
-#' point estimates for \code{Tmin} and \code{Gmin}, arguments \code{muB, vyr}, and \code{vt2}
-#' can be left \code{NA}. To compute inference for all point estimates, \code{vyr} and 
-#' \code{vt2} must be supplied. 
+#' These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. For detailed guidance on implementing and interpreting the sensitivity analyses, see in particular Section 5 of Mathur & VanderWeele (2019) and Section 1.2 of Mathur & VanderWeele (2020)'s Supplement. 
+#' 
+#' By default, \code{confounded_meta} performs estimation using a "calibrated" method (Mathur & VanderWeele, 2020; Mathur & VanderWeele, 2019) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{dat}, \code{yi.name}, and \code{vi.name}.
+#' 
+#' The parametric method that the population effects are approximately normal and that the number of studies is large, and it should only be used when the proportion estimate is between 0.15 and 0.85. Unlike the calibrated method, the parametric method can accommodate bias that is heterogeneous across studies (i.e., log-normal). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{sigB}, \code{yr}, \code{vyr} (if you want confidence intervals), \code{t2}, \code{vt2} (if you want confidence intervals).
 #' @keywords meta-analysis
 #' @import
 #' metafor
 #' stats 
 #' MetaUtility
 #' boot
+#' 
+#' @references
+#' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+#'
+#' Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses.
+#'
+#' Wang C-C & Lee W-C (2019). A simple method to estimate prediction intervals and
+#' predictive distributions: Summarizing meta-analyses
+#' beyond means and confidence intervals. \emph{Research Synthesis Methods}.
 #' @examples
 #' 
 #' ##### Using Calibrated Method #####
@@ -281,36 +300,32 @@ Tmin_causal = function( q,
 
 
 
-
-
-# @@warn when user provides input that's being ignored based on the chosen method
 # @@check that they provided all needed input based on chosen method
 # @@work on the examples
 # bms
 
-
-
-
 confounded_meta = function( method="calibrated",  # for both methods
                             q,
                             r = NA,
-                            CI.level = 0.95,
                             tail = NA,
-                            muB = NA,
+                            CI.level = 0.95,
+                            give.CI = TRUE,
                             R = 1000,
+                            
+                            muB = NA,
+                            
+                            # only for calibrated
+                            dat = NA,
+                            yi.name = NA,
+                            vi.name = NA,
                             
                             # only for parametric
                             sigB = NA,
                             yr = NA,
                             vyr = NA,
                             t2 = NA,
-                            vt2 = NA,
-                            
-                            # only for calibrated
-                            give.CI = TRUE,
-                            dat = NA,
-                            yi.name = NA,
-                            vi.name = NA) {
+                            vt2 = NA
+                           ) {
   
   
   # # test only
@@ -622,7 +637,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' or confounding strength (for \code{meas == "Gmin"}) required to reduce to less than
 #' \code{r} the proportion of true effects more extreme than \code{q}.
 #' @param meas \code{prop}, \code{Tmin}, or \code{Gmin}
-#' @param q True effect size that is the threshold for "scientific significance"
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
 #' @param r For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of strong effect sizes is to be reduced
 #' @param muB Mean bias factor on the log scale across studies
 #' @param sigB Standard deviation of log bias factor across studies
@@ -727,7 +742,7 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' Alternatively, produces distribution plots (\code{type="dist"}) for a specific bias factor showing the observed and 
 #' true distributions of RRs with a red line marking exp(\code{q}).
 #' @param type \code{dist} for distribution plot; \code{line} for line plot (see Details)
-#' @param q True effect size that is the threshold for "scientific significance"
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
 #' @param muB Single mean bias factor on log scale (only needed for distribution plot)
 #' @param Bmin Lower limit of lower X-axis on the log scale (only needed for line plot)
 #' @param Bmax Upper limit of lower X-axis on the log scale (only needed for line plot)
