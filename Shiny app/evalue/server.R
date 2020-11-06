@@ -202,7 +202,7 @@ function(input, output, session) {
   })
   
   ### jl testing if data is being read okay:
-  output$calibrated_tab1 = renderTable(mydata())
+  # output$calibrated_tab1 = renderTable(mydata())
   
   calibrated_output <- observeEvent(input$calibrated_calculate, {
     
@@ -215,12 +215,10 @@ function(input, output, session) {
       vi.name = input$calibrated_vi.name
       
       method = input$calibrated_method
-      Bmin = input$calibrated_Bmin
-      Bmax = input$calibrated_Bmax
-      # calib = mydata()[[input$calibrated_calib.name]]
+      Bmin = log(input$calibrated_Bmin)
+      Bmax = log(input$calibrated_Bmax)
       R = input$calibrated_R
       dat = mydata()
-      # calib.name = input$calibrated_calib.name
       
     } else {
       if(input$calibrated_scale=="Log-RR"){
@@ -230,14 +228,12 @@ function(input, output, session) {
         muB = input$calibrated_muB
         yi.name = input$calibrated_yi.name
         vi.name = input$calibrated_vi.name
-
+        
         method = input$calibrated_method
         Bmin = input$calibrated_Bmin
         Bmax = input$calibrated_Bmax
-        # calib = mydata()[[input$calibrated_calib.name]]
         R = input$calibrated_R
         dat = mydata()
-        # calib.name = input$calibrated_calib.name
       }
     }
     
@@ -251,33 +247,32 @@ function(input, output, session) {
       #                               hi=d$ub)
       # d=cbind(d,es)
       # 
-      # q = logHR_to_logRR(log(.8))
-      # r = .1
+      # q = 0
+      # r = NA
       # tail = "below"
       # method = "calibrated"
       # Bmin = 1
       # Bmax = 4
-      # yr="yi"
-      # vyr="vyi"
+      # yi.name="yi"
+      # vi.name="vyi"
       # 
       # R = 2000
       # dat = d
-      # calib = d$calib.logRR
-      # calib.name = "calib.logRR"
+      
       withProgress(message="calculating proportion...", value=1,{
-      
-      cm = suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
-                                            tail=tail, give.CI=TRUE, R=R, dat=dat))
-
-      p = round( as.numeric(cm$Est[which(cm$Value=="Prop")]), 3 )
-      p_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Prop")]), 3 )
-      p_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="Prop")]), 3 )
-
-
-      ##### Create String for UI #####
-      string_p = paste( p, " (95% CI: ", p_lo, ", ", p_hi, ")", sep="" )
-      return( string_p )
-      
+        
+        cm = suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
+                                              tail=tail, give.CI=TRUE, R=R, dat=dat))
+        
+        p = round( as.numeric(cm$Est[which(cm$Value=="Prop")]), 3 )
+        p_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Prop")]), 3 )
+        p_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="Prop")]), 3 )
+        
+        
+        ##### Create String for UI #####
+        string_p = paste( p, " (95% CI: ", p_lo, ", ", p_hi, ")", sep="" )
+        return( string_p )
+        
       }) ## closes withProgress
       
     }) ## closes calibrated_text1
@@ -286,17 +281,18 @@ function(input, output, session) {
       withProgress(message="calculating minimum bias factor...", value=1,{
         cm = suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
                                               tail=tail, give.CI=TRUE, R=R, dat=dat))
-
-      p = round( as.numeric(cm$Est[which(cm$Value=="Prop" )]), 3 )
-      Tmin = round( as.numeric(cm$Est[which(cm$Value=="Tmin" )]), 3 )
-      Tmin_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Tmin" )]), 3 )
-      Tmin_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="Tmin" )]), 3 )
-      
-      
-      ##### Create String for UI ##### 
-      string_Tmin = ifelse(p < r, "The proportion of meaningfully strong effects is already less than or equal to r even with no confounding, so this metric does not apply. No confounding at all is required to make the specified shift.", paste( Tmin, " (95% CI: ", Tmin_lo, ", ", Tmin_hi, ")", sep="" ))
-      return( string_Tmin )
-      
+        
+        p = round( as.numeric(cm$Est[which(cm$Value=="Prop" )]), 3 )
+        Tmin = round( as.numeric(cm$Est[which(cm$Value=="Tmin" )]), 3 )
+        Tmin_lo = round( as.numeric(cm$CI.lo[which(cm$Value=="Tmin" )]), 3 )
+        Tmin_hi = round( as.numeric(cm$CI.hi[which(cm$Value=="Tmin" )]), 3 )
+        
+        
+        ##### Create String for UI ##### 
+        string_Tmin = ifelse(p < r, "The proportion of meaningfully strong effects is already less than or equal to r even with no confounding, so this metric does not apply. No confounding at all is required to make the specified shift.", paste( Tmin, " (95% CI: ", Tmin_lo, ", ", Tmin_hi, ")", sep="" ))
+        string_Tmin = ifelse(is.na(string_Tmin), "Cannot compute Tmin or Gmin without r. Returning only prop.", string_Tmin)
+        return( string_Tmin )
+        
       }) ## closes withProgress
       
     }) ## closes calibrated_text2
@@ -305,39 +301,85 @@ function(input, output, session) {
       withProgress(message="calculating minimum confounding strength...", value=1,{
         cm = suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
                                               tail=tail, give.CI=TRUE, R=R, dat=dat))
-      
-      p = round( as.numeric(cm$Est[ which(cm$Value=="Prop") ]), 3 )
-      Gmin = round( as.numeric(cm$Est[ which(cm$Value=="Gmin") ]), 3 )
-      Gmin_lo = round( as.numeric(cm$CI.lo[ which(cm$Value=="Gmin") ]), 3 )
-      Gmin_hi = round( as.numeric(cm$CI.hi[ which(cm$Value=="Gmin") ]), 3 )
-      
-      
-      ##### Create String for UI ##### 
-      string_Gmin = ifelse(p < r, "Not applicable. This is already the case, even with no bias, given your pooled effect size, threshold, and choice of tail.", paste( Gmin, " (95% CI: ", Gmin_lo, ", ", Gmin_hi, ")", sep="" ))
-      return( string_Gmin )
-      
+        
+        p = round( as.numeric(cm$Est[ which(cm$Value=="Prop") ]), 3 )
+        Gmin = round( as.numeric(cm$Est[ which(cm$Value=="Gmin") ]), 3 )
+        Gmin_lo = round( as.numeric(cm$CI.lo[ which(cm$Value=="Gmin") ]), 3 )
+        Gmin_hi = round( as.numeric(cm$CI.hi[ which(cm$Value=="Gmin") ]), 3 )
+        
+        
+        ##### Create String for UI ##### 
+        string_Gmin = ifelse(p < r, "Not applicable. This is already the case, even with no bias, given your pooled effect size, threshold, and choice of tail.", paste( Gmin, " (95% CI: ", Gmin_lo, ", ", Gmin_hi, ")", sep="" ))
+        string_Gmin = ifelse(is.na(string_Gmin), "Cannot compute Tmin or Gmin without r. Returning only prop.", string_Gmin)
+        return( string_Gmin )
+        
       }) ## closes withProgress
       
     }) ## closes calibrated_text3
-    
+  }) ## closes calibrated_output
+  
+  observeEvent(input$calibrated_plot, {
     output$calibrated_plot1 <- renderPlot({
       withProgress(message="generating plot...", value=1,{
-      suppressWarnings(sens_plot(method=method, type="line", muB=muB, q=q, r=r, yi.name=yi.name, vi.name=vi.name, Bmin=Bmin, Bmax=Bmax, tail=tail, give.CI=TRUE, R=R, dat=dat ))
-  }) ## closes withProgress
+        hist(1:100, main="test Generate calibrated plot button")
+        # suppressWarnings(sens_plot(method=method, type="line", q=q, yi.name=yi.name, vi.name=vi.name, Bmin=Bmin, Bmax=Bmax, tail=tail, give.CI=TRUE, R=R, dat=dat ))
+        
+        # d = readxl::read_xlsx("~/Box Sync/jlee/Maya/meta/data/dat.xlsx")
+        # es = MetaUtility::scrape_meta(type="RR",
+        #                               est = d$hr,
+        #                               hi=d$ub)
+        # d=cbind(d,es)
+        # 
+        # method="calibrated"
+        # type = "line"
+        # # q=median(d$calib)
+        # tail = "above"
+        # muB=0
+        # r=0.1
+        # q = 0.2
+        # R = 250
+        # CI.level = 0.95
+        # 
+        # give.CI=TRUE
+        # dat = d
+        # yi.name = "yi"
+        # vi.name = "vyi"
+        # Bmin = log(1)
+        # Bmax = log(5)
+        # CI.level = 0.95
+        # tail = "above"
+        # breaks.x1 = NA
+        # breaks.x2 = NA
+        
+      }) ## closes withProgress
     }) ## closes calibrated_plot1
-  }) ## closes calibrated_output
+    
+    ### output plot warnings:
+    output$calibrated_warning_tail <- reactive({
+      if ( is.na(tail) ) {
+        tail = ifelse( yr > log(1), "above", "below" )
+        HTML(paste("WARNING: Assuming you want tail =", tail, "because it wasn't specified"))
+      }
+    }) ## closes calibrated_warning_tail
+    
+    output$calibrated_warning_boot <- reactive({
+      if ( any( res$lo > res$Phat ) | any( res$hi < res$Phat ) ) {
+        HTML( paste( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." ) )
+      }
+    }) ## closes calibrated_warning_boot
+  }) ## closes calibrated_output_plot
   
   
   
   ### results text for calibrated Fixed sensitivity parameters tab
   output$calibrated_results_prop = renderText({
-    paste("Proportion of studies with population causal effects", input$calibrated_tail, input$calibrated_q, ":")
+    paste("Proportion of studies with population causal effects", input$calibrated_tail, input$calibrated_scale, "=", input$calibrated_q, ":")
   })
   output$calibrated_results_minbias = renderText({
-    paste("Minimum bias factor (RR scale) to reduce to less than", input$calibrated_r, "the proportion of studies with population causal effects", input$calibrated_tail, input$calibrated_q, ":")
+    paste("Minimum bias factor (RR scale) to reduce to less than", input$calibrated_r, "the proportion of studies with population causal effects", input$calibrated_tail, input$calibrated_scale, "=", input$calibrated_q, ":")
   })
   output$calibrated_results_minconf = renderText({
-    paste("Minimum confounding strength (RR scale) to reduce to less than", input$calibrated_r, "the proportion of studies with population causal effects", input$calibrated_tail, input$calibrated_q, ":")
+    paste("Minimum confounding strength (RR scale) to reduce to less than", input$calibrated_r, "the proportion of studies with population causal effects", input$calibrated_tail, input$calibrated_scale, "=", input$calibrated_q, ":")
   })
   
   
@@ -437,6 +479,36 @@ function(input, output, session) {
       
     }) ## closes parametric_text3
     
+    observeEvent(input$parametric_plot, { 
+      output$parametric_plot1 <- renderPlot({
+        hist(1:100, main="test Generate parametric plot button")
+        # suppressWarnings(sens_plot(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
+        #                            Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 ))
+      })
+      
+      ### output plot warnings:
+      output$parametric_warning_tail <- reactive({
+        if ( is.na(tail) ) {
+          tail = ifelse( yr > log(1), "above", "below" )
+          HTML(paste("WARNING: Assuming you want tail =", tail, "because it wasn't specified"))
+        }
+      }) ## closes parametric_warning_tail
+      
+      output$parametric_warning_ci <- reactive({
+        if ( is.na(vyr) | is.na(vt2) ) {
+          HTML( "No confidence interval because vyr or vt2 is NULL")
+        }
+      }) ## closes parametric_warning_ci
+      
+      output$parametric_warning_phatci <- reactive({
+        if ( no.CI==FALSE ){
+          HTML("Calculating parametric confidence intervals in the plot. For values of Phat that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
+        }
+      }) ## closes parametric_warning_phatci
+      
+      
+    }) ## closes parametric_output_plot
+    
     ### warnings:
     output$parametric_kwarn <- reactive({
       numStudies <- input$parametric_k
@@ -453,22 +525,20 @@ function(input, output, session) {
       ifelse(p<0.15 | p>0.85,
              HTML(paste('WARNING: Extreme estimated proportion', 'The estimated proportion of meaningfully strong effects is <0.15 or >0.85. The methods implemented in this website do not always work well in these situations. We would recommend instead applying alternative methods that have the same interpretation (see the "More Resouces" tab).', sep = "<br/>")), "")
     }) ## closes parametric_phatwarn_2
-    
-    output$parametric_plot1 <- renderPlot({
-      suppressWarnings(sens_plot(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
-                                         Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 ))
-    }) ## closes parametric_plot1
   }) ## closes parametric_output
+  
+  
+  
   
   ### results text for parametric Fixed sensitivity parameters tab
   output$parametric_results_prop = renderText({
-    paste("Proportion of studies with population causal effects", input$parametric_tail, input$parametric_q, ":")
+    paste("Proportion of studies with population causal effects", input$parametric_tail, input$parametric_scale, "=", input$parametric_q, ":")
   })
   output$parametric_results_minbias = renderText({
-    paste("Minimum bias factor (RR scale) to reduce to less than", input$parametric_r, "the proportion of studies with population causal effects", input$parametric_tail, input$parametric_q, ":")
+    paste("Minimum bias factor (RR scale) to reduce to less than", input$parametric_r, "the proportion of studies with population causal effects", input$parametric_tail, input$parametric_scale, "=", input$parametric_q, ":")
   })
   output$parametric_results_minconf = renderText({
-    paste("Minimum confounding strength (RR scale) to reduce to less than", input$parametric_r, "the proportion of studies with population causal effects", input$parametric_tail, input$parametric_q, ":")
+    paste("Minimum confounding strength (RR scale) to reduce to less than", input$parametric_r, "the proportion of studies with population causal effects", input$parametric_tail, input$parametric_scale, "=", input$parametric_q, ":")
   })
   
   
