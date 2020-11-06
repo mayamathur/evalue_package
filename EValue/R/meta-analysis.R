@@ -10,7 +10,6 @@
 
 
 
-
 ############################ META-ANALYSIS FUNCTIONS ############################ 
 
 #' Proportion of studies with causal effects above or below q
@@ -55,41 +54,6 @@ Phat_causal = function( q,
 
 
 
-#' #' Simplified Phat_causal for bootstrapping
-#' #'
-#' #' An internal function that calls \code{Phat_causal} in a way that plays well with the \code{boot} package. Draws a resample internally. Only returns Phat itself. 
-#' #' @param original The original dataset from which to resample (will be passed by \code{boot})
-#' #' @param indices The indices to resample (will be passed by \code{boot})
-#' #' @param q True effect size that is the threshold for "scientific significance"
-#' #' @param B Single value of bias factor
-#' 
-#' #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' #' the proportion of effects below \code{q}.
-#' #' @param calib.name Column name in dataframe \code{dat} containing calibrated estimates
-#' #' @import
-#' #' @noRd
-#' #' boot 
-#' Phat_causal_bt = function( original,
-#'                            indices,
-#'        
-#'                            q,
-#'                            B,
-#'                            tail,
-#'                            calib.name) {
-#'   
-#'   # draw bootstrap sample
-#'   b = original[indices,]
-#'   
-#'   phatb = Phat_causal( q = q, 
-#'                        B = B,
-#'                        dat = b,
-#'                        calib = b[[calib.name]], 
-#'                        tail = tail,
-#'                        give.CI = FALSE)
-#'   return(phatb)
-#' }
-
-
 #' define transformation in a way that is monotonic over the effective range of B (>1)
 #' to avoid ggplot errors in sens_plot
 #' helper function for confounded_meta
@@ -99,10 +63,6 @@ g = Vectorize( function(x) {
   x + sqrt( x^2 - x )
 } )
 
-# # @@ needed?
-# logHR_to_logRR = function(logRR){
-#   log( ( 1 - 0.5^sqrt( exp(logRR) ) ) / ( 1 - 0.5^sqrt( 1 / exp(logRR) ) ) )
-# }
 
 
 #' Minimum common bias factor to reduce proportion of studies with causal effects above or below q t less than r
