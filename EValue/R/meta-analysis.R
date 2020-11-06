@@ -357,8 +357,6 @@ confounded_meta = function( method="calibrated",  # for both methods
   # vi.name = "vyi"
   
   
-  
-  
   ##### Check for Bad Input - Common to Parametric and Calibrated Methods #####
   if ( ! is.na(r) ) {
     if (r < 0 | r > 1) stop("r must be between 0 and 1")
@@ -777,14 +775,107 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' @import ggplot2 
 #' @examples
 #' 
+#' ##### Example 1: Calibrated Line Plots #####
 #' 
-
-
-
-
-
-
-
+#' # simulated dataset with exponentially distributed 
+#' #  population effects
+#' # we will use the calibrated method to avoid normality assumption
+#' data(toyMeta)
+#' 
+#' # without confidence band
+#' sens_plot( method = "calibrated",
+#'            type="line",
+#'            q=log(.9),
+#'            tail = "below",
+#'            Bmin=log(1),
+#'            Bmax=log(4),
+#'            dat = toyMeta,
+#'            yi.name = "est",
+#'            vi.name = "var",
+#'            give.CI = FALSE )
+#' 
+#' 
+#' # # with confidence band and a different threshold, q
+#' # # commented out because takes a while too run
+#' # sens_plot( method = "calibrated",
+#' #            type="line",
+#' #            q=log(1),
+#' #            tail = "below",
+#' #            Bmin=log(1),
+#' #            Bmax=log(4),
+#' #            dat = toyMeta,
+#' #            yi.name = "est",
+#' #            vi.name = "var",
+#' #            give.CI = TRUE,
+#' #            R = 300 ) # should be higher in practice
+#' 
+#' 
+#' ##### Example 2: Calibrated and Parametric Line Plots #####
+#' 
+#' # example dataset
+#' d = metafor::escalc(measure="RR",
+#'                     ai=tpos,
+#'                     bi=tneg,
+#'                     ci=cpos,
+#'                     di=cneg,
+#'                     data=metafor::dat.bcg)
+#' 
+#' # without confidence band
+#' sens_plot( method = "calibrated",
+#'            type="line",
+#'            tail = "below",
+#'            q=log(1.1),
+#'            Bmin=log(1),
+#'            Bmax=log(4),
+#'            dat = d,
+#'            yi.name = "yi",
+#'            vi.name = "vi",
+#'            give.CI = FALSE )
+#' 
+#' # # with confidence band
+#' # # commented out because  it takes a while
+#' # # this example gives bootstrap warnings because of its small sample size
+#' # sens_plot( method = "calibrated",
+#' #            type="line",
+#' #            q=log(1.1),
+#' #            Bmin=log(1),
+#' #            Bmax=log(4),
+#' #            R = 500,  # should be higher in practice (e.g., 1000)
+#' #            dat = d,
+#' #            yi.name = "yi",
+#' #            vi.name = "vi",
+#' #            give.CI = TRUE )
+#' 
+#' 
+#' # now with heterogeneous bias across studies (via sigB) and with confidence band
+#' sens_plot( method = "parametric",
+#'            type="line",
+#'            q=log(1.1),
+#'            yr=log(1.3),
+#'            vyr = .05,
+#'            vt2 = .001,
+#'            t2=0.4,
+#'            sigB = 0.1,
+#'            Bmin=log(1),
+#'            Bmax=log(4) )
+#' 
+#' ##### Distribution Line Plot #####
+#' 
+#' # distribution plot: apparently causative
+#' sens_plot( type="dist",
+#'            q=log(1.1),
+#'            muB=log(2),
+#'            sigB = 0.1,
+#'            yr=log(1.3),
+#'            t2=0.4 )
+#' 
+#' # distribution plot: apparently preventive
+#' sens_plot( type="dist",
+#'            q=log(0.90),
+#'            muB=log(1.5),
+#'            sigB = 0.1,
+#'            yr=log(0.7),
+#'            t2=0.2 )
 
 sens_plot = function(method="calibrated",
                      type,
@@ -854,6 +945,37 @@ sens_plot = function(method="calibrated",
   # breaks.x1 = NA
   # breaks.x2 = NA
   
+  ##### Warn About Unusued Args #####
+  
+  # # @@problem: arguments that have defaults
+  # 
+  # # arguments that are ONLY used for a certain type/method
+  # line.param.args = c(  "sigB",
+  #                       "yr",
+  #                       "vyr",
+  #                       "t2",
+  #                       "vt2" )
+  # 
+  # line.calib.args = c( "dat",
+  #                      "yi.name",
+  #                      "vi.name" )
+  # 
+  # if ( !( type  == "line" & method == "parametric" ) ) {
+  #   # find arguments that won't be used, yet were specified
+  #   useless = line.param.args[ vapply(x, FUN = exists, FUN.VALUE = 0) ]
+  # }
+  # 
+  # if ( !( type  == "line" & method == "calibrated" ) ) {
+  #   # find arguments that won't be used, yet were specifie
+  #   useless = line.calib.args[ vapply(x, FUN = exists, FUN.VALUE = 0) ]
+  # }
+  # 
+  # if ( length(useless) > 0 ){ 
+  #   message( paste( "Given your choice of type and method, the following arguments you passed were ignored:",
+  #                                                paste( useless, collapse = ", " ) ) )
+  # }
+  # 
+  
   ##### Distribution Plot ######
   if ( type=="dist" ) {
     
@@ -879,15 +1001,22 @@ sens_plot = function(method="calibrated",
     temp = data.frame( group = rep( c( "Observed", "True" ), each = reps ), 
                        val = c( RR.c, RR.t ) )
     
+    # cut the dataframe to match axis limits
+    # avoids warnings from stat_density about non-finite values being removed
+    temp = temp %>% filter(val >= x.min & val <= x.max)
+    
     colors=c("black", "orange")
-    p = ggplot2::ggplot( data=temp, aes(x=temp$val, group=temp$group ) ) +
-      geom_density( aes( fill=temp$group ), alpha=0.4 ) +
-      theme_bw() + xlab("Study-specific relative risks") +
-      ylab("") + guides(fill=guide_legend(title=" ")) +
-      scale_fill_manual(values=colors) +
-      geom_vline( xintercept = exp(q), lty=2, color="red" ) +
-      scale_x_continuous( limits=c(x.min, x.max), breaks = seq( round(x.min), round(x.max), 0.5) ) +
-      ggtitle("Observed and true relative risk distributions")
+    
+    p = ggplot2::ggplot( data=temp, aes(x=val, group=group ) ) +
+                            geom_density( aes( fill=group ), alpha=0.4 ) +
+                            theme_bw() +
+      xlab("Study-specific relative risks") +
+                            ylab("") +
+      guides(fill=guide_legend(title=" ")) +
+                            scale_fill_manual(values=colors) +
+                            geom_vline( xintercept = exp(q), lty=2, color="red" ) +
+                            scale_x_continuous( limits=c(x.min, x.max), breaks = seq( round(x.min), round(x.max), 0.5) ) +
+                            ggtitle("Observed and true relative risk distributions") 
     
     graphics::plot(p)
   }
@@ -1032,9 +1161,9 @@ sens_plot = function(method="calibrated",
             warning( paste( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." ) )
           }
         }
-        }
-        
-
+      }
+      
+      
       
       #browser()
       
@@ -1048,11 +1177,11 @@ sens_plot = function(method="calibrated",
         scale_y_continuous( limits=c(0,1),
                             breaks=seq(0, 1, .1)) +
         scale_x_continuous(  #limits = c( min(breaks.x1), max(breaks.x1) ),  # this line causes an error with geom_line having "missing values"
-                             breaks = breaks.x1,
-                             sec.axis = sec_axis( ~ g(.),  # confounding strength axis
-                                                  name = "Minimum strength of both confounding RRs",
-                                                  breaks = breaks.x2)
-                             ) +
+          breaks = breaks.x1,
+          sec.axis = sec_axis( ~ g(.),  # confounding strength axis
+                               name = "Minimum strength of both confounding RRs",
+                               breaks = breaks.x2)
+        ) +
         geom_line(lwd=1.2) +
         
         xlab("Hypothetical bias factor in all studies (RR scale)") +

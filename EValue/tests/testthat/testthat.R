@@ -1153,8 +1153,25 @@ test_that("Calibrated, test set #4, (no bias needed to reduce this Phat to less 
 
 
 
+###################### SENS_PLOT WARNINGS ABOUT IGNORED ARGS ###################### 
+
+# BM
 
 
+# we'll use the calibrated method to avoid normality assumption
+data(toyMeta)
+
+# without confidence band - WORKS
+sens_plot( method = "calibrated",
+           type="line",
+           q=log(.9),
+           tail = "below",
+           Bmin=log(1),
+           Bmax=log(4),
+           dat = toyMeta,
+           yi.name = "est",
+           vi.name = "var",
+           give.CI = FALSE )
 
 
 # ### jl testing calibrated confounded_meta 1 ###
