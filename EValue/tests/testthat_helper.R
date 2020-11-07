@@ -173,3 +173,58 @@ sim_one_study2 = function(b0, # intercept
                       yi,
                       vyi ) )
 }
+
+
+
+# return the threshold q that is the TheoryP^th quantile 
+#  when moderators are set to zc.star and zb.star
+calculate_theory_p = function(true.effect.dist, 
+                              q,
+                              b0,
+                              bc,
+                              bb,
+                              zc,   
+                              zb,
+                              V){
+  
+  # get the mean for this combination of moderators
+  mu = b0 + bc*zc + bb*zb
+  
+  if ( true.effect.dist == "normal" ) {
+    return( 1 - pnorm( q = q,
+                       mean = mu,
+                       sd = sqrt(V) ) )
+  }
+  
+  if ( true.effect.dist == "expo" ) {
+    # we generate from a exponential, then shift to achieve the correct mean, 
+    #  so q is the threshold BEFORE shifting
+    # here is the data generation code from sim_data:
+    # Mi = rexp( n = 1, rate = sqrt(1/V) )
+    # Mi = Mi + (mu - sqrt(V))
+    # is this first line right?
+    #stop("Not tested/written yet")
+    q0 = q - ( mu - sqrt(V) )
+    return( pexp( q = q0,
+                  rate = sqrt(1/V),
+                  lower.tail = FALSE) )
+  }
+  
+  if ( true.effect.dist == "unif2" ) {
+    stop("unif2 method not tested/written yet")
+    # return( qunif2( p = 1 - TheoryP, 
+    #                 mu = mu, 
+    #                 V = V) )
+  }
+  
+  if (true.effect.dist == "t.scaled") {
+    stop("t.scaled method not tested/written yet")
+    # from metRology package
+    # return( qt.scaled(p = 1 - TheoryP,
+    #                   df = 3,
+    #                   mean = mu,
+    #                   sd = sqrt(V) ) )
+  }
+  
+  else stop("true.effect.dist not recognized.")
+}

@@ -354,7 +354,8 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     ##### Check for Bad Input #####
     if ( t2 < 0 ) stop("Heterogeneity cannot be negative")
-    if ( !is.na(sigB) & sigB < 0 ) stop("Bias factor variance cannot be negative")
+    if ( is.na(sigB) ) stop("Must provide sigB for parametric method")
+    if ( sigB < 0 ) stop("Bias factor variance cannot be negative")
     
     # the second condition is needed for Shiny app:
     #  if user deletes the input in box, then it's NA instead of NULL
@@ -366,7 +367,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
     }
     
-    if ( !is.na(sigB) & t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
+    if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
     
     ##### Messages When Not All Output Can Be Computed #####
     if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
@@ -539,66 +540,44 @@ confounded_meta = function( method="calibrated",  # for both methods
       
       require(boot)
       
-      # CI for Phat
-      boot.res.Phat = suppressWarnings( boot( data = dat,
-                                              parallel = "multicore",
-                                              R = R, 
-                                              statistic = function(original, indices) {
-                                                
-                                                # draw bootstrap sample
-                                                b = original[indices,]
-                                                
-                                                Phatb = Phat_causal( q = q, 
-                                                                     B = muB,
-                                                                     tail = tail,
-                                                                     dat = b,
-                                                                     yi.name = yi.name,
-                                                                     vi.name = vi.name)
-                                                return(Phatb)
-                                              } ) )
+      Phat.CI.lims = Phat_CI_lims(.B = muB,
+                                  R = R,
+                                  q = q,
+                                  tail = tail,
+                                  dat = dat,
+                                  yi.name = yi.name,
+                                  vi.name = vi.name,
+                                  CI.level = CI.level)
       
-      bootCIs.Phat = boot.ci(boot.res.Phat,
-                             type="bca",
-                             conf = CI.level )
+      lo.Phat = as.numeric( Phat.CI.lims[1] )
+      hi.Phat = as.numeric( Phat.CI.lims[2] )
+      SE.Phat = as.numeric( Phat.CI.lims[3] )
       
-      lo.Phat = bootCIs.Phat$bca[4]
-      hi.Phat = bootCIs.Phat$bca[5]
-      SE.Phat = sd(boot.res.Phat$t)
-      
-      
-      # Tmin and Gmin
-      if ( !is.na(r) ) {
-        boot.res.Tmin = suppressWarnings( boot( data = dat,
-                                                parallel = "multicore",
-                                                R = R, 
-                                                statistic = function(original, indices) {
-                                                  
-                                                  # draw bootstrap sample
-                                                  b = original[indices,]
-                                                  
-                                                  Tminb = Tmin_causal(q = q,
-                                                                      r = r,
-                                                                      tail = tail,
-                                                                      dat = b,
-                                                                      yi.name = yi.name,
-                                                                      vi.name = vi.name)
-                                                  return(Tminb)
-                                                } ) )
-        
-        bootCIs.Tmin = boot.ci(boot.res.Tmin,
-                               type="bca",
-                               conf = CI.level )
-        
-        lo.T = max(1, bootCIs.Tmin$bca[4])  # bias factor can't be < 1
-        hi.T = bootCIs.Tmin$bca[5]  # but has no upper bound
-        SE.T = sd(boot.res.Tmin$t)
-        
-        
-        ##### Gmin #####
-        lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
-        hi.G = g(hi.T)  # but has no upper bound
-        SE.G = sd( g(boot.res.Tmin$t) )
+      if ( any( is.na( c(lo.Phat, hi.Phat, SE.Phat) ) ) ) {
+        message("The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.")
       }
+
+      Tmin.Gmin.CI.lims = Tmin_Gmin_CI_lims( R,
+                                             q,
+                                             r,
+                                             tail,
+                                             dat,
+                                             yi.name,
+                                             vi.name,
+                                             CI.level )
+
+      lo.T = as.numeric( Tmin.Gmin.CI.lims["lo.T"] )
+      hi.T = as.numeric( Tmin.Gmin.CI.lims["hi.T"] )
+      SE.T = as.numeric( Tmin.Gmin.CI.lims["SE.T"] )
+      lo.G = as.numeric( Tmin.Gmin.CI.lims["lo.G"] )
+      hi.G = as.numeric( Tmin.Gmin.CI.lims["hi.G"] )
+      SE.G = as.numeric( Tmin.Gmin.CI.lims["SE.G"] )
+      
+      
+      if ( any( is.na( c(lo.T, hi.T, SE.T, lo.G, hi.G, SE.G) ) ) ) {
+        message("The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.")
+      }
+      
     }  # closes "if ( !is.na(r) )"
     
   } # closes calibrated method
@@ -792,8 +771,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #'            type="line",
 #'            q=log(.9),
 #'            tail = "below",
-#'            Bmin=log(1),
-#'            Bmax=log(4),
 #'            dat = toyMeta,
 #'            yi.name = "est",
 #'            vi.name = "var",
@@ -806,8 +783,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' #            type="line",
 #' #            q=log(1),
 #' #            tail = "below",
-#' #            Bmin=log(1),
-#' #            Bmax=log(4),
 #' #            dat = toyMeta,
 #' #            yi.name = "est",
 #' #            vi.name = "var",
@@ -830,8 +805,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #'            type="line",
 #'            tail = "below",
 #'            q=log(1.1),
-#'            Bmin=log(1),
-#'            Bmax=log(4),
 #'            dat = d,
 #'            yi.name = "yi",
 #'            vi.name = "vi",
@@ -843,8 +816,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' # sens_plot( method = "calibrated",
 #' #            type="line",
 #' #            q=log(1.1),
-#' #            Bmin=log(1),
-#' #            Bmax=log(4),
 #' #            R = 500,  # should be higher in practice (e.g., 1000)
 #' #            dat = d,
 #' #            yi.name = "yi",
@@ -888,8 +859,8 @@ sens_plot = function(method="calibrated",
                      CI.level=0.95,
                      tail=NA,
                      give.CI=TRUE,
-                     Bmin,
-                     Bmax,
+                     Bmin = log(1),
+                     Bmax = log(4),
                      breaks.x1=NA,
                      breaks.x2=NA,
                      
@@ -1143,6 +1114,7 @@ sens_plot = function(method="calibrated",
         
         
         # bootstrap a CI for each entry in res.short
+        #browser()
         res.short = res.short %>% rowwise() %>%
           mutate( Phat_CI_lims(.B = B,
                                R = R,
@@ -1151,7 +1123,7 @@ sens_plot = function(method="calibrated",
                                dat = dat,
                                yi.name = yi.name,
                                vi.name = vi.name,
-                               CI.level = CI.level) )
+                               CI.level = CI.level)[1:2] )
         
         # merge this with the full-length res dataframe, merging by Phat itself
         res = merge( res, res.short, by = "Phat", all.x = TRUE )
@@ -1166,7 +1138,7 @@ sens_plot = function(method="calibrated",
         
         # if ALL CI limits are missing
         if ( all( is.na(res$lo) ) ) {
-          warning( "None of the pointwise confidence intervals were estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R." )
+          warning( "None of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R." )
           # avoid even trying to plot the CI if it's always NA to avoid geom_ribbon errors later
           give.CI = FALSE
         }
@@ -1225,7 +1197,6 @@ sens_plot = function(method="calibrated",
 
 
 
-# fn of B; everything else is taken as a global var
 # @put as separate internal fn
 Phat_CI_lims = function(.B,
                         R,
@@ -1260,13 +1231,95 @@ Phat_CI_lims = function(.B,
     
     lo = bootCIs$bca[4]
     hi = bootCIs$bca[5]
+    se = sd(boot.res$t)
+    
+    # avoid issues with creating df below
+    if ( is.null(lo) ) lo = NA
+    if ( is.null(hi) ) hi = NA
     
   }, error = function(err) {
     lo <<- NA
     hi <<- NA
+    se <<- NA
   })
   
   # return as data frame to play well with rowwise() and mutate()
-  return( data.frame( lo, hi ) )
+  return( data.frame( lo, hi, se ) )
 }
+
+
+
+# @put as separate internal fn
+#bm
+Tmin_Gmin_CI_lims = function(
+                        R,
+                        q,
+                        r,
+                        tail,
+                        dat,
+                        yi.name,
+                        vi.name,
+                        CI.level) {
+  
+  tryCatch({
+    boot.res = suppressWarnings( boot( data = dat,
+                                       parallel = "multicore",
+                                       R = R, 
+                                       statistic = function(original, indices) {
+                                         
+                                         # draw bootstrap sample
+                                         b = original[indices,]
+                                         
+                                         Tminb = Tmin_causal(q = q,
+                                                             r = r,
+                                                             tail = tail,
+                                                             dat = b,
+                                                             yi.name = yi.name,
+                                                             vi.name = vi.name)
+                                         return(Tminb)
+                                       } ) )
+    
+    
+    bootCIs.Tmin = boot.ci(boot.res.Tmin,
+                           type="bca",
+                           conf = CI.level )
+    
+    lo.T = max(1, bootCIs.Tmin$bca[4])  # bias factor can't be < 1
+    hi.T = bootCIs.Tmin$bca[5]  # but has no upper bound
+    SE.T = sd(boot.res.Tmin$t)
+    
+    
+    ##### Gmin #####
+    lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
+    hi.G = g(hi.T)  # but has no upper bound
+    SE.G = sd( g(boot.res.Tmin$t) )
+    
+    
+    # avoid issues with creating df below
+    if ( is.null(lo.T) ) lo.T = NA
+    if ( is.null(hi.T) ) hi.T = NA
+    if ( is.null(lo.G) ) lo.G = NA
+    if ( is.null(hi.G) ) hi.G = NA
+    
+  }, error = function(err) {
+    lo.T <<- NA
+    hi.T <<- NA
+    
+    lo.G <<- NA
+    hi.G <<- NA
+    
+    SE.T <<- NA
+    SE.G <<- NA
+  })
+  
+  # return as data frame to play well with rowwise() and mutate()
+  return( data.frame( lo.T, hi.T, SE.T, lo.G, hi.G, SE.G ) )
+}
+
+
+
+
+
+
+
 

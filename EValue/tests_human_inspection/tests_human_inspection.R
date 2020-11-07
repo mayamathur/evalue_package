@@ -12,6 +12,102 @@ setwd("tests")
 source("testthat_helper.R")
 
 
+##### Simulate Data with Random Parameters #####
+
+# data-generation parameters
+k = round( runif(1, 11, 40) )
+mu = rnorm(1, mean = 0, sd = 2)  # log-RR
+V = 0
+if (rbinom(n=1, size=1, prob=0.5)) V = runif(1, 0, 2)
+dist = sample(c("normal", "expo"), 1)
+
+# confounded_meta parameters
+method = sample(c("calibrated", "parametric"), 1)
+q = runif(1, 0, 1)
+# sometimes choose q equal to mean
+if (rbinom(n=1, size=1, prob=0.5)) q = mu
+
+
+r = runif(1, 0, 1)
+muB = rnorm(1, mean = 0, sd = 2)
+
+sigB = 0
+if (rbinom(n=1, size=1, prob=0.5)) sigB = runif(1, 0, 1)
+if ( sigB^2 > V ) sigB = sqrt(V)
+
+tail = sample(c("above", "below"), 1)
+give.CI = sample(c(TRUE, FALSE), 1)
+
+if ( tail == "above" ) yr.corr = mu - muB
+if ( tail == "below" ) yr.corr = mu + muB
+theoryP = calculate_theory_p( true.effect.dist = dist, 
+                              q = q,
+                              b0 = yr.corr,
+                              bc = 0,
+                              bb = 0,
+                              zc = 0,   
+                              zb = 0,
+                              V = V - sigB^2 )
+if ( tail == "below" ) theoryP = 1 - theoryP
+
+
+
+d = sim_data2( k = k,
+               m = k,
+               b0 = mu, # intercept
+               bc = 0, # effect of continuous moderator
+               bb = 0, # effect of binary moderator
+               V = V, 
+               Vzeta = 0, # used to calcuate within-cluster variance
+               
+               muN = 100,
+               minN = 50,
+               sd.w = 1,
+               true.effect.dist = dist )
+
+# fit meta-analysis
+meta = rma.uni(yi = d$yi,
+               sei = sqrt(d$vyi),
+               method = "REML")
+
+
+( x = confounded_meta(method=method,
+                    q=q,
+                    r = r,
+                    tail = tail,
+                    muB=muB,
+                    
+                    yr = meta$b,
+                    vyr = meta$se^2,
+                    t2 = meta$tau2,
+                    vt2 = meta$se.tau2^2,
+                    
+                    give.CI=give.CI,
+                    dat = d,
+                    yi.name = "yi",
+                    vi.name = "vyi") )
+x$Est[ x$Value == "Prop" ]; theoryP  # should be reasonably close
+exp(yr.corr)
+exp(q)
+tail
+# just changed confounded_meta to use Phat_CI_lims instead of its own boot loop
+
+
+
+sens_plot( method = method,
+           type="line",
+           q=q,
+           tail = tail,
+           # Bmin=log(1),
+           # Bmax=log(4),
+           dat = d,
+           yi.name = "yi",
+           vi.name = "vyi",
+           give.CI = TRUE )
+
+
+###### sens_plot warnings #####
+
 
 # # MOVE THIS - CURRENTLY NEEDS VISUAL INSPECTION
 # # Justin's example
