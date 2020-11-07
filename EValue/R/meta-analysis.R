@@ -300,10 +300,6 @@ Tmin_causal = function( q,
 
 
 
-# @@check that they provided all needed input based on chosen method
-# @@work on the examples
-# bms
-
 confounded_meta = function( method="calibrated",  # for both methods
                             q,
                             r = NA,
@@ -735,31 +731,53 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 
 #' Plots for sensitivity analyses
 #'
-#' Produces line plots (\code{type="line"}) showing the bias factor on the relative risk (RR) scale vs. the proportion
-#' of studies with true RRs above \code{q} (or below it for an apparently preventive relative risk).
-#' The plot secondarily includes a X-axis scaled based on the minimum strength of confounding
-#' to produce the given bias factor. The shaded region represents a 95% pointwise confidence band.
+#' Produces line plots (\code{type="line"}) showing the average bias factor across studies on the relative risk (RR) scale vs. the estimated proportion
+#' of studies with true RRs above or below a chosen threshold \code{q}.
+#' The plot secondarily includes a X-axis showing the minimum strength of confounding
+#' to produce the given bias factor. The shaded region represents a pointwise confidence band.
 #' Alternatively, produces distribution plots (\code{type="dist"}) for a specific bias factor showing the observed and 
 #' true distributions of RRs with a red line marking exp(\code{q}).
+#' @param method \code{"calibrated"} or \code{"parametric"}. See Details.
 #' @param type \code{dist} for distribution plot; \code{line} for line plot (see Details)
 #' @param q True causal effect size chosen as the threshold for a meaningfully large effect
-#' @param muB Single mean bias factor on log scale (only needed for distribution plot)
-#' @param Bmin Lower limit of lower X-axis on the log scale (only needed for line plot)
-#' @param Bmax Upper limit of lower X-axis on the log scale (only needed for line plot)
-#' @param sigB Standard deviation of log bias factor across studies (length 1)
-#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
-#' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis
-#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis
-#' @param vt2 Estimated variance of tau^2 from confounded meta-analysis
-#' @param breaks.x1 Breaks for lower X-axis (bias factor) on RR scale (optional for line plot; not used for distribution plot)
-#' @param breaks.x2 Breaks for upper X-axis (confounding strength) on RR scale (optional for line plot; not used for distribution plot)
-#' @param CI.level Pointwise confidence level as a proportion
+#' @param CI.level Pointwise confidence level as a proportion (e.g., 0.95).
+#' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
+#' the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.
+#' @param give.CI Logical. If \code{TRUE}, a pointwise confidence intervals is plotted. 
+#' @param Bmin Lower limit of lower X-axis on the log scale (only needed if \code{type = "line"}). 
+#' @param Bmax Upper limit of lower X-axis on the log scale (only needed if \code{type = "line"})
+#' @param breaks.x1 Breaks for lower X-axis (bias factor) on RR scale. (optional for \code{type = "line"}; not used for \code{type = "dist"}). 
+#' @param breaks.x2 Breaks for upper X-axis (confounding strength) on RR scale (optional for \code{type = "line"}; not used for \code{type = "dist"})
+#' 
+#' 
+#' @param muB Single mean bias factor on log scale (only needed if \code{type = "dist"})
+
+#' @param sigB Standard deviation of log bias factor across studies (only used if \code{method = "parametric"})
+#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis (only used if \code{method = "parametric"})
+#' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis (only used if \code{method = "parametric"})
+#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis (only used if \code{method = "parametric"})
+#' @param vt2 Estimated variance of tau^2 from confounded meta-analysis (only used if \code{method = "parametric"})
+
+#' @param R  Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}. 
+#' @param dat Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.
+#' @param yi.name Name of variable in \code{dat} containing studies' point estimates. Only used if \code{method = "calibrated"}.
+#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates. Only used if \code{method = "calibrated"}.
+#'
 #' @keywords meta-analysis confounding sensitivity
 #' @details
-#' Arguments \code{vyr} and \code{vt2} can be left \code{NA}, in which case no confidence
-#' band will appear on the line plot. 
+#' This function calls \code{confounded_meta} to get the point estimate and confidence interval at each value of the bias factor. See \code{?confounded_meta} for details. 
+#' 
+#' Note that \code{Bmin} and \code{Bmax} are specified on the log scale for consistency with the \code{muB} argument and with the function \code{confounded_meta}, whereas \code{breaks.x1} and \code{breaks.x2} are specified on the RR scale to facilitate adjustments to the plot appearance. 
 #' @export
 #' @import ggplot2 
+#' @references
+#' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+#'
+#' Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses.
+#'
+#' Wang C-C & Lee W-C (2019). A simple method to estimate prediction intervals and
+#' predictive distributions: Summarizing meta-analyses
+#' beyond means and confidence intervals. \emph{Research Synthesis Methods}.
 #' @examples
 #' 
 #' ##### Example 1: Calibrated Line Plots #####

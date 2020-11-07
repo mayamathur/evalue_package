@@ -28,43 +28,59 @@ sens_plot(
 )
 }
 \arguments{
+\item{method}{\code{"calibrated"} or \code{"parametric"}. See Details.}
+
 \item{type}{\code{dist} for distribution plot; \code{line} for line plot (see Details)}
 
-\item{q}{True effect size that is the threshold for "scientific significance"}
+\item{q}{True causal effect size chosen as the threshold for a meaningfully large effect}
 
-\item{CI.level}{Pointwise confidence level as a proportion}
+\item{CI.level}{Pointwise confidence level as a proportion (e.g., 0.95).}
 
-\item{Bmin}{Lower limit of lower X-axis on the log scale (only needed for line plot)}
+\item{tail}{\code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
+the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.}
 
-\item{Bmax}{Upper limit of lower X-axis on the log scale (only needed for line plot)}
+\item{give.CI}{Logical. If \code{TRUE}, a pointwise confidence intervals is plotted.}
 
-\item{breaks.x1}{Breaks for lower X-axis (bias factor) on RR scale (optional for line plot; not used for distribution plot)}
+\item{Bmin}{Lower limit of lower X-axis on the log scale (only needed if \code{type = "line"}).}
 
-\item{breaks.x2}{Breaks for upper X-axis (confounding strength) on RR scale (optional for line plot; not used for distribution plot)}
+\item{Bmax}{Upper limit of lower X-axis on the log scale (only needed if \code{type = "line"})}
 
-\item{muB}{Single mean bias factor on log scale (only needed for distribution plot)}
+\item{breaks.x1}{Breaks for lower X-axis (bias factor) on RR scale. (optional for \code{type = "line"}; not used for \code{type = "dist"}).}
 
-\item{sigB}{Standard deviation of log bias factor across studies (length 1)}
+\item{breaks.x2}{Breaks for upper X-axis (confounding strength) on RR scale (optional for \code{type = "line"}; not used for \code{type = "dist"})}
 
-\item{yr}{Pooled point estimate (on log scale) from confounded meta-analysis}
+\item{muB}{Single mean bias factor on log scale (only needed if \code{type = "dist"})}
 
-\item{vyr}{Estimated variance of pooled point estimate from confounded meta-analysis}
+\item{sigB}{Standard deviation of log bias factor across studies (only used if \code{method = "parametric"})}
 
-\item{t2}{Estimated heterogeneity (tau^2) from confounded meta-analysis}
+\item{yr}{Pooled point estimate (on log scale) from confounded meta-analysis (only used if \code{method = "parametric"})}
 
-\item{vt2}{Estimated variance of tau^2 from confounded meta-analysis}
+\item{vyr}{Estimated variance of pooled point estimate from confounded meta-analysis (only used if \code{method = "parametric"})}
+
+\item{t2}{Estimated heterogeneity (tau^2) from confounded meta-analysis (only used if \code{method = "parametric"})}
+
+\item{vt2}{Estimated variance of tau^2 from confounded meta-analysis (only used if \code{method = "parametric"})}
+
+\item{R}{Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}.}
+
+\item{dat}{Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.}
+
+\item{yi.name}{Name of variable in \code{dat} containing studies' point estimates. Only used if \code{method = "calibrated"}.}
+
+\item{vi.name}{Name of variable in \code{dat} containing studies' variance estimates. Only used if \code{method = "calibrated"}.}
 }
 \description{
-Produces line plots (\code{type="line"}) showing the bias factor on the relative risk (RR) scale vs. the proportion
-of studies with true RRs above \code{q} (or below it for an apparently preventive relative risk).
-The plot secondarily includes a X-axis scaled based on the minimum strength of confounding
-to produce the given bias factor. The shaded region represents a 95\% pointwise confidence band.
+Produces line plots (\code{type="line"}) showing the average bias factor across studies on the relative risk (RR) scale vs. the estimated proportion
+of studies with true RRs above or below a chosen threshold \code{q}.
+The plot secondarily includes a X-axis showing the minimum strength of confounding
+to produce the given bias factor. The shaded region represents a pointwise confidence band.
 Alternatively, produces distribution plots (\code{type="dist"}) for a specific bias factor showing the observed and
 true distributions of RRs with a red line marking exp(\code{q}).
 }
 \details{
-Arguments \code{vyr} and \code{vt2} can be left \code{NA}, in which case no confidence
-band will appear on the line plot.
+This function calls \code{confounded_meta} to get the point estimate and confidence interval at each value of the bias factor. See \code{?confounded_meta} for details.
+
+Note that \code{Bmin} and \code{Bmax} are specified on the log scale for consistency with the \code{muB} argument and with the function \code{confounded_meta}, whereas \code{breaks.x1} and \code{breaks.x2} are specified on the RR scale to facilitate adjustments to the plot appearance.
 }
 \examples{
 
@@ -169,6 +185,15 @@ sens_plot( type="dist",
            sigB = 0.1,
            yr=log(0.7),
            t2=0.2 )
+}
+\references{
+Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+
+Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses.
+
+Wang C-C & Lee W-C (2019). A simple method to estimate prediction intervals and
+predictive distributions: Summarizing meta-analyses
+beyond means and confidence intervals. \emph{Research Synthesis Methods}.
 }
 \keyword{confounding}
 \keyword{meta-analysis}

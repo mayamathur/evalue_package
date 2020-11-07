@@ -26,20 +26,20 @@ confounded_meta(
 \arguments{
 \item{method}{\code{"calibrated"} or \code{"parametric"}. See Details.}
 
-\item{q}{True causal effect size that is the threshold for a meaningfully large effect size.}
+\item{q}{True causal effect size chosen as the threshold for a meaningfully large effect.}
 
 \item{r}{For \code{Tmin} and \code{Gmin}, value to which the proportion of meaningfully strong effect sizes is to be reduced.}
 
-\item{tail}{\code{above} for the proportion of effects above \code{q}; \code{below} for
-the proportion of effects below \code{q}. By default, is set to \code{above} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{below} otherwise.}
+\item{tail}{\code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
+the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.}
 
-\item{CI.level}{Confidence level as a proportion.}
+\item{CI.level}{Confidence level as a proportion (e.g., 0.95).}
 
 \item{give.CI}{Logical. If \code{TRUE}, confidence intervals are provided. Otherwise, only point estimates are provided.}
 
 \item{R}{Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}.}
 
-\item{muB}{Mean bias factor on the log scale across studies. When considering bias that of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study.}
+\item{muB}{Mean bias factor on the log scale across studies. When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study.}
 
 \item{dat}{Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.}
 
@@ -68,9 +68,9 @@ relative risk for both confounding associations (\code{Gmin}).
 \details{
 These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. For detailed guidance on implementing and interpreting the sensitivity analyses, see in particular Section 5 of Mathur & VanderWeele (2019) and Section 1.2 of Mathur & VanderWeele (2020)'s Supplement.
 
-By default, \code{confounded_meta} performs estimation using a "calibrated" method (Mathur & VanderWeele, 2020; Mathur & VanderWeele, 2019) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following additional arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{dat}, \code{yi.name}, and \code{vi.name}.
+By default, \code{confounded_meta} performs estimation using a "calibrated" method (Mathur & VanderWeele, 2020; Mathur & VanderWeele, 2019) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{dat}, \code{yi.name}, and \code{vi.name}.
 
-The parametric method that the population effects are approximately normal and that the number of studies is large, and it should only be used when the proportion estimate is between 0.15 and 0.85. Unlike the calibrated method, the parametric method can accommodate bias whose distribution differs across studies. When using this method, the following additional arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{sigB}, \code{yr}, \code{vyr} (if you want confidence intervals), \code{t2}, \code{vt2} (if you want confidence intervals).
+The parametric method that the population effects are approximately normal and that the number of studies is large, and it should only be used when the proportion estimate is between 0.15 and 0.85. Unlike the calibrated method, the parametric method can accommodate bias that is heterogeneous across studies (i.e., log-normal). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{sigB}, \code{yr}, \code{vyr} (if you want confidence intervals), \code{t2}, \code{vt2} (if you want confidence intervals).
 }
 \examples{
 
