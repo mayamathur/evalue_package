@@ -318,57 +318,127 @@ function(input, output, session) {
     }) ## closes calibrated_text3
   }) ## closes calibrated_output
   
-  observeEvent(input$calibrated_plot, {
-    output$calibrated_plot1 <- renderPlot({
+  calibrated_plot <- observeEvent(input$calibrated_plot, {
+    output$calibrated_plot1 = renderPlot({
       withProgress(message="generating plot...", value=1,{
-        hist(1:100, main="test Generate calibrated plot button")
-        # suppressWarnings(sens_plot(method=method, type="line", q=q, yi.name=yi.name, vi.name=vi.name, Bmin=Bmin, Bmax=Bmax, tail=tail, give.CI=TRUE, R=R, dat=dat ))
+        ### hmm not finding these inputs from above, need to put it here too?
+        ### isolate on tail to not update until action button pressed again
+        if(input$calibrated_scale=="RR"){
+          q = log(input$calibrated_q)
+          r = input$calibrated_r
+          tail = isolate(input$calibrated_tail)
+          muB = input$calibrated_muB
+          yi.name = input$calibrated_yi.name
+          vi.name = input$calibrated_vi.name
+          
+          method = input$calibrated_method
+          Bmin = log(input$calibrated_Bmin)
+          Bmax = log(input$calibrated_Bmax)
+          R = input$calibrated_R
+          dat = mydata()
+          
+        } else {
+          if(input$calibrated_scale=="Log-RR"){
+            q = input$calibrated_q
+            r = input$calibrated_r
+            tail = isolate(input$calibrated_tail)
+            muB = input$calibrated_muB
+            yi.name = input$calibrated_yi.name
+            vi.name = input$calibrated_vi.name
+            
+            method = input$calibrated_method
+            Bmin = input$calibrated_Bmin
+            Bmax = input$calibrated_Bmax
+            R = input$calibrated_R
+            dat = mydata()
+          }
+        }
         
-        # d = readxl::read_xlsx("~/Box Sync/jlee/Maya/meta/data/dat.xlsx")
-        # es = MetaUtility::scrape_meta(type="RR",
-        #                               est = d$hr,
-        #                               hi=d$ub)
-        # d=cbind(d,es)
+        # hist(1:100, main="test Generate calibrated plot button")
+        suppressWarnings(sens_plot(method=method, type="line", q=q, yi.name=yi.name, vi.name=vi.name, Bmin=Bmin, Bmax=Bmax, tail=tail, give.CI=TRUE, R=R, dat=dat ))
+        
+        # d = read.csv("~/Box Sync/jlee/Maya/unmeasured_confounding/metashiny/d_sens_plot.csv", stringsAsFactors = FALSE)
         # 
         # method="calibrated"
         # type = "line"
-        # # q=median(d$calib)
-        # tail = "above"
+        # tail = NA
         # muB=0
         # r=0.1
-        # q = 0.2
+        # q = log(1.1)
         # R = 250
         # CI.level = 0.95
         # 
         # give.CI=TRUE
         # dat = d
         # yi.name = "yi"
-        # vi.name = "vyi"
+        # vi.name = "vi"
         # Bmin = log(1)
-        # Bmax = log(5)
-        # CI.level = 0.95
-        # tail = "above"
+        # Bmax = log(4)
         # breaks.x1 = NA
         # breaks.x2 = NA
         
+        
       }) ## closes withProgress
+      
+      ### output plot warnings:
+      ### Shiny user will be forced to choose tail, so don't need this warning
+      # output$calibrated_warning_tail = reactive({
+      #   if ( !tail %in% c("above", "below") ) {
+      #     calib = MetaUtility::calib_ests( yi = dat[[yi.name]], 
+      #                                      sei = sqrt( dat[[vi.name]] ) )
+      #     
+      #     tail = ifelse( median(calib) > log(1), "above", "below" )
+      #     HTML("WARNING: Assuming you want tail =", tail, "because it wasn't specified")
+      #   } 
+      # }) ## closes calibrated_warning_tail
+      
+      output$calibrated_warning_boot = reactive({
+        res = data.frame( B = seq(Bmin, Bmax, .01) )
+        
+        # evaluate Phat causal at each value of B
+        res = res %>% rowwise() %>%
+          mutate( Phat = Phat_causal( q = q,
+                                      B = B,
+                                      tail = tail,
+                                      dat = dat,
+                                      yi.name = yi.name,
+                                      vi.name = vi.name ) )
+        
+        if ( give.CI == TRUE ) {
+          require(boot)
+          # look at just the values of B at which Phat jumps
+          #  this will not exceed the number of point estimates in the meta-analysis
+          # first entry should definitely be bootstrapped, so artificially set its diff to nonzero value
+          diffs = c( 1, diff(res$Phat) )
+          res.short = res[ diffs != 0, ]
+          
+          require(dplyr)
+          
+          
+          # bootstrap a CI for each entry in res.short
+          res.short = res.short %>% rowwise() %>%
+            mutate( Phat_CI_lims(.B = B,
+                                 R = R,
+                                 q = q,
+                                 tail = tail,
+                                 dat = dat,
+                                 yi.name = yi.name,
+                                 vi.name = vi.name,
+                                 CI.level = CI.level) )
+          
+          # merge this with the full-length res dataframe, merging by Phat itself
+          res = merge( res, res.short, by = "Phat", all.x = TRUE )
+          
+          res = res %>% rename( B = B.x )
+          
+          if ( any( res$lo > res$Phat ) | any( res$hi < res$Phat ) ) {
+            HTML( paste( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." ) )
+          }}
+      }) ## closes calibrated_warning_boot
     }) ## closes calibrated_plot1
     
-    ### output plot warnings:
-    output$calibrated_warning_tail <- reactive({
-      if ( is.na(tail) ) {
-        tail = ifelse( yr > log(1), "above", "below" )
-        HTML(paste("WARNING: Assuming you want tail =", tail, "because it wasn't specified"))
-      }
-    }) ## closes calibrated_warning_tail
     
-    output$calibrated_warning_boot <- reactive({
-      if ( any( res$lo > res$Phat ) | any( res$hi < res$Phat ) ) {
-        HTML( paste( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." ) )
-      }
-    }) ## closes calibrated_warning_boot
-  }) ## closes calibrated_output_plot
-  
+  }) ## closes calibrated_plot
   
   
   ### results text for calibrated Fixed sensitivity parameters tab
@@ -479,37 +549,7 @@ function(input, output, session) {
       
     }) ## closes parametric_text3
     
-    observeEvent(input$parametric_plot, { 
-      output$parametric_plot1 <- renderPlot({
-        hist(1:100, main="test Generate parametric plot button")
-        # suppressWarnings(sens_plot(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
-        #                            Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 ))
-      })
-      
-      ### output plot warnings:
-      output$parametric_warning_tail <- reactive({
-        if ( is.na(tail) ) {
-          tail = ifelse( yr > log(1), "above", "below" )
-          HTML(paste("WARNING: Assuming you want tail =", tail, "because it wasn't specified"))
-        }
-      }) ## closes parametric_warning_tail
-      
-      output$parametric_warning_ci <- reactive({
-        if ( is.na(vyr) | is.na(vt2) ) {
-          HTML( "No confidence interval because vyr or vt2 is NULL")
-        }
-      }) ## closes parametric_warning_ci
-      
-      output$parametric_warning_phatci <- reactive({
-        if ( no.CI==FALSE ){
-          HTML("Calculating parametric confidence intervals in the plot. For values of Phat that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
-        }
-      }) ## closes parametric_warning_phatci
-      
-      
-    }) ## closes parametric_output_plot
-    
-    ### warnings:
+    ### parametric_output warnings:
     output$parametric_kwarn <- reactive({
       numStudies <- input$parametric_k
       ifelse(numStudies <=10,
@@ -525,8 +565,107 @@ function(input, output, session) {
       ifelse(p<0.15 | p>0.85,
              HTML(paste('WARNING: Extreme estimated proportion', 'The estimated proportion of meaningfully strong effects is <0.15 or >0.85. The methods implemented in this website do not always work well in these situations. We would recommend instead applying alternative methods that have the same interpretation (see the "More Resouces" tab).', sep = "<br/>")), "")
     }) ## closes parametric_phatwarn_2
+    
   }) ## closes parametric_output
   
+  parametric_plot <- observeEvent(input$parametric_plot, { 
+    output$parametric_plot1 = renderPlot({
+      ### hmm not finding these inputs from above, need to put it here too?
+      ### isolate on tail to not update until action button pressed again
+      if(input$parametric_scale=="RR"){
+        yr_2 = log(input$parametric_yr)
+        t2_2 = input$parametric_t2
+        q_2 = log(input$parametric_q)
+        vyr_2 = input$parametric_se_yr^2
+        vt2_2 = (input$parametric_prop_t2*(input$parametric_t2^2))
+        muB_2 = log(input$parametric_muB)
+        sigB_2 = input$parametric_sigB
+        r_2 = input$parametric_r
+        tail_2 = isolate(input$parametric_tail)
+        
+        method_2 = input$parametric_method
+        Bmin_2 = log(input$parametric_Bmin)
+        Bmax_2 = log(input$parametric_Bmax)
+        CI.level_2 = 0.95
+        give.CI_2 = TRUE
+        
+      } else {
+        if(input$parametric_scale=="Log-RR"){
+          yr_2 = input$parametric_yr
+          t2_2 = input$parametric_t2
+          q_2 = input$parametric_q
+          vyr_2 = input$parametric_se_yr^2
+          vt2_2 = (input$parametric_prop_t2*(input$parametric_t2^2))
+          muB_2 = input$parametric_muB
+          sigB_2 = input$parametric_sigB
+          r_2 = input$parametric_r
+          tail_2 = isolate(input$parametric_tail)
+          
+          method_2 = input$parametric_method
+          Bmin_2 = input$parametric_Bmin
+          Bmax_2 = input$parametric_Bmax
+          CI.level_2 = 0.95
+          give.CI_2 = TRUE
+        }
+      }
+      
+      # hist(1:100, main="test Generate parametric plot button")
+      suppressWarnings(sens_plot(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
+                                 Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 ))
+      
+      ### output plot warnings:
+      
+      ### Shiny user will be forced to choose tail, so don't need this warning
+      # output$parametric_warning_tail = reactive({
+      #   if ( !tail_2 %in% c("above", "below") ) {
+      #     tail_2 = ifelse( yr_2 > log(1), "above", "below" )
+      #     HTML(paste("WARNING: Assuming you want tail =", tail_2, "because it wasn't specified"))
+      #   }
+      # }) ## closes parametric_warning_tail
+      
+      output$parametric_warning_ci = reactive({
+        if ( is.na(vyr_2) | is.na(vt2_2) ) {
+          HTML( "No confidence interval because vyr or vt2 is NULL")
+        }
+      }) ## closes parametric_warning_ci
+      
+      output$parametric_warning_phatci = reactive({
+        # get mean bias factor values for a vector of B's from Bmin to Bmax
+        t = data.frame( B = seq(Bmin_2, Bmax_2, .01), phat = NA, lo = NA, hi = NA )
+        t$eB = exp(t$B)
+        
+        for ( i in 1:dim(t)[1] ) {
+          # r is irrelevant here
+          # suppress warnings about Phat being close to 0 or 1
+          #browser()
+          cm = suppressMessages( confounded_meta( method = method_2,
+                                                  q = q_2,
+                                                  r = NA,
+                                                  muB=t$B[i],
+                                                  sigB=sigB_2,
+                                                  yr=yr_2,
+                                                  vyr=vyr_2,
+                                                  t2=t2_2,
+                                                  vt2=vt2_2,
+                                                  CI.level=CI.level_2,
+                                                  tail=tail_2 ) )
+          
+          t$phat[i] = cm$Est[ cm$Value=="Prop" ]
+          t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
+          t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
+        }
+        
+        # can't compute a CI if the bounds aren't there
+        no.CI = any( is.na(t$lo) ) | any( is.na(t$hi) ) | (give.CI_2 == FALSE)
+        
+        if ( no.CI==FALSE ){
+          HTML("Calculating parametric confidence intervals in the plot. For values of Phat that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
+        }
+      }) ## closes parametric_warning_phatci
+      
+      
+    }) ## closes parametric_plot1
+  }) ## closes parametric_plot
   
   
   

@@ -300,13 +300,13 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                   ),
                                   
                                   mainPanel(
-                                    "jl don't have plot working yet with Maya fixed confounded_meta",
                                     plotOutput('calibrated_plot1')
                                   ),
                                   ### plot warnings:
-                                  mainPanel(
-                                    span( htmlOutput("calibrated_warning_tail"), style="color:red"), width = 8
-                                  ),
+                                  ### Shiny user will be forced to choose tail, so don't need this warning
+                                  # mainPanel(
+                                  #   span( htmlOutput("calibrated_warning_tail"), style="color:red"), width = 8
+                                  # ),
                                   mainPanel(
                                     span( htmlOutput("calibrated_warning_boot"), style="color:red"), width = 8
                                   )
