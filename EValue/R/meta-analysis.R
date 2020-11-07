@@ -1,4 +1,5 @@
 
+############################ EXAMPLE DATASETS ############################ 
 
 #' An example meta-analysis
 #'
@@ -10,16 +11,15 @@
 
 
 
-
 ############################ META-ANALYSIS FUNCTIONS ############################ 
 
 #' Proportion of studies with causal effects above or below q
 #'
 #' An internal function that estimates the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call \code{confounded_meta} instead.
-#' @param q True effect size that is the threshold for "scientific significance"
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
 #' @param B Single value of bias factor (log scale)
 
-#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
+#' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
 #' the proportion of effects below \code{q}.
 #' @param dat Dataframe containing studies' point estimates and variances
 #' @param yi.name Name of variable in \code{dat} containing studies' point estimates
@@ -30,7 +30,6 @@
 Phat_causal = function( q,
                         B,
                         tail,
-                        
                         dat,
                         yi.name,
                         vi.name) {
@@ -55,60 +54,26 @@ Phat_causal = function( q,
 
 
 
-#' #' Simplified Phat_causal for bootstrapping
-#' #'
-#' #' An internal function that calls \code{Phat_causal} in a way that plays well with the \code{boot} package. Draws a resample internally. Only returns Phat itself. 
-#' #' @param original The original dataset from which to resample (will be passed by \code{boot})
-#' #' @param indices The indices to resample (will be passed by \code{boot})
-#' #' @param q True effect size that is the threshold for "scientific significance"
-#' #' @param B Single value of bias factor
-#' 
-#' #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' #' the proportion of effects below \code{q}.
-#' #' @param calib.name Column name in dataframe \code{dat} containing calibrated estimates
-#' #' @import
-#' #' @noRd
-#' #' boot 
-#' Phat_causal_bt = function( original,
-#'                            indices,
-#'        
-#'                            q,
-#'                            B,
-#'                            tail,
-#'                            calib.name) {
-#'   
-#'   # draw bootstrap sample
-#'   b = original[indices,]
-#'   
-#'   phatb = Phat_causal( q = q, 
-#'                        B = B,
-#'                        dat = b,
-#'                        calib = b[[calib.name]], 
-#'                        tail = tail,
-#'                        give.CI = FALSE)
-#'   return(phatb)
-#' }
+#' Transformation from bias factor to confounding strength scale
+#'
+#' An internal function. 
+#' @param x Bias factor (RR scale) to be transformed
+#' @noRd
 
-
-#' define transformation in a way that is monotonic over the effective range of B (>1)
-#' to avoid ggplot errors in sens_plot
-#' helper function for confounded_meta
-#' 
 g = Vectorize( function(x) {
+  # define transformation in a way that is monotonic over the effective range of B (>1)
+  # to avoid ggplot errors in sens_plot
+  # helper function for confounded_meta
   if (x < 1) return( x / 1e10 )
   x + sqrt( x^2 - x )
 } )
 
-# # @@ needed?
-# logHR_to_logRR = function(logRR){
-#   log( ( 1 - 0.5^sqrt( exp(logRR) ) ) / ( 1 - 0.5^sqrt( 1 / exp(logRR) ) ) )
-# }
 
 
 #' Minimum common bias factor to reduce proportion of studies with causal effects above or below q t less than r
 #'
 #' An internal function that estimates; users should call \code{confounded_meta} instead.
-#' @param q True effect size that is the threshold for "scientific significance"
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
 #' @param r Value to which the proportion of strong effect sizes is to be reduced
 #' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
 #' the proportion of effects below \code{q}.
@@ -183,162 +148,184 @@ Tmin_causal = function( q,
   return(as.numeric(Tmin))
 }
 
-# @@ in docs below, talk about homogeneous vs. heterogeneous bias and which args need
-#  to be passed for each method
-# also warn about which arguments are being ignored for each method (e.g., calibrated ignores sigB)
 
-#' Estimates and inference for sensitivity analyses
+#' Sensitivity analysis for unmeasured confounding in meta-analyses
 #' 
-#' Computes point estimates, standard errors, and confidence interval bounds
-#' for (1) \code{prop}, the proportion of studies with true effect sizes above \code{q} (or below
-#' \code{q} for an apparently preventive \code{yr}) as a function of the bias parameters;
+#' This function implements the sensitivity analyses of Mathur & VanderWeele (2019) and Mathur & VanderWeele (2020). It computes point estimates, standard errors, and confidence interval bounds
+#' for (1) \code{prop}, the proportion of studies with true causal effect sizes above or below a chosen threshold \code{q} as a function of the bias parameters;
 #' (2) the minimum bias factor on the relative risk scale (\code{Tmin}) required to reduce to
-#' less than \code{r} the proportion of studies with true effect sizes more extreme than
+#' less than \code{r} the proportion of studies with true causal effect sizes more extreme than
 #' \code{q}; and (3) the counterpart to (2) in which bias is parameterized as the minimum
 #' relative risk for both confounding associations (\code{Gmin}).
-#' @param method "calibrated" or "parametric"
-#' @param q True effect size that is the threshold for "scientific significance"
-#' @param r For \code{Tmin} and \code{Gmin}, value to which the proportion of strong effect sizes is to be reduced
-#' @param muB Mean bias factor on the log scale across studies. When considering bias that of homogeneous strength across studies (i.e., \code{method == "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. 
-#' @param sigB Standard deviation of log bias factor across studies
-#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
-#' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis
-#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis
-#' @param vt2 Estimated variance of tau^2 from confounded meta-analysis
-#' @param CI.level Confidence level as a proportion
-#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' the proportion of effects below \code{q}. By default, is set to \code{above} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{below} otherwise.
-#' @param Bmin Lower limit of bias factor (used for "calibrated" method only)
-#' @param Bmax Upper limit of bias factor (used for "calibrated" method only)
-#' @param give.CI Logical. If TRUE, bootstrap confidence intervals provided
-#' @param R Number  of  bootstrap  or  simulation  iterates  (depending  on  the  methods  cho-sen).   Not required if using ci.method = "parametric"and bootstrapping is not needed.
-#' @param calib.name column name in dataframe containing calibrated estimates
+#' 
+#' @param method \code{"calibrated"} or \code{"parametric"}. See Details. 
+#' 
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect.
+#' 
+#' @param r For \code{Tmin} and \code{Gmin}, value to which the proportion of meaningfully strong effect sizes is to be reduced.
+#' 
+#' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
+#' the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.
+#' 
+#' @param CI.level Confidence level as a proportion (e.g., 0.95).
+#' 
+#' @param give.CI Logical. If \code{TRUE}, confidence intervals are provided. Otherwise, only point estimates are provided.
+#' 
+#' @param R Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}. 
+#' 
+#' @param muB Mean bias factor on the log scale across studies. When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. 
+#' 
+#' @param dat Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.
+#' @param yi.name Name of variable in \code{dat} containing studies' point estimates. Only used if \code{method = "calibrated"}.
+#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates. Only used if \code{method = "calibrated"}.
+#' 
+#' @param sigB Standard deviation of log bias factor across studies. Only used if \code{method = "parametric"}.
+#' 
+#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' 
+#' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' 
+#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' 
+#' @param vt2 Estimated variance of tau^2 from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' 
 #' @export
 #' @details
-#' To compute all three point estimates (\code{prop, Tmin, and Gmin}) and inference, all
-#' arguments must be non-\code{NA}. To compute only a point estimate for \code{prop},
-#' arguments \code{r, vyr}, and \code{vt2} can be left \code{NA}. To compute only
-#' point estimates for \code{Tmin} and \code{Gmin}, arguments \code{muB, vyr}, and \code{vt2}
-#' can be left \code{NA}. To compute inference for all point estimates, \code{vyr} and 
-#' \code{vt2} must be supplied. 
+#' These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. For detailed guidance on implementing and interpreting the sensitivity analyses, see in particular Section 5 of Mathur & VanderWeele (2019) and Section 1.2 of Mathur & VanderWeele (2020)'s Supplement. 
+#' 
+#' By default, \code{confounded_meta} performs estimation using a "calibrated" method (Mathur & VanderWeele, 2020; Mathur & VanderWeele, 2019) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{dat}, \code{yi.name}, and \code{vi.name}.
+#' 
+#' The parametric method that the population effects are approximately normal and that the number of studies is large, and it should only be used when the proportion estimate is between 0.15 and 0.85. Unlike the calibrated method, the parametric method can accommodate bias that is heterogeneous across studies (i.e., log-normal). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{sigB}, \code{yr}, \code{vyr} (if you want confidence intervals), \code{t2}, \code{vt2} (if you want confidence intervals).
 #' @keywords meta-analysis
 #' @import
 #' metafor
 #' stats 
 #' MetaUtility
 #' boot
+#' 
+#' @references
+#' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+#'
+#' Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses.
+#'
+#' Wang C-C & Lee W-C (2019). A simple method to estimate prediction intervals and
+#' predictive distributions: Summarizing meta-analyses
+#' beyond means and confidence intervals. \emph{Research Synthesis Methods}.
 #' @examples
+#' 
+#' ##### Using Calibrated Method #####
+#' d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
+#'                     ci=cpos, di=cneg, data=metafor::dat.bcg)
+#' 
+#' 
+#' # obtaining all three estimators and inference
+#' # number of bootstrap iterates
+#' # should be larger in practice
+#' R = 100
+#' confounded_meta( method="calibrated",  # for both methods
+#'                  q = log(0.90),
+#'                  r = 0.20,
+#'                  tail="below",
+#'                  muB = log(1.5),
+#'                  dat = d,
+#'                  yi.name = "yi",
+#'                  vi.name = "vi",
+#'                  R = 100 )
+#' 
+#' # passing only arguments needed for prop point estimate
+#' confounded_meta( method="calibrated",
+#'                  q = log(0.90),
+#'                  tail="below",
+#'                  muB = log(1.5),
+#'                  give.CI = FALSE,
+#'                  dat = d,
+#'                  yi.name = "yi",
+#'                  vi.name = "vi" )
+#' 
+#' # passing only arguments needed for Tmin, Gmin point estimates
+#' confounded_meta( method="calibrated",
+#'                  q = log(0.90),
+#'                  r = 0.10,
+#'                  tail="below",
+#'                  give.CI = FALSE,
+#'                  dat = d,
+#'                  yi.name = "yi",
+#'                  vi.name = "vi" )
+#' 
+#' ##### Using Parametric Method #####
+#' # fit random-effects meta-analysis
+#' m = metafor::rma.uni(yi= d$yi,
+#'                      vi=d$vi,
+#'                      knha=TRUE,
+#'                      measure="RR",
+#'                      method="REML" )
+#' 
+#' yr = as.numeric(m$b)  # metafor returns on log scale
+#' vyr = as.numeric(m$vb)
+#' t2 = m$tau2
+#' vt2 = m$se.tau2^2
+#' 
+#' # obtaining all three estimators and inference
+#' # now the proportion considers heterogeneous bias
+#' confounded_meta( method = "parametric",
+#'                  q=log(0.90),
+#'                  r=0.20,
+#'                  tail = "below",
+#'                  muB=log(1.5),
+#'                  sigB=0.1,
+#'                  yr=yr,
+#'                  vyr=vyr,
+#'                  t2=t2,
+#'                  vt2=vt2,
+#'                  CI.level=0.95 )
+#' 
+#' # passing only arguments needed for prop point estimate
+#' confounded_meta( method = "parametric",
+#'                  q=log(0.90),
+#'                  tail = "below",
+#'                  muB=log(1.5),
+#'                  sigB = 0,
+#'                  yr=yr,
+#'                  t2=t2,
+#'                  CI.level=0.95 )
+#' 
+#' # passing only arguments needed for Tmin, Gmin point estimates
+#' confounded_meta( method = "parametric",
+#'                  q=log(0.90),
+#'                  r = 0.10,
+#'                  tail = "below",
+#'                  yr=yr,
+#'                  t2=t2,
+#'                  CI.level=0.95 )
 
-#'                  
 
-# @@warn when user provides input that's being ignored based on the chosen method
+
 # @@check that they provided all needed input based on chosen method
 # @@work on the examples
 # bms
-# d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
-#                     ci=cpos, di=cneg, data=metafor::dat.bcg)
-# 
-# 
-# # obtaining all three estimators and inference
-# # number of bootstrap iterates
-# # should be larger in practice
-# R = 100
-# confounded_meta( method="calibrated",  # for both methods
-#                 q = log(0.90),
-#                 r = 0.20,
-#                 tail="below",
-#                 muB = log(1.5),
-#                 dat = d,
-#                 yi.name = "yi",
-#                 vi.name = "vi",
-#                 R = 100 )  
-# 
-# # passing only arguments needed for prop point estimate
-# confounded_meta( method="calibrated", 
-#                  q = log(0.90),
-#                  tail="below",
-#                  muB = log(1.5),
-#                  give.CI = FALSE,
-#                  dat = d,
-#                  yi.name = "yi",
-#                  vi.name = "vi" )  
-# 
-# # passing only arguments needed for Tmin, Gmin point estimates
-# confounded_meta( method="calibrated", 
-#                  q = log(0.90),
-#                  r = 0.10,
-#                  tail="below",
-#                  give.CI = FALSE,
-#                  dat = d,
-#                  yi.name = "yi",
-#                  vi.name = "vi" ) 
-# 
-# 
-# ### parametric
-# 
-# m = metafor::rma.uni(yi= d$yi, vi=d$vi, knha=FALSE,
-#                      measure="RR", method="DL" ) 
-# yr = as.numeric(m$b)  # metafor returns on log scale
-# vyr = as.numeric(m$vb)
-# t2 = m$tau2
-# vt2 = m$se.tau2^2 
-# 
-# # obtaining all three estimators and inference
-# # now the proportion considers heterogeneous bias
-# confounded_meta( method = "parametric",
-#                  q=log(0.90),
-#                  r=0.20,
-#                  tail = "below",
-#                  muB=log(1.5),
-#                  sigB=0.1,
-#                  yr=yr,
-#                  vyr=vyr,
-#                  t2=t2,
-#                  vt2=vt2,
-#                  CI.level=0.95 )
-# 
-# # passing only arguments needed for prop point estimate
-# confounded_meta( method = "parametric",
-#                  q=log(0.90),
-#                  tail = "below",
-#                  muB=log(1.5),
-#                  sigB = 0,
-#                  yr=yr,
-#                  t2=t2,
-#                  CI.level=0.95 )
-# 
-# # passing only arguments needed for Tmin, Gmin point estimates
-# # @@why is this requiring sigB?
-# # @@return to this
-# confounded_meta( method = "parametric",
-#                  q=log(0.90),
-#                  tail = "below",
-#                  yr=yr,
-#                  t2=t2,
-#                  CI.level=0.95 )
-
-
 
 confounded_meta = function( method="calibrated",  # for both methods
                             q,
                             r = NA,
-                            CI.level = 0.95,
                             tail = NA,
-                            muB = NA,
+                            CI.level = 0.95,
+                            give.CI = TRUE,
                             R = 1000,
+                            
+                            muB = NA,
+                            
+                            # only for calibrated
+                            dat = NA,
+                            yi.name = NA,
+                            vi.name = NA,
                             
                             # only for parametric
                             sigB = NA,
                             yr = NA,
                             vyr = NA,
                             t2 = NA,
-                            vt2 = NA,
-                            
-                            # only for calibrated
-                            give.CI = TRUE,
-                            dat = NA,
-                            yi.name = NA,
-                            vi.name = NA) {
+                            vt2 = NA
+                           ) {
   
   
   # # test only
@@ -355,8 +342,6 @@ confounded_meta = function( method="calibrated",  # for both methods
   # dat = d
   # yi.name = "yi"
   # vi.name = "vyi"
-  
-  
   
   
   ##### Check for Bad Input - Common to Parametric and Calibrated Methods #####
@@ -385,7 +370,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
     }
     
-    if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
+    if ( !is.na(sigB) & t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
     
     ##### Messages When Not All Output Can Be Computed #####
     if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
@@ -652,7 +637,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' or confounding strength (for \code{meas == "Gmin"}) required to reduce to less than
 #' \code{r} the proportion of true effects more extreme than \code{q}.
 #' @param meas \code{prop}, \code{Tmin}, or \code{Gmin}
-#' @param q True effect size that is the threshold for "scientific significance"
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
 #' @param r For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of strong effect sizes is to be reduced
 #' @param muB Mean bias factor on the log scale across studies
 #' @param sigB Standard deviation of log bias factor across studies
@@ -757,7 +742,7 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' Alternatively, produces distribution plots (\code{type="dist"}) for a specific bias factor showing the observed and 
 #' true distributions of RRs with a red line marking exp(\code{q}).
 #' @param type \code{dist} for distribution plot; \code{line} for line plot (see Details)
-#' @param q True effect size that is the threshold for "scientific significance"
+#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
 #' @param muB Single mean bias factor on log scale (only needed for distribution plot)
 #' @param Bmin Lower limit of lower X-axis on the log scale (only needed for line plot)
 #' @param Bmax Upper limit of lower X-axis on the log scale (only needed for line plot)
@@ -777,14 +762,107 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' @import ggplot2 
 #' @examples
 #' 
+#' ##### Example 1: Calibrated Line Plots #####
 #' 
-
-
-
-
-
-
-
+#' # simulated dataset with exponentially distributed 
+#' #  population effects
+#' # we will use the calibrated method to avoid normality assumption
+#' data(toyMeta)
+#' 
+#' # without confidence band
+#' sens_plot( method = "calibrated",
+#'            type="line",
+#'            q=log(.9),
+#'            tail = "below",
+#'            Bmin=log(1),
+#'            Bmax=log(4),
+#'            dat = toyMeta,
+#'            yi.name = "est",
+#'            vi.name = "var",
+#'            give.CI = FALSE )
+#' 
+#' 
+#' # # with confidence band and a different threshold, q
+#' # # commented out because takes a while too run
+#' # sens_plot( method = "calibrated",
+#' #            type="line",
+#' #            q=log(1),
+#' #            tail = "below",
+#' #            Bmin=log(1),
+#' #            Bmax=log(4),
+#' #            dat = toyMeta,
+#' #            yi.name = "est",
+#' #            vi.name = "var",
+#' #            give.CI = TRUE,
+#' #            R = 300 ) # should be higher in practice
+#' 
+#' 
+#' ##### Example 2: Calibrated and Parametric Line Plots #####
+#' 
+#' # example dataset
+#' d = metafor::escalc(measure="RR",
+#'                     ai=tpos,
+#'                     bi=tneg,
+#'                     ci=cpos,
+#'                     di=cneg,
+#'                     data=metafor::dat.bcg)
+#' 
+#' # without confidence band
+#' sens_plot( method = "calibrated",
+#'            type="line",
+#'            tail = "below",
+#'            q=log(1.1),
+#'            Bmin=log(1),
+#'            Bmax=log(4),
+#'            dat = d,
+#'            yi.name = "yi",
+#'            vi.name = "vi",
+#'            give.CI = FALSE )
+#' 
+#' # # with confidence band
+#' # # commented out because  it takes a while
+#' # # this example gives bootstrap warnings because of its small sample size
+#' # sens_plot( method = "calibrated",
+#' #            type="line",
+#' #            q=log(1.1),
+#' #            Bmin=log(1),
+#' #            Bmax=log(4),
+#' #            R = 500,  # should be higher in practice (e.g., 1000)
+#' #            dat = d,
+#' #            yi.name = "yi",
+#' #            vi.name = "vi",
+#' #            give.CI = TRUE )
+#' 
+#' 
+#' # now with heterogeneous bias across studies (via sigB) and with confidence band
+#' sens_plot( method = "parametric",
+#'            type="line",
+#'            q=log(1.1),
+#'            yr=log(1.3),
+#'            vyr = .05,
+#'            vt2 = .001,
+#'            t2=0.4,
+#'            sigB = 0.1,
+#'            Bmin=log(1),
+#'            Bmax=log(4) )
+#' 
+#' ##### Distribution Line Plot #####
+#' 
+#' # distribution plot: apparently causative
+#' sens_plot( type="dist",
+#'            q=log(1.1),
+#'            muB=log(2),
+#'            sigB = 0.1,
+#'            yr=log(1.3),
+#'            t2=0.4 )
+#' 
+#' # distribution plot: apparently preventive
+#' sens_plot( type="dist",
+#'            q=log(0.90),
+#'            muB=log(1.5),
+#'            sigB = 0.1,
+#'            yr=log(0.7),
+#'            t2=0.2 )
 
 sens_plot = function(method="calibrated",
                      type,
@@ -854,6 +932,37 @@ sens_plot = function(method="calibrated",
   # breaks.x1 = NA
   # breaks.x2 = NA
   
+  ##### Warn About Unusued Args #####
+  
+  # # @@problem: arguments that have defaults
+  # 
+  # # arguments that are ONLY used for a certain type/method
+  # line.param.args = c(  "sigB",
+  #                       "yr",
+  #                       "vyr",
+  #                       "t2",
+  #                       "vt2" )
+  # 
+  # line.calib.args = c( "dat",
+  #                      "yi.name",
+  #                      "vi.name" )
+  # 
+  # if ( !( type  == "line" & method == "parametric" ) ) {
+  #   # find arguments that won't be used, yet were specified
+  #   useless = line.param.args[ vapply(x, FUN = exists, FUN.VALUE = 0) ]
+  # }
+  # 
+  # if ( !( type  == "line" & method == "calibrated" ) ) {
+  #   # find arguments that won't be used, yet were specifie
+  #   useless = line.calib.args[ vapply(x, FUN = exists, FUN.VALUE = 0) ]
+  # }
+  # 
+  # if ( length(useless) > 0 ){ 
+  #   message( paste( "Given your choice of type and method, the following arguments you passed were ignored:",
+  #                                                paste( useless, collapse = ", " ) ) )
+  # }
+  # 
+  
   ##### Distribution Plot ######
   if ( type=="dist" ) {
     
@@ -879,15 +988,22 @@ sens_plot = function(method="calibrated",
     temp = data.frame( group = rep( c( "Observed", "True" ), each = reps ), 
                        val = c( RR.c, RR.t ) )
     
+    # cut the dataframe to match axis limits
+    # avoids warnings from stat_density about non-finite values being removed
+    temp = temp %>% filter(val >= x.min & val <= x.max)
+    
     colors=c("black", "orange")
-    p = ggplot2::ggplot( data=temp, aes(x=temp$val, group=temp$group ) ) +
-      geom_density( aes( fill=temp$group ), alpha=0.4 ) +
-      theme_bw() + xlab("Study-specific relative risks") +
-      ylab("") + guides(fill=guide_legend(title=" ")) +
-      scale_fill_manual(values=colors) +
-      geom_vline( xintercept = exp(q), lty=2, color="red" ) +
-      scale_x_continuous( limits=c(x.min, x.max), breaks = seq( round(x.min), round(x.max), 0.5) ) +
-      ggtitle("Observed and true relative risk distributions")
+    
+    p = ggplot2::ggplot( data=temp, aes(x=val, group=group ) ) +
+                            geom_density( aes( fill=group ), alpha=0.4 ) +
+                            theme_bw() +
+      xlab("Study-specific relative risks") +
+                            ylab("") +
+      guides(fill=guide_legend(title=" ")) +
+                            scale_fill_manual(values=colors) +
+                            geom_vline( xintercept = exp(q), lty=2, color="red" ) +
+                            scale_x_continuous( limits=c(x.min, x.max), breaks = seq( round(x.min), round(x.max), 0.5) ) +
+                            ggtitle("Observed and true relative risk distributions") 
     
     graphics::plot(p)
   }
@@ -1032,9 +1148,9 @@ sens_plot = function(method="calibrated",
             warning( paste( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." ) )
           }
         }
-        }
-        
-
+      }
+      
+      
       
       #browser()
       
@@ -1048,11 +1164,11 @@ sens_plot = function(method="calibrated",
         scale_y_continuous( limits=c(0,1),
                             breaks=seq(0, 1, .1)) +
         scale_x_continuous(  #limits = c( min(breaks.x1), max(breaks.x1) ),  # this line causes an error with geom_line having "missing values"
-                             breaks = breaks.x1,
-                             sec.axis = sec_axis( ~ g(.),  # confounding strength axis
-                                                  name = "Minimum strength of both confounding RRs",
-                                                  breaks = breaks.x2)
-                             ) +
+          breaks = breaks.x1,
+          sec.axis = sec_axis( ~ g(.),  # confounding strength axis
+                               name = "Minimum strength of both confounding RRs",
+                               breaks = breaks.x2)
+        ) +
         geom_line(lwd=1.2) +
         
         xlab("Hypothetical bias factor in all studies (RR scale)") +
