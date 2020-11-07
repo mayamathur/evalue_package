@@ -206,11 +206,6 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                              shiny_iconlink() %>%
                                                bs_embed_popover(title = 'The scale (relative risk [RR] or log-relative risk [log-RR] on which you will input the meta-analytic pooled estimate, threshold, and mean bias factor below.'))
                                   ),
-                                  # column(width=8,
-                                  #        numericInput('calibrated_k', 'Number of studies', 12, min = 0, max = Inf, step = 1) %>%
-                                  #          shinyInput_label_embed(
-                                  #            shiny_iconlink() %>%
-                                  #              bs_embed_popover(title = 'Number of studies in meta-analysis')),
                                   column(width=8, shinyjs::hidden(selectInput('calibrated_method', 'Method (calibrated or parametric)', choices = c('calibrated'), selected = 'calibrated'))
                                   ),
                                   
@@ -268,15 +263,6 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                     
                                   ),
                                   
-                                  ### warnings ###
-                                  ### 10/27/20 don't need this for calibrated, keep for now though
-                                  # mainPanel(
-                                  #   span( textOutput("calibrated_kwarn"), style="color:red"), width = 8
-                                  # ),
-                                  # mainPanel(
-                                  #   span( htmlOutput("calibrated_phatwarn"), style="color:red"), width = 8
-                                  # ),
-                                  
                                   ### results text ###
                                   wellPanel( textOutput("calibrated_results_prop"), span( textOutput("calibrated_text1") ), shiny_iconlink() %>%
                                                bs_embed_popover(title = "MAYA TO HELP INTEREPRET OUTPUT")),
@@ -310,11 +296,6 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                   mainPanel(
                                     span( htmlOutput("calibrated_warning_boot"), style="color:red"), width = 8
                                   )
-                                  
-                                  # ## jl testing to see if table uploads okay
-                                  # mainPanel(
-                                  #   tableOutput('calibrated_tab1')
-                                  # )
                                 ) 
                        ), ### closes tabPanel "Calibrated"
                        
@@ -328,11 +309,6 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                              shiny_iconlink() %>%
                                                bs_embed_popover(title = 'The scale (relative risk [RR] or log-relative risk [log-RR] on which you will input the meta-analytic pooled estimate, threshold, and mean bias factor below.'))
                                   ),
-                                  # column(width=8,
-                                  #        numericInput('parametric_k', 'Number of studies', 12, min = 0, max = Inf, step = 1) %>%
-                                  #          shinyInput_label_embed(
-                                  #            shiny_iconlink() %>%
-                                  #              bs_embed_popover(title = 'Number of studies in meta-analysis')),
                                   column(width=8, shinyjs::hidden(selectInput('parametric_method', 'Method (calibrated or parametric)', choices = c('parametric'), selected = 'parametric'))
                                   ),
                                   shinydashboard::box(width=5,
@@ -387,16 +363,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                       
                                   )
                        ),
-                       
-                       ### warnings ###
-                       # mainPanel(
-                       #   span( textOutput("parametric_kwarn"), style="color:red"), width = 8
-                       # ),
-                       
-                       # mainPanel(
-                       #   span( htmlOutput("parametric_phatwarn"), style="color:red"), width = 8
-                       # ),
-                       
+
                        ### results text ###
                        wellPanel( textOutput("parametric_results_prop"), span( textOutput("parametric_text1") ), shiny_iconlink() %>%
                                     bs_embed_popover(title = "MAYA TO HELP INTEREPRET OUTPUT"),
@@ -435,111 +402,6 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                        ) ### closes tabPanel "Parametric"
                        ) ### closes tabsetPanel
                      ), ### closes tabPanel "Fixed sensitivity parameters"
-            
-            
-            
-            
-            ### 10/29/20 jl think we will remove this tab, but keep the code here for now ###
-            # tabPanel( "Range of sensitivity parameters",
-            #           shinyjs::useShinyjs(),
-            #           wellPanel(  HTML(paste(
-            #             'This website implements the sensitivity analyses described in <a href="https://www.tandfonline.com/doi/full/10.1080/01621459.2018.1529598">Mathur & VanderWeele (2020a)</a>.
-            #             For more information on how to interpret these sensitivity analyses, see that paper and other materials listed in the "More Resources" tab.
-            #             
-            #             <br><br>In this tab, you can look at the estimated proportion of studies with population causal effects stronger than q as a function of the mean bias factor (X-axis) across studies.'))
-            #           ),
-            #           width = 6,
-            #           
-            #           
-            #           fluidRow(
-            #             tags$style(type = "text/css",
-            #                        "label { font-size: 12px; }"
-            #             ),
-            #             column(width=8, selectInput('scale_3', 'Scale (RR or log-RR)', choices = c('RR', 'Log-RR')) %>%
-            #                      shinyInput_label_embed(
-            #                        shiny_iconlink() %>%
-            #                          bs_embed_popover(title = 'scale'))
-            #             ),
-            #             # column(width=8, selectInput('method_3', 'Method (calibrated or parametric)', choices = c('calibrated', 'parametric')) %>%
-            #             #          shinyInput_label_embed(
-            #             #            shiny_iconlink() %>%
-            #             #              bs_embed_popover(title = 'Calibrated or Parametric counfounded_meta method -- MAYA TO CHANGE WORDING'))
-            #             # ),
-            #             
-            #             fluidRow(
-            #               shinydashboard::box(width=6,
-            #                                   title= strong("Estimates from confounded meta-analysis"),
-            #                                   splitLayout(
-            #                                     column(width=10, 
-            #                                            numericInput('k_3', 'Number of studies', 12, min = 0, max = Inf, step = 1) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = 'Number of studies in meta-analysis')),
-            #                                            numericInput('yr_3', 'Meta-analytic pooled estimate', 1.2, min = 0, max = Inf, step = 0.1) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = 'The usual estimate of the average effect size in the meta-analysis of the potentially confounded studies, prior to any correction for unmeasured confounding.')),
-            #                                            numericInput('se_yr_3', 'Estimated standard error of pooled estimate (optional)', 0.01, min = 0, max = Inf, step = 0.01) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = 'The estimated standard error of the pooled point estimate from confounded meta-analysis. Since the meta-analysis should be conducted with the point estimates on the log scale, you should input the standard error as it is reported by your meta-analysis software without taking the log again. If not provided, you will not get confidence intervals for the sensitivity analyses.'))
-            #                                     ),
-            #                                     column(width=10,
-            #                                            numericInput('t2_3', paste0("Estimated heterogeneity (", "\u03c4\u00b2", ")"), 0.10, min = 0, max = Inf, step = 0.1) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = paste0('The estimated heterogeneity (', '\u03c4\u00b2', ') from the confounded meta-analysis. Since the meta-analysis should be conducted with the point estimates on the log scale, you should input ', '\u03c4\u00b2', ' as it is reported by your meta-analysis software without taking the log again.'))),
-            #                                            numericInput('prop_t2_3', paste0('Proportion of heterogeneity due to variations in confounding bias ', '\u03c4\u00b2'), .35, min = 0, max = 1, step = .1) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = paste0('The proportion of ', '\u03c4\u00b2', ' from confounded meta-analysis. If not provided, you will not get confidence intervals for the sensitivity analyses.')))
-            #                                     )
-            #                                   )
-            #               ),
-            #               
-            #               shinydashboard::box(width=6,
-            #                                   title= strong("User-chosen sensitivity parameters and thresholds"),
-            #                                   splitLayout(
-            #                                     column(width=10, 
-            #                                            numericInput('sigB_3', 'Standard deviation of log bias factors', 0, min = 0, max = Inf, step = 0.1) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = 'Standard deviation of log bias factor across studies')),
-            #                                            numericInput('q_3', 'Threshold (q) for meaningfully strong effect', 1.1, min = 0, max = Inf, step = 0.01) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = 'Effect size that represents the minimum threshold for a meaningfully strong effect size')),
-            #                                            numericInput('Bmin_3', 'X-axis lower limit for bias factor', 1, min = 0, max = Inf, step = 0.1) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = 'Lower limit of lower X-axis on the chosen scale (only needed for line plot)'))
-            #                                     ),
-            #                                     column(width=10,
-            #                                            numericInput('Bmax_3', 'X-axis upper limit for bias factor', 3, min = 0, max = Inf, step = 0.01) %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = 'Upper limit of lower X-axis on the chosen scale (only needed for line plot)')),
-            #                                            selectInput('tail_3', 'Tail', log(1.1), choices = c('above', 'below'), selectize = FALSE, size = 2, selected = 'above') %>%
-            #                                              shinyInput_label_embed(
-            #                                                shiny_iconlink() %>%
-            #                                                  bs_embed_popover(title = 'above for the proportion of effects above q; below for the proportion of effects below q'))
-            #                                     )
-            #                                   )
-            #               )
-            #             ),
-            #             
-            #             ### warnings ###
-            #             mainPanel(
-            #               span( textOutput("kwarn_3"), style="color:red"), width = 8
-            #             ),
-            #             
-            #             mainPanel(
-            #               plotOutput('plot_3')
-            #               
-            #             )
-            #             
-            #           )
-            #           ),
             
             tabPanel("More resources",
                      

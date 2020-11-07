@@ -570,7 +570,6 @@ function(input, output, session) {
   
   parametric_plot <- observeEvent(input$parametric_plot, { 
     output$parametric_plot1 = renderPlot({
-      ### hmm not finding these inputs from above, need to put it here too?
       ### isolate on tail to not update until action button pressed again
       if(input$parametric_scale=="RR"){
         yr_2 = log(input$parametric_yr)
@@ -608,8 +607,6 @@ function(input, output, session) {
           give.CI_2 = TRUE
         }
       }
-      
-      # hist(1:100, main="test Generate parametric plot button")
       suppressWarnings(sens_plot(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
                                  Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 ))
       
@@ -679,44 +676,6 @@ function(input, output, session) {
   output$parametric_results_minconf = renderText({
     paste("Minimum confounding strength (RR scale) to reduce to less than", input$parametric_r, "the proportion of studies with population causal effects", input$parametric_tail, input$parametric_scale, "=", input$parametric_q, ":")
   })
-  
-  
-  ### 10/29/20 jl think we will remove this tab, but keep the code here for now ###
-  ##### For Tab Panel Range of sensitivity parameters #####
-  # output$plot_3 <- renderPlot({
-  #   
-  #   if(input$scale_3=="RR"){
-  #     yr_3 = log(input$yr_3)
-  #     t2_3 = input$t2_3
-  #     q_3= log(input$q_3)
-  #     vyr_3 = input$se_yr_3^2
-  #     vt2_3 = (input$prop_t2_3*(input$t2_3^2))
-  #     sigB_3 = input$sigB_3
-  #     Bmin_3 = log(input$Bmin_3)
-  #     Bmax_3 = log(input$Bmax_3)
-  #     tail_3 = input$tail_3
-  #     
-  #     method_3 = "parametric"
-  #     
-  #   } else {
-  #     if(input$scale_3=="Log-RR"){
-  #       yr_3 = input$yr_3
-  #       t2_3 = input$t2_3
-  #       q_3 = input$q_3
-  #       vyr_3 = input$se_yr_3^2
-  #       vt2_3 = (input$prop_t2_3*(input$t2_3^2))
-  #       sigB_3 = input$sigB_3
-  #       Bmin_3 = input$Bmin_3
-  #       Bmax_3 = input$Bmax_3
-  #       tail_3 = input$tail_3
-  #       
-  #       method_3 = "parametric"
-  #     }
-  #   }
-  #   
-  #   suppressWarnings(sens_plot(method = method_3, type="line", q=q_3, yr=yr_3, vyr=vyr_3, t2=t2_3, vt2=vt2_3,
-  #                                      Bmin=Bmin_3, Bmax=Bmax_3, sigB=sigB_3, tail=tail_3 ))
-  # })
   
   
   
