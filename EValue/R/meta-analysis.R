@@ -458,7 +458,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       
       # warn if bootstrapping needed
       # @ change to recommending calibrated?
-      if ( Phat < 0.15 | Phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
+      if ( Phat < 0.15 | Phat > 0.85 ) warning('Phat is close to 0 or 1. We recommend choosing method = "calibrated" or alternatively using bias-corrected and accelerated bootstrapping to estimate all inference in this case.')
       
     } else {
       SE.Phat = lo.Phat = hi.Phat = NA
@@ -867,7 +867,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 sens_plot = function(method="calibrated",
                      type,
                      q,
-                     #r=NA,
                      CI.level=0.95,
                      tail=NA,
                      give.CI=TRUE,
@@ -1141,19 +1140,36 @@ sens_plot = function(method="calibrated",
         
         res = res %>% rename( B = B.x )
         
+        #browser()
+        
+        
+        ##### Warnings About Missing CIs Due to Boot Failures #####
         # @@need to test
-        # outer "if" handles case in which all CI limits are NA because of boot failures
+        
+        # if ALL CI limits are missing
+        if ( all( is.na(res$lo) ) ) {
+          warning( "None of the pointwise confidence intervals were estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R." )
+          # avoid even trying to plot the CI if it's always NA to avoid geom_ribbon errors later
+          give.CI = FALSE
+        }
+        
+        
+        # outer "if" handles case in which AT LEAST ONE CI limit is NA because of boot failures
         if ( any( !is.na(res$lo) ) & any( !is.na(res$hi) ) ) {
-          if ( any( res$lo > res$Phat ) | any( res$hi < res$Phat ) ) {
-            warning( paste( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." ) )
+          
+          warning( "Some of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot may not be shown for some values of the bias factor. You can try increasing R." )
+          
+          if ( any( res$lo[ !is.na(res$lo) ] > res$Phat[ !is.na(res$lo) ] ) | any( res$hi[ !is.na(res$lo) ] < res$Phat[ !is.na(res$lo) ] ) ) {
+            
+            warning( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." )
+            
           }
         }
+        
+        
       }
       
-      
-      
-      #browser()
-      
+
       #bm
       p = ggplot2::ggplot( data = res,
                            aes( x = exp(B),
