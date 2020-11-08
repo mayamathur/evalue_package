@@ -20,6 +20,8 @@ library(dplyr)
 options(shiny.sanitize.errors = FALSE)
 
 
+
+
 ############################ EXAMPLE DATASETS ############################ 
 
 #' An example meta-analysis
@@ -321,10 +323,6 @@ Tmin_causal = function( q,
 
 
 
-# @@check that they provided all needed input based on chosen method
-# @@work on the examples
-# bms
-
 confounded_meta = function( method="calibrated",  # for both methods
                             q,
                             r = NA,
@@ -333,7 +331,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                             give.CI = TRUE,
                             R = 1000,
                             
-                            muB = NA,
+                            muB,
                             
                             # only for calibrated
                             dat = NA,
@@ -379,7 +377,8 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     ##### Check for Bad Input #####
     if ( t2 < 0 ) stop("Heterogeneity cannot be negative")
-    if ( !is.na(sigB) & sigB < 0 ) stop("Bias factor variance cannot be negative")
+    if ( is.na(sigB) ) stop("Must provide sigB for parametric method")
+    if ( sigB < 0 ) stop("Bias factor variance cannot be negative")
     
     # the second condition is needed for Shiny app:
     #  if user deletes the input in box, then it's NA instead of NULL
@@ -391,7 +390,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
     }
     
-    if ( !is.na(sigB) & t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
+    if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
     
     ##### Messages When Not All Output Can Be Computed #####
     if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
@@ -479,7 +478,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       
       # warn if bootstrapping needed
       # @ change to recommending calibrated?
-      if ( Phat < 0.15 | Phat > 0.85 ) warning("Phat is close to 0 or 1. We recommend using bias-corrected and accelerated bootstrapping to estimate all inference in this case.")
+      if ( Phat < 0.15 | Phat > 0.85 ) warning('Phat is close to 0 or 1. We recommend choosing method = "calibrated" or alternatively using bias-corrected and accelerated bootstrapping to estimate all inference in this case.')
       
     } else {
       SE.Phat = lo.Phat = hi.Phat = NA
@@ -562,68 +561,52 @@ confounded_meta = function( method="calibrated",  # for both methods
     ##### All Three Confidence Intervals #####
     if ( give.CI == TRUE ) {
       
+      # check for needed input
+      # use length(dat) instead of is.na(dat) because latter will 
+      if ( all(is.na(dat)) | is.na(yi.name) | is.na(vi.name) ) {
+        stop("Must provide dat, yi.name, and vi.name to calculate confidence intervals with calibrated method")
+      }
+      
       require(boot)
       
-      # CI for Phat
-      boot.res.Phat = suppressWarnings( boot( data = dat,
-                                              parallel = "multicore",
-                                              R = R, 
-                                              statistic = function(original, indices) {
-                                                
-                                                # draw bootstrap sample
-                                                b = original[indices,]
-                                                
-                                                Phatb = Phat_causal( q = q, 
-                                                                     B = muB,
-                                                                     tail = tail,
-                                                                     dat = b,
-                                                                     yi.name = yi.name,
-                                                                     vi.name = vi.name)
-                                                return(Phatb)
-                                              } ) )
+      Phat.CI.lims = Phat_CI_lims(.B = muB,
+                                  R = R,
+                                  q = q,
+                                  tail = tail,
+                                  dat = dat,
+                                  yi.name = yi.name,
+                                  vi.name = vi.name,
+                                  CI.level = CI.level)
       
-      bootCIs.Phat = boot.ci(boot.res.Phat,
-                             type="bca",
-                             conf = CI.level )
+      lo.Phat = as.numeric( Phat.CI.lims[1] )
+      hi.Phat = as.numeric( Phat.CI.lims[2] )
+      SE.Phat = as.numeric( Phat.CI.lims[3] )
       
-      lo.Phat = bootCIs.Phat$bca[4]
-      hi.Phat = bootCIs.Phat$bca[5]
-      SE.Phat = sd(boot.res.Phat$t)
-      
-      
-      # Tmin and Gmin
-      if ( !is.na(r) ) {
-        boot.res.Tmin = suppressWarnings( boot( data = dat,
-                                                parallel = "multicore",
-                                                R = R, 
-                                                statistic = function(original, indices) {
-                                                  
-                                                  # draw bootstrap sample
-                                                  b = original[indices,]
-                                                  
-                                                  Tminb = Tmin_causal(q = q,
-                                                                      r = r,
-                                                                      tail = tail,
-                                                                      dat = b,
-                                                                      yi.name = yi.name,
-                                                                      vi.name = vi.name)
-                                                  return(Tminb)
-                                                } ) )
-        
-        bootCIs.Tmin = boot.ci(boot.res.Tmin,
-                               type="bca",
-                               conf = CI.level )
-        
-        lo.T = max(1, bootCIs.Tmin$bca[4])  # bias factor can't be < 1
-        hi.T = bootCIs.Tmin$bca[5]  # but has no upper bound
-        SE.T = sd(boot.res.Tmin$t)
-        
-        
-        ##### Gmin #####
-        lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
-        hi.G = g(hi.T)  # but has no upper bound
-        SE.G = sd( g(boot.res.Tmin$t) )
+      if ( any( is.na( c(lo.Phat, hi.Phat, SE.Phat) ) ) ) {
+        message("The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.")
       }
+      
+      Tmin.Gmin.CI.lims = Tmin_Gmin_CI_lims( R,
+                                             q,
+                                             r,
+                                             tail,
+                                             dat,
+                                             yi.name,
+                                             vi.name,
+                                             CI.level )
+      
+      lo.T = as.numeric( Tmin.Gmin.CI.lims["lo.T"] )
+      hi.T = as.numeric( Tmin.Gmin.CI.lims["hi.T"] )
+      SE.T = as.numeric( Tmin.Gmin.CI.lims["SE.T"] )
+      lo.G = as.numeric( Tmin.Gmin.CI.lims["lo.G"] )
+      hi.G = as.numeric( Tmin.Gmin.CI.lims["hi.G"] )
+      SE.G = as.numeric( Tmin.Gmin.CI.lims["SE.G"] )
+      
+      
+      if ( any( is.na( c(lo.T, hi.T, SE.T, lo.G, hi.G, SE.G) ) ) ) {
+        message("The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.")
+      }
+      
     }  # closes "if ( !is.na(r) )"
     
   } # closes calibrated method
@@ -756,31 +739,53 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 
 #' Plots for sensitivity analyses
 #'
-#' Produces line plots (\code{type="line"}) showing the bias factor on the relative risk (RR) scale vs. the proportion
-#' of studies with true RRs above \code{q} (or below it for an apparently preventive relative risk).
-#' The plot secondarily includes a X-axis scaled based on the minimum strength of confounding
-#' to produce the given bias factor. The shaded region represents a 95% pointwise confidence band.
+#' Produces line plots (\code{type="line"}) showing the average bias factor across studies on the relative risk (RR) scale vs. the estimated proportion
+#' of studies with true RRs above or below a chosen threshold \code{q}.
+#' The plot secondarily includes a X-axis showing the minimum strength of confounding
+#' to produce the given bias factor. The shaded region represents a pointwise confidence band.
 #' Alternatively, produces distribution plots (\code{type="dist"}) for a specific bias factor showing the observed and 
 #' true distributions of RRs with a red line marking exp(\code{q}).
+#' @param method \code{"calibrated"} or \code{"parametric"}. See Details.
 #' @param type \code{dist} for distribution plot; \code{line} for line plot (see Details)
 #' @param q True causal effect size chosen as the threshold for a meaningfully large effect
-#' @param muB Single mean bias factor on log scale (only needed for distribution plot)
-#' @param Bmin Lower limit of lower X-axis on the log scale (only needed for line plot)
-#' @param Bmax Upper limit of lower X-axis on the log scale (only needed for line plot)
-#' @param sigB Standard deviation of log bias factor across studies (length 1)
-#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
-#' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis
-#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis
-#' @param vt2 Estimated variance of tau^2 from confounded meta-analysis
-#' @param breaks.x1 Breaks for lower X-axis (bias factor) on RR scale (optional for line plot; not used for distribution plot)
-#' @param breaks.x2 Breaks for upper X-axis (confounding strength) on RR scale (optional for line plot; not used for distribution plot)
-#' @param CI.level Pointwise confidence level as a proportion
+#' @param CI.level Pointwise confidence level as a proportion (e.g., 0.95).
+#' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
+#' the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.
+#' @param give.CI Logical. If \code{TRUE}, a pointwise confidence intervals is plotted. 
+#' @param Bmin Lower limit of lower X-axis on the log scale (only needed if \code{type = "line"}). 
+#' @param Bmax Upper limit of lower X-axis on the log scale (only needed if \code{type = "line"})
+#' @param breaks.x1 Breaks for lower X-axis (bias factor) on RR scale. (optional for \code{type = "line"}; not used for \code{type = "dist"}). 
+#' @param breaks.x2 Breaks for upper X-axis (confounding strength) on RR scale (optional for \code{type = "line"}; not used for \code{type = "dist"})
+#' 
+#' 
+#' @param muB Single mean bias factor on log scale (only needed if \code{type = "dist"})
+
+#' @param sigB Standard deviation of log bias factor across studies (only used if \code{method = "parametric"})
+#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis (only used if \code{method = "parametric"})
+#' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis (only used if \code{method = "parametric"})
+#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis (only used if \code{method = "parametric"})
+#' @param vt2 Estimated variance of tau^2 from confounded meta-analysis (only used if \code{method = "parametric"})
+
+#' @param R  Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}. 
+#' @param dat Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.
+#' @param yi.name Name of variable in \code{dat} containing studies' point estimates. Only used if \code{method = "calibrated"}.
+#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates. Only used if \code{method = "calibrated"}.
+#'
 #' @keywords meta-analysis confounding sensitivity
 #' @details
-#' Arguments \code{vyr} and \code{vt2} can be left \code{NA}, in which case no confidence
-#' band will appear on the line plot. 
+#' This function calls \code{confounded_meta} to get the point estimate and confidence interval at each value of the bias factor. See \code{?confounded_meta} for details. 
+#' 
+#' Note that \code{Bmin} and \code{Bmax} are specified on the log scale for consistency with the \code{muB} argument and with the function \code{confounded_meta}, whereas \code{breaks.x1} and \code{breaks.x2} are specified on the RR scale to facilitate adjustments to the plot appearance. 
 #' @export
 #' @import ggplot2 
+#' @references
+#' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+#'
+#' Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses.
+#'
+#' Wang C-C & Lee W-C (2019). A simple method to estimate prediction intervals and
+#' predictive distributions: Summarizing meta-analyses
+#' beyond means and confidence intervals. \emph{Research Synthesis Methods}.
 #' @examples
 #' 
 #' ##### Example 1: Calibrated Line Plots #####
@@ -795,8 +800,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #'            type="line",
 #'            q=log(.9),
 #'            tail = "below",
-#'            Bmin=log(1),
-#'            Bmax=log(4),
 #'            dat = toyMeta,
 #'            yi.name = "est",
 #'            vi.name = "var",
@@ -809,8 +812,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' #            type="line",
 #' #            q=log(1),
 #' #            tail = "below",
-#' #            Bmin=log(1),
-#' #            Bmax=log(4),
 #' #            dat = toyMeta,
 #' #            yi.name = "est",
 #' #            vi.name = "var",
@@ -833,8 +834,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #'            type="line",
 #'            tail = "below",
 #'            q=log(1.1),
-#'            Bmin=log(1),
-#'            Bmax=log(4),
 #'            dat = d,
 #'            yi.name = "yi",
 #'            vi.name = "vi",
@@ -846,8 +845,6 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 #' # sens_plot( method = "calibrated",
 #' #            type="line",
 #' #            q=log(1.1),
-#' #            Bmin=log(1),
-#' #            Bmax=log(4),
 #' #            R = 500,  # should be higher in practice (e.g., 1000)
 #' #            dat = d,
 #' #            yi.name = "yi",
@@ -888,12 +885,11 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
 sens_plot = function(method="calibrated",
                      type,
                      q,
-                     #r=NA,
                      CI.level=0.95,
                      tail=NA,
                      give.CI=TRUE,
-                     Bmin,
-                     Bmax,
+                     Bmin = log(1),
+                     Bmax = log(4),
                      breaks.x1=NA,
                      breaks.x2=NA,
                      
@@ -1147,6 +1143,7 @@ sens_plot = function(method="calibrated",
         
         
         # bootstrap a CI for each entry in res.short
+        #browser()
         res.short = res.short %>% rowwise() %>%
           mutate( Phat_CI_lims(.B = B,
                                R = R,
@@ -1155,25 +1152,42 @@ sens_plot = function(method="calibrated",
                                dat = dat,
                                yi.name = yi.name,
                                vi.name = vi.name,
-                               CI.level = CI.level) )
+                               CI.level = CI.level)[1:2] )
         
         # merge this with the full-length res dataframe, merging by Phat itself
         res = merge( res, res.short, by = "Phat", all.x = TRUE )
         
         res = res %>% rename( B = B.x )
         
+        #browser()
+        
+        
+        ##### Warnings About Missing CIs Due to Boot Failures #####
         # @@need to test
-        # outer "if" handles case in which all CI limits are NA because of boot failures
+        
+        # if ALL CI limits are missing
+        if ( all( is.na(res$lo) ) ) {
+          warning( "None of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R." )
+          # avoid even trying to plot the CI if it's always NA to avoid geom_ribbon errors later
+          give.CI = FALSE
+        }
+        
+        
+        # outer "if" handles case in which AT LEAST ONE CI limit is NA because of boot failures
         if ( any( !is.na(res$lo) ) & any( !is.na(res$hi) ) ) {
-          if ( any( res$lo > res$Phat ) | any( res$hi < res$Phat ) ) {
-            warning( paste( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." ) )
+          
+          warning( "Some of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot may not be shown for some values of the bias factor. You can try increasing R." )
+          
+          if ( any( res$lo[ !is.na(res$lo) ] > res$Phat[ !is.na(res$lo) ] ) | any( res$hi[ !is.na(res$lo) ] < res$Phat[ !is.na(res$lo) ] ) ) {
+            
+            warning( "Some of the pointwise confidence intervals do not contain the proportion estimate itself. This reflects instability in the bootstrapping process. See the other warnings for details." )
+            
           }
         }
+        
+        
       }
       
-      
-      
-      #browser()
       
       #bm
       p = ggplot2::ggplot( data = res,
@@ -1212,7 +1226,6 @@ sens_plot = function(method="calibrated",
 
 
 
-# fn of B; everything else is taken as a global var
 # @put as separate internal fn
 Phat_CI_lims = function(.B,
                         R,
@@ -1247,13 +1260,99 @@ Phat_CI_lims = function(.B,
     
     lo = bootCIs$bca[4]
     hi = bootCIs$bca[5]
+    se = sd(boot.res$t)
+    
+    # avoid issues with creating df below
+    if ( is.null(lo) ) lo = NA
+    if ( is.null(hi) ) hi = NA
     
   }, error = function(err) {
     lo <<- NA
     hi <<- NA
+    se <<- NA
   })
   
   # return as data frame to play well with rowwise() and mutate()
-  return( data.frame( lo, hi ) )
+  return( data.frame( lo, hi, se ) )
 }
+
+
+
+# @put as separate internal fn
+#bm
+Tmin_Gmin_CI_lims = function(
+  R,
+  q,
+  r,
+  tail,
+  dat,
+  yi.name,
+  vi.name,
+  CI.level) {
+  
+  tryCatch({
+    boot.res = suppressWarnings( boot( data = dat,
+                                       parallel = "multicore",
+                                       R = R, 
+                                       statistic = function(original, indices) {
+                                         
+                                         # draw bootstrap sample
+                                         b = original[indices,]
+                                         
+                                         Tminb = Tmin_causal(q = q,
+                                                             r = r,
+                                                             tail = tail,
+                                                             dat = b,
+                                                             yi.name = yi.name,
+                                                             vi.name = vi.name)
+                                         return(Tminb)
+                                       } ) )
+    
+    
+    bootCIs.Tmin = boot.ci(boot.res.Tmin,
+                           type="bca",
+                           conf = CI.level )
+    
+    lo.T = max(1, bootCIs.Tmin$bca[4])  # bias factor can't be < 1
+    hi.T = bootCIs.Tmin$bca[5]  # but has no upper bound
+    SE.T = sd(boot.res.Tmin$t)
+    
+    
+    ##### Gmin #####
+    lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
+    hi.G = g(hi.T)  # but has no upper bound
+    SE.G = sd( g(boot.res.Tmin$t) )
+    
+    
+    # avoid issues with creating df below
+    if ( is.null(lo.T) ) lo.T = NA
+    if ( is.null(hi.T) ) hi.T = NA
+    if ( is.null(lo.G) ) lo.G = NA
+    if ( is.null(hi.G) ) hi.G = NA
+    
+  }, error = function(err) {
+    lo.T <<- NA
+    hi.T <<- NA
+    
+    lo.G <<- NA
+    hi.G <<- NA
+    
+    SE.T <<- NA
+    SE.G <<- NA
+  })
+  
+  # return as data frame to play well with rowwise() and mutate()
+  return( data.frame( lo.T, hi.T, SE.T, lo.G, hi.G, SE.G ) )
+}
+
+
+
+
+
+
+
+
+
+
+
 

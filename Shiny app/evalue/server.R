@@ -140,7 +140,7 @@ function(input, output, session) {
   
   output$curveOfExplainAway <- renderPlotly({
     
-    # MM: do not attempt to make plot unless we have the point estimate
+    # do not attempt to make plot unless we have the point estimate
     if( !is.na( bias.factor() ) ) {
       
       rr.ud <- function(rr.eu) {
@@ -261,6 +261,9 @@ function(input, output, session) {
       
       withProgress(message="calculating proportion...", value=1,{
         
+        # MBM: Why call confounded_meta three times for each of Phat, Tmin, and Gmin?
+        #  Can't we just call it once and save all its output?
+        #  Then we wouldn't be doing a redudant round of bootstrapping for Gmin
         cm = suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
                                               tail=tail, give.CI=TRUE, R=R, dat=dat))
         
@@ -395,6 +398,7 @@ function(input, output, session) {
       output$calibrated_warning_boot = reactive({
         res = data.frame( B = seq(Bmin, Bmax, .01) )
         
+        # MBM: What is this, and why can't we just call sens_plot
         # evaluate Phat causal at each value of B
         res = res %>% rowwise() %>%
           mutate( Phat = Phat_causal( q = q,
@@ -405,6 +409,7 @@ function(input, output, session) {
                                       vi.name = vi.name ) )
         
         if ( give.CI == TRUE ) {
+          # MBM: Why is this necessary instead of calling sens_plot directly?
           require(boot)
           # look at just the values of B at which Phat jumps
           #  this will not exceed the number of point estimates in the meta-analysis
@@ -413,7 +418,6 @@ function(input, output, session) {
           res.short = res[ diffs != 0, ]
           
           require(dplyr)
-          
           
           # bootstrap a CI for each entry in res.short
           res.short = res.short %>% rowwise() %>%

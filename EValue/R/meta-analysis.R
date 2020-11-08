@@ -308,7 +308,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                             give.CI = TRUE,
                             R = 1000,
                             
-                            muB = NA,
+                            muB,
                             
                             # only for calibrated
                             dat = NA,
@@ -537,6 +537,12 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     ##### All Three Confidence Intervals #####
     if ( give.CI == TRUE ) {
+      
+      # check for needed input
+      # use length(dat) instead of is.na(dat) because latter will 
+      if ( all(is.na(dat)) | is.na(yi.name) | is.na(vi.name) ) {
+        stop("Must provide dat, yi.name, and vi.name to calculate confidence intervals with calibrated method")
+      }
       
       require(boot)
       
