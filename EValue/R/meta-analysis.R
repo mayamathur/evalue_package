@@ -652,7 +652,9 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' 
 #' Note that \code{Bmin} and \code{Bmax} are specified on the log scale for consistency with the \code{muB} argument and with the function \code{confounded_meta}, whereas \code{breaks.x1} and \code{breaks.x2} are specified on the RR scale to facilitate adjustments to the plot appearance. 
 #' @export
-#' @import ggplot2 dplyr
+#' @import
+#' ggplot2
+#' @importFrom dplyr %>% rowwise mutate rename
 #' @references
 #' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
 #'
@@ -824,6 +826,8 @@ sens_plot = function(method="calibrated",
   # breaks.x1 = NA
   # breaks.x2 = NA
   
+  val = group = eB = phat = lo = hi = B = B.x = Phat = NULL
+  
   ##### Warn About Unusued Args #####
   
   # # @@problem: arguments that have defaults
@@ -882,12 +886,17 @@ sens_plot = function(method="calibrated",
     
     # cut the dataframe to match axis limits
     # avoids warnings from stat_density about non-finite values being removed
-    temp = temp %>% filter(val >= x.min & val <= x.max)
+    # @@example of line that produce "no visible binding" error
+    # as.data.frame to avoid "`data` must be a data frame" error in check(), 
+    #  even though it doesn't occur when 
+    temp = temp[ temp$val >= x.min & temp$val <= x.max, ]
     
     colors=c("black", "orange")
     
-    p = ggplot2::ggplot( data=temp, aes(x=val, group=group ) ) +
-                            geom_density( aes( fill=group ), alpha=0.4 ) +
+  #browser()
+    p = ggplot2::ggplot( data = temp, aes(x=val, group=group ) ) +
+      
+                            geom_density( aes( x=val, fill=group ), alpha=0.4 ) +
                             theme_bw() +
       xlab("Study-specific relative risks") +
                             ylab("") +
@@ -930,7 +939,7 @@ sens_plot = function(method="calibrated",
         # r is irrelevant here
         # suppress warnings about Phat being close to 0 or 1
         #browser()
-        cm = suppressMessages( confounded_meta( method = method,
+        cm = suppressWarnings( suppressMessages( confounded_meta( method = method,
                                                 q = q,
                                                 r = NA,
                                                 muB=t$B[i],
@@ -940,7 +949,7 @@ sens_plot = function(method="calibrated",
                                                 t2=t2,
                                                 vt2=vt2,
                                                 CI.level=CI.level,
-                                                tail=tail ) )
+                                                tail=tail ) ) )
         
         t$phat[i] = cm$Est[ cm$Value=="Prop" ]
         t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
@@ -1007,7 +1016,7 @@ sens_plot = function(method="calibrated",
                                     vi.name = vi.name ) ) 
       
       if ( give.CI == TRUE ) {
-        # look at just the values of B at which Phat jumps
+        # look at just the values of B at which Phat jumpss
         #  this will not exceed the number of point estimates in the meta-analysis
         # first entry should definitely be bootstrapped, so artificially set its diff to nonzero value
         diffs = c( 1, diff(res$Phat) )  

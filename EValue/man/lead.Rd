@@ -5,7 +5,7 @@
 \alias{lead}
 \title{An example dataset}
 \format{
-An object of class \code{function} of length 1.
+An object of class \code{data.frame} with 3340 rows and 18 columns.
 }
 \usage{
 lead
