@@ -652,7 +652,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' 
 #' Note that \code{Bmin} and \code{Bmax} are specified on the log scale for consistency with the \code{muB} argument and with the function \code{confounded_meta}, whereas \code{breaks.x1} and \code{breaks.x2} are specified on the RR scale to facilitate adjustments to the plot appearance. 
 #' @export
-#' @import ggplot2 
+#' @import ggplot2 dplyr
 #' @references
 #' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
 #'
@@ -1177,19 +1177,19 @@ Tmin_Gmin_CI_lims = function(
                                        } ) )
     
     
-    bootCIs.Tmin = boot.ci(boot.res.Tmin,
+    bootCIs.Tmin = boot.ci(boot.res,
                            type="bca",
                            conf = CI.level )
     
     lo.T = max(1, bootCIs.Tmin$bca[4])  # bias factor can't be < 1
     hi.T = bootCIs.Tmin$bca[5]  # but has no upper bound
-    SE.T = sd(boot.res.Tmin$t)
+    SE.T = sd(boot.res$t)
     
     
     ##### Gmin #####
     lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
     hi.G = g(hi.T)  # but has no upper bound
-    SE.G = sd( g(boot.res.Tmin$t) )
+    SE.G = sd( g(boot.res$t) )
     
     
     # avoid issues with creating df below
