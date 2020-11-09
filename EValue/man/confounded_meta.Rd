@@ -39,7 +39,7 @@ the proportion of effects below \code{q}. By default, is set to \code{"above"} i
 
 \item{R}{Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}.}
 
-\item{muB}{Mean bias factor on the log scale across studies. When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study.}
+\item{muB}{Mean bias factor on the log scale across studies. When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. If \code{muB} is not specified, then only \code{Tmin} and \code{Gmin} will be returned, not \code{Prop}.}
 
 \item{dat}{Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.}
 

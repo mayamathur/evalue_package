@@ -173,7 +173,7 @@ Tmin_causal = function( q,
 #' 
 #' @param R Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}. 
 #' 
-#' @param muB Mean bias factor on the log scale across studies. When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. 
+#' @param muB Mean bias factor on the log scale across studies. When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. If \code{muB} is not specified, then only \code{Tmin} and \code{Gmin} will be returned, not \code{Prop}. 
 #' 
 #' @param dat Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.
 #' @param yi.name Name of variable in \code{dat} containing studies' point estimates. Only used if \code{method = "calibrated"}.
@@ -612,113 +612,135 @@ confounded_meta = function( method="calibrated",  # for both methods
 
 
 
-#' Tables for sensitivity analyses
-#'
-#' Produces table showing the proportion of true effect sizes more extreme than \code{q}
-#' across a grid of bias parameters \code{muB} and \code{sigB} (for \code{meas == "prop"}).
-#' Alternatively, produces a table showing the minimum bias factor (for \code{meas == "Tmin"})
-#' or confounding strength (for \code{meas == "Gmin"}) required to reduce to less than
-#' \code{r} the proportion of true effects more extreme than \code{q}.
-#' @param meas \code{prop}, \code{Tmin}, or \code{Gmin}
-#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
-#' @param r For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of strong effect sizes is to be reduced
-#' @param muB Mean bias factor on the log scale across studies
-#' @param sigB Standard deviation of log bias factor across studies
-#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
-#' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis
-#' @keywords meta-analysis
-#' confounding
-#' sensitivity
-#' @export
-#' @details
-#' For \code{meas=="Tmin"} or \code{meas=="Gmin"}, arguments \code{muB} and
-#' \code{sigB} can be left \code{NA}; \code{r} can also be \code{NA} as
-#' it will default to a reasonable range of proportions. Returns a \code{data.frame}
-#' whose rows are values of \code{muB} (for \code{meas=="prop"}) or of \code{r} 
-#' (for \code{meas=="Tmin"} or \code{meas=="Gmin"}). Its columns are values of 
-#' \code{sigB} (for \code{meas=="prop"}) or of \code{q} (for \code{meas=="Tmin"}
-#' or \code{meas=="Gmin"}).
-#' Tables for \code{Gmin} will display \code{NaN} for cells corresponding to \code{Tmin}<1,
-#' i.e., for which no bias is required to reduce the effects as specified. 
-#' @keywords meta-analysis
-#' @import ggplot2 
-#' @examples
-#' sens_table( meas="prop", q=log(1.1), muB=c( log(1.1),
-#' log(1.5), log(2.0) ), sigB=c(0, 0.1, 0.2), 
-#' yr=log(2.5), t2=0.1 )
+#' #' Tables for sensitivity analyses
+#' #'
+#' #' Using the parametric estimation method (see \code{?confounded_meta} for details), produces a table showing the estimation proportion of true causal effect sizes stronger than \code{q}
+#' #' across a grid of bias parameters \code{muB} and \code{sigB} (for \code{meas == "prop"}).
+#' #' Alternatively, produces a table showing the minimum bias factor (for \code{meas == "Tmin"})
+#' #' or confounding strength (for \code{meas == "Gmin"}) required to reduce to less than
+#' #' \code{r} the proportion of true causal effects stronger than \code{q}.
+#' #' @param meas \code{prop}, \code{Tmin}, or \code{Gmin}
+#' #' @param q True causal effect size chosen as the threshold for a meaningfully large effect
+#' #' @param r For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of strong effect sizes is to be reduced
+#' #' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
+#' #' the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.
+#' #' @param muB Mean bias factor on the log scale across studies
+#' #' @param sigB Standard deviation of log bias factor across studies
+#' #' @param yr Pooled point estimate (on log scale) from confounded meta-analysis
+#' #' @param t2 Estimated heterogeneity (tau^2) from confounded meta-analysis
+#' #' @keywords meta-analysis
+#' #' confounding
+#' #' sensitivity
+#' #' @export
+#' #' @details
+#' #'  For \code{meas=="Tmin"} or \code{meas=="Gmin"}, arguments \code{muB} and
+#' #'  \code{sigB} can be left \code{NA}; \code{r} can also be \code{NA} as
+#' #'  it will default to a reasonable range of proportions. Returns a \code{data.frame}
+#' #'  whose rows are values of \code{muB} (for \code{meas=="prop"}) or of \code{r} 
+#' #'  (for \code{meas=="Tmin"} or \code{meas=="Gmin"}). Its columns are values of 
+#' #'  \code{sigB} (for \code{meas=="prop"}) or of \code{q} (for \code{meas=="Tmin"}
+#' #'  or \code{meas=="Gmin"}).
+#' #'  Tables for \code{Gmin} will display \code{NaN} for cells corresponding to \code{Tmin}<1,
+#' #'  i.e., for which no bias is required to reduce the effects as specified. 
+#' #'  @keywords meta-analysis
+#' #'  @import ggplot2 
+#' #'  @examples
+#'   sens_table( meas="prop",
+#'               q=log(1.1),
+#'               tail = "above",
+#'               muB=c( log(1.1), log(1.5), log(2.0) ),
+#'               sigB=c(0, 0.1, 0.2), 
+#'               yr=log(2.5),
+#'               t2=0.1 )
+#'   
+#'   sens_table( meas="Tmin",
+#'               q=c( log(1.1), log(1.5) ),
+#'               tail = "above",
+#'               yr=log(1.3),
+#'               t2=0.1 ) 
+#'   
+#'   # Tmin is 1 here because we already have <80% of effects
+#'   #  above log(1.1) even without any confounding
+#'   sens_table( meas="Gmin",
+#'               r=0.8,
+#'               tail = "above",
+#'               q=c( log(1.1) ),
+#'               yr=log(1.3),
+#'               t2=0.1 )
 #' 
-#' sens_table( meas="Tmin", q=c( log(1.1), log(1.5) ),
-#' yr=log(1.3), t2=0.1 ) 
 #' 
-#' # Tmin is 1 here because we already have <80% of effects
-#' #  below log(1.1) even without any confounding
-#' sens_table( meas="Gmin", r=0.8, q=c( log(1.1) ),
-#' yr=log(1.3), t2=0.1 )
+#' sens_table = function( meas,
+#'                        q,
+#'                        r=seq(0.1, 0.9, 0.1),
+#'                        tail = NA,
+#'                        muB=NA,
+#'                        sigB=NA,
+#'                        yr,
+#'                        t2 ) {
+#'   
+#'  
+#'   ##### Check for Correct Inputs Given Measure ######
+#'   if ( meas=="prop" & ( any( is.na(muB) ) | any( is.na(sigB) ) ) ) {
+#'     stop( "To compute proportion above q, provide muB and sigB with no NA values")
+#'   }
+#'   
+#'   if ( meas=="prop" & length(q) > 1 ) {
+#'     stop( "To compute proportion above q, provide only a single value of q" )
+#'   }
+#'   
+#'   ###### Generate Table #####
+#'   
+#'   # table skeleton
+#'   nrow = ifelse( meas=="prop", length(muB), length(r) )
+#'   ncol = ifelse( meas=="prop", length(sigB), length(q) )
+#'   
+#'   m = matrix( NA, nrow=nrow, ncol=ncol )
+#'   
+#'   # fill in each cell individually
+#'   # doing this inefficient thing because confounded_meta is not vectorized
+#'   # because it returns a dataframe
+#'   for (i in 1:nrow) {
+#'     for (j in 1:ncol) {
+#'       if ( meas == "prop" ) {
+#'         # bm
+#'       
+#'         m[i,j] = suppressMessages( confounded_meta( method = "parametric",
+#'                                                     q=q,
+#'                                                     muB = muB[i],
+#'                                                     sigB = sigB[j],
+#'                                                     tail = tail,
+#'                                                     yr=yr,
+#'                                                     t2=t2 )[1,"Est"] )
+#'       } else if ( meas == "Tmin" ) {
+#'         # sigB will be ignored
+#'         m[i,j] = suppressMessages( confounded_meta( method = "parametric", q=q[j], r=r[i],
+#'                                                     yr=yr, t2=t2 )[2,"Est"] )
+#'       } else if ( meas == "Gmin" ) {
+#'         # sigB will be ignored
+#'         m[i,j] = suppressMessages( confounded_meta( method = "parametric", q=q[j], r=r[i],
+#'                                                     yr=yr, t2=t2 )[3,"Est"] )
+#'       }
+#'       
+#'     }
+#'   }
+#'   
+#'   d = data.frame(m)
+#'   
+#'   if ( meas=="prop" ) {
+#'     row.names(d) = paste( "muB=", round( muB, 3 ), sep="" )
+#'   } else if ( meas %in% c( "Tmin", "Gmin" ) ) {
+#'     row.names(d) = paste( "r=", round( r, 3 ), sep="" )
+#'   }
+#'   
+#'   if( meas=="prop" ) {
+#'     names(d) = paste( "sigB=", round( sigB, 3 ), sep="" )  
+#'   } else if ( meas %in% c( "Tmin", "Gmin" ) ) {
+#'     names(d) = paste( "q=", round( q, 3 ), sep="" )
+#'   }
+#'   
+#'   return(d)
+#' }
 
-
-sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
-                       yr, t2 ) {
-  
-  # @@test only
-  method = "parametric"
-  
-  
-  ##### Check for Correct Inputs Given Measure ######
-  if ( meas=="prop" & ( any( is.na(muB) ) | any( is.na(sigB) ) ) ) {
-    stop( "To compute proportion above q, provide muB and sigB with no NA values")
-  }
-  
-  if ( meas=="prop" & length(q) > 1 ) {
-    stop( "To compute proportion above q, provide only a single value of q" )
-  }
-  
-  ###### Generate Table #####
-  
-  # table skeleton
-  nrow = ifelse( meas=="prop", length(muB), length(r) )
-  ncol = ifelse( meas=="prop", length(sigB), length(q) )
-  
-  m = matrix( NA, nrow=nrow, ncol=ncol )
-  
-  # fill in each cell individually
-  # doing this inefficient thing because confounded_meta is not vectorized
-  # because it returns a dataframe
-  for (i in 1:nrow) {
-    for (j in 1:ncol) {
-      if ( meas == "prop" ) {
-        # bm
-        m[i,j] = suppressMessages( confounded_meta( method = method,
-                                                    q=q, muB = muB[i], sigB = sigB[j],
-                                                    yr=yr, t2=t2 )[1,"Est"] )
-      } else if ( meas == "Tmin" ) {
-        # sigB will be ignored
-        m[i,j] = suppressMessages( confounded_meta( method = method, q=q[j], r=r[i],
-                                                    yr=yr, t2=t2, sigB = 0 )[2,"Est"] )
-      } else if ( meas == "Gmin" ) {
-        # sigB will be ignored
-        m[i,j] = suppressMessages( confounded_meta( method = method, q=q[j], r=r[i],
-                                                    yr=yr, t2=t2, sigB = 0 )[3,"Est"] )
-      }
-      
-    }
-  }
-  
-  d = data.frame(m)
-  
-  if ( meas=="prop" ) {
-    row.names(d) = paste( "muB=", round( muB, 3 ), sep="" )
-  } else if ( meas %in% c( "Tmin", "Gmin" ) ) {
-    row.names(d) = round( r, 3 )
-  }
-  
-  if( meas=="prop" ) {
-    names(d) = paste( "sigB=", round( sigB, 3 ), sep="" )  
-  } else if ( meas %in% c( "Tmin", "Gmin" ) ) {
-    names(d) = round( q, 3 )
-  }
-  
-  return(d)
-}
 
 
 
