@@ -308,7 +308,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                             give.CI = TRUE,
                             R = 1000,
                             
-                            muB,
+                            muB = NA,
                             
                             # only for calibrated
                             dat = NA,
@@ -347,6 +347,7 @@ confounded_meta = function( method="calibrated",  # for both methods
   
   if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
   
+  # @@depending on choice about muB parameterization, stop if muB < 0
   
   ##### PARAMETRIC #####
   if (method=="parametric"){
@@ -354,8 +355,8 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     ##### Check for Bad Input #####
     if ( t2 < 0 ) stop("Heterogeneity cannot be negative")
-    if ( is.na(sigB) ) stop("Must provide sigB for parametric method")
-    if ( sigB < 0 ) stop("Bias factor variance cannot be negative")
+    #if ( is.na(sigB) ) stop("Must provide sigB for parametric method")
+    
     
     # the second condition is needed for Shiny app:
     #  if user deletes the input in box, then it's NA instead of NULL
@@ -367,7 +368,11 @@ confounded_meta = function( method="calibrated",  # for both methods
       if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
     }
     
-    if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
+    if ( !is.na(sigB) ) {
+      if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
+      if ( sigB < 0 ) stop("Bias factor standard deviation cannot be negative")
+    }
+    
     
     ##### Messages When Not All Output Can Be Computed #####
     if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
@@ -389,7 +394,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     if ( tail == "above" ) {
       
-      if ( !is.na(muB) ) {
+      if ( !is.na(muB) & !is.na(sigB) ) {
         # prop above
         Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
         Phat = 1 - pnorm(Z) 
@@ -415,7 +420,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     ##### Point Estimates: Preventive Case #####
     if ( tail == "below" ) {
       
-      if ( !is.na(muB) ) {
+      if ( !is.na(muB) & !is.na(sigB) ) {
         # prop below
         Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
         Phat = pnorm(Z) 
@@ -493,11 +498,8 @@ confounded_meta = function( method="calibrated",  # for both methods
   
   ##### CALIBRATED #####
   if( method == "calibrated" ){
-    
-    # bm1
-    
-    ##### Check for Bad Input #####
-    # @@do me
+  
+    # no need to catch bad input for this method
     
     # if tail isn't provided, assume user wants the more extreme one (away from the null)
     if ( is.na(tail) ) {
@@ -657,6 +659,9 @@ confounded_meta = function( method="calibrated",  # for both methods
 sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
                        yr, t2 ) {
   
+  # @@test only
+  method = "parametric"
+  
   
   ##### Check for Correct Inputs Given Measure ######
   if ( meas=="prop" & ( any( is.na(muB) ) | any( is.na(sigB) ) ) ) {
@@ -681,14 +686,18 @@ sens_table = function( meas, q, r=seq(0.1, 0.9, 0.1), muB=NA, sigB=NA,
   for (i in 1:nrow) {
     for (j in 1:ncol) {
       if ( meas == "prop" ) {
-        m[i,j] = suppressMessages( confounded_meta( q=q, muB = muB[i], sigB = sigB[j],
+        # bm
+        m[i,j] = suppressMessages( confounded_meta( method = method,
+                                                    q=q, muB = muB[i], sigB = sigB[j],
                                                     yr=yr, t2=t2 )[1,"Est"] )
       } else if ( meas == "Tmin" ) {
-        m[i,j] = suppressMessages( confounded_meta( q=q[j], r=r[i],
-                                                    yr=yr, t2=t2 )[2,"Est"] )
+        # sigB will be ignored
+        m[i,j] = suppressMessages( confounded_meta( method = method, q=q[j], r=r[i],
+                                                    yr=yr, t2=t2, sigB = 0 )[2,"Est"] )
       } else if ( meas == "Gmin" ) {
-        m[i,j] = suppressMessages( confounded_meta( q=q[j], r=r[i],
-                                                    yr=yr, t2=t2 )[3,"Est"] )
+        # sigB will be ignored
+        m[i,j] = suppressMessages( confounded_meta( method = method, q=q[j], r=r[i],
+                                                    yr=yr, t2=t2, sigB = 0 )[3,"Est"] )
       }
       
     }
@@ -1136,12 +1145,8 @@ sens_plot = function(method="calibrated",
         
         res = res %>% rename( B = B.x )
         
-        #browser()
-        
-        
+  
         ##### Warnings About Missing CIs Due to Boot Failures #####
-        # @@need to test
-        
         # if ALL CI limits are missing
         if ( all( is.na(res$lo) ) ) {
           warning( "None of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R." )
