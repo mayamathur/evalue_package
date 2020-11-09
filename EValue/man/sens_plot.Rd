@@ -2,7 +2,7 @@
 % Please edit documentation in R/meta-analysis.R
 \name{sens_plot}
 \alias{sens_plot}
-\title{Plots for sensitivity analyses}
+\title{Tables for sensitivity analyses}
 \usage{
 sens_plot(
   method = "calibrated",
@@ -68,16 +68,40 @@ the proportion of effects below \code{q}. By default, is set to \code{"above"} i
 \item{yi.name}{Name of variable in \code{dat} containing studies' point estimates. Only used if \code{method = "calibrated"}.}
 
 \item{vi.name}{Name of variable in \code{dat} containing studies' variance estimates. Only used if \code{method = "calibrated"}.}
+
+\item{meas}{\code{prop}, \code{Tmin}, or \code{Gmin}}
+
+\item{r}{For \code{Tmin} and \code{Gmin}, vector of values to which the proportion of strong effect sizes is to be reduced}
 }
 \description{
+Using the parametric estimation method (see \code{?confounded_meta} for details), produces a table showing the estimation proportion of true causal effect sizes stronger than \code{q}
+across a grid of bias parameters \code{muB} and \code{sigB} (for \code{meas == "prop"}).
+Alternatively, produces a table showing the minimum bias factor (for \code{meas == "Tmin"})
+or confounding strength (for \code{meas == "Gmin"}) required to reduce to less than
+\code{r} the proportion of true causal effects stronger than \code{q}.
+}
+\details{
+For \code{meas=="Tmin"} or \code{meas=="Gmin"}, arguments \code{muB} and
+\code{sigB} can be left \code{NA}; \code{r} can also be \code{NA} as
+it will default to a reasonable range of proportions. Returns a \code{data.frame}
+whose rows are values of \code{muB} (for \code{meas=="prop"}) or of \code{r}
+(for \code{meas=="Tmin"} or \code{meas=="Gmin"}). Its columns are values of
+\code{sigB} (for \code{meas=="prop"}) or of \code{q} (for \code{meas=="Tmin"}
+or \code{meas=="Gmin"}).
+Tables for \code{Gmin} will display \code{NaN} for cells corresponding to \code{Tmin}<1,
+i.e., for which no bias is required to reduce the effects as specified.
+@keywords meta-analysis
+@import ggplot2
+@examples
+Plots for sensitivity analyses
+
 Produces line plots (\code{type="line"}) showing the average bias factor across studies on the relative risk (RR) scale vs. the estimated proportion
 of studies with true RRs above or below a chosen threshold \code{q}.
 The plot secondarily includes a X-axis showing the minimum strength of confounding
 to produce the given bias factor. The shaded region represents a pointwise confidence band.
 Alternatively, produces distribution plots (\code{type="dist"}) for a specific bias factor showing the observed and
 true distributions of RRs with a red line marking exp(\code{q}).
-}
-\details{
+
 This function calls \code{confounded_meta} to get the point estimate and confidence interval at each value of the bias factor. See \code{?confounded_meta} for details.
 
 Note that \code{Bmin} and \code{Bmax} are specified on the log scale for consistency with the \code{muB} argument and with the function \code{confounded_meta}, whereas \code{breaks.x1} and \code{breaks.x2} are specified on the RR scale to facilitate adjustments to the plot appearance.
