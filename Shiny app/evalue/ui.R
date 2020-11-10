@@ -201,33 +201,13 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                   tags$style(type = "text/css",
                                              "label { font-size: 12px; }"
                                   ),
-                                  column(width=8, selectInput('calibrated_scale', 'Scale (RR or log-RR)', choices = c('RR', 'Log-RR'), selected = 'RR') %>%
-                                           shinyInput_label_embed(
-                                             shiny_iconlink() %>%
-                                               bs_embed_popover(title = 'The scale (relative risk [RR] or log-relative risk [log-RR] on which you will input the meta-analytic pooled estimate, threshold, and mean bias factor below.'))
-                                  ),
+                                  ### hidden method input used in server.R
                                   column(width=8, shinyjs::hidden(selectInput('calibrated_method', 'Method (calibrated or parametric)', choices = c('calibrated'), selected = 'calibrated'))
                                   ),
                                   
                                   fluidRow(
                                     shinydashboard::box(width=6,
-                                                        title= strong("Specify sensitivity parameters and thresholds"),
-                                                        column(width=10,
-                                                               numericInput('calibrated_muB', 'Bias factor in each study (on scale you specified above)', 1.5, min = 0, max = Inf, step = 0.01) %>%
-                                                                 shinyInput_label_embed(
-                                                                   shiny_iconlink() %>%
-                                                                     bs_embed_popover(title = 'Used to adjust proportion by the provided bias factor')),
-                                                               numericInput('calibrated_q', 'Threshold (q) for meaningfully strong effect size \n(on scale you specified above)', 0.8, min = 0, max = Inf, step = 0.01) %>%
-                                                                 shinyInput_label_embed(
-                                                                   shiny_iconlink() %>%
-                                                                     bs_embed_popover(title = 'Effect size that represents the minimum threshold for a meaningfully strong effect size')),
-                                                               numericInput('calibrated_r', 'Proportion below which strong effects are to be reduced (r)', 0.1, min = 0, max = 1, step = 0.1) %>%
-                                                                 shinyInput_label_embed(
-                                                                   shiny_iconlink() %>%
-                                                                     bs_embed_popover(title = 'For the second two metrics, the value to which the proportion of meaningfully strong effects is to be reduced'))
-                                                        )
-                                    ),
-                                    shinydashboard::box(width=6,
+                                                        title= h4(strong("Estimates from confounded meta-analysis")),
                                                         column(width=10,
                                                                fileInput('calibrated_uploaddat', label = 'Upload csv data', accept=c('text/csv',
                                                                                                                                      'text/comma-separated-values,text/plain',
@@ -259,8 +239,29 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                         column(width=10,
                                                                actionButton(inputId = 'calibrated_calculate', label='Analyze')
                                                         )
+                                    ),
+                                    shinydashboard::box(width=6,
+                                                        title= h4(strong("Specify sensitivity parameters and thresholds")),
+                                                        column(width=10,
+                                                               selectInput('calibrated_scale', 'Scale (RR or log-RR)', choices = c('RR', 'Log-RR'), selected = 'RR') %>%
+                                                                        shinyInput_label_embed(
+                                                                          shiny_iconlink() %>%
+                                                                            bs_embed_popover(title = 'The scale (relative risk [RR] or log-relative risk [log-RR] on which you will input the meta-analytic pooled estimate, threshold, and mean bias factor below.')
+                                                                          ),
+                                                               numericInput('calibrated_muB', 'Bias factor in each study (on scale you specified above)', 1.5, min = 0, max = Inf, step = 0.01) %>%
+                                                                 shinyInput_label_embed(
+                                                                   shiny_iconlink() %>%
+                                                                     bs_embed_popover(title = 'Used to adjust proportion by the provided bias factor')),
+                                                               numericInput('calibrated_q', 'Threshold (q) for meaningfully strong effect size \n(on scale you specified above)', 0.8, min = 0, max = Inf, step = 0.01) %>%
+                                                                 shinyInput_label_embed(
+                                                                   shiny_iconlink() %>%
+                                                                     bs_embed_popover(title = 'Effect size that represents the minimum threshold for a meaningfully strong effect size')),
+                                                               numericInput('calibrated_r', 'Proportion below which strong effects are to be reduced (r)', 0.1, min = 0, max = 1, step = 0.1) %>%
+                                                                 shinyInput_label_embed(
+                                                                   shiny_iconlink() %>%
+                                                                     bs_embed_popover(title = 'For the second two metrics, the value to which the proportion of meaningfully strong effects is to be reduced'))
+                                                        )
                                     )
-                                    
                                   ),
                                   
                                   ### results text ###
@@ -270,10 +271,13 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                bs_embed_popover(title = "MAYA TO HELP INTEREPRET OUTPUT")),
                                   wellPanel( textOutput("calibrated_results_minconf"), span( textOutput("calibrated_text3") ), shiny_iconlink() %>%
                                                bs_embed_popover(title = "MAYA TO HELP INTEREPRET OUTPUT")),
+                                  mainPanel(
+                                    span( htmlOutput("calibrated_cm_messages"), style="color:red"), width = 8
+                                  ),
                                   
                                   ### used for plot only:
                                   shinydashboard::box(width=6,
-                                                      title=strong("Range of bias factors to search"),
+                                                      title=h4(strong("Range of bias factors to search")),
                                                       numericInput('calibrated_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0, max=Inf, step=0.1) %>%
                                                         shinyInput_label_embed(
                                                           shiny_iconlink() %>%
@@ -287,15 +291,11 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                   
                                   mainPanel(
                                     plotOutput('calibrated_plot1')
-                                  ),
-                                  ### plot warnings:
-                                  ### Shiny user will be forced to choose tail, so don't need this warning
-                                  # mainPanel(
-                                  #   span( htmlOutput("calibrated_warning_tail"), style="color:red"), width = 8
-                                  # ),
-                                  mainPanel(
-                                    span( htmlOutput("calibrated_warning_boot"), style="color:red"), width = 8
                                   )
+                                  # ### plot warnings:
+                                  # mainPanel(
+                                  #   span( htmlOutput("calibrated_sens_plot_messages"), style="color:red"), width = 8
+                                  # )
                                 ) 
                        ), ### closes tabPanel "Calibrated"
                        
@@ -304,18 +304,17 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                   tags$style(type = "text/css",
                                              "label { font-size: 12px; }"
                                   ),
-                                  column(width=8, selectInput('parametric_scale', 'Scale (RR or log-RR)', choices = c('RR', 'Log-RR'), selected = 'RR') %>%
-                                           shinyInput_label_embed(
-                                             shiny_iconlink() %>%
-                                               bs_embed_popover(title = 'The scale (relative risk [RR] or log-relative risk [log-RR] on which you will input the meta-analytic pooled estimate, threshold, and mean bias factor below.'))
-                                  ),
-                                  
-                                  # MBM: What's this? 
+                                  ### hidden method input used in server.R
                                   column(width=8, shinyjs::hidden(selectInput('parametric_method', 'Method (calibrated or parametric)', choices = c('parametric'), selected = 'parametric'))
                                   ),
                                   shinydashboard::box(width=5,
-                                                      title= strong("Estimates from confounded meta-analysis"),
+                                                      title= h4(strong("Estimates from confounded meta-analysis")),
                                                       column(width=6,
+                                                             selectInput('parametric_scale', 'Scale (RR or log-RR)', choices = c('RR', 'Log-RR'), selected = 'RR') %>%
+                                                                      shinyInput_label_embed(
+                                                                        shiny_iconlink() %>%
+                                                                          bs_embed_popover(title = 'The scale (relative risk [RR] or log-relative risk [log-RR] on which you will input the meta-analytic pooled estimate, threshold, and mean bias factor below.'))
+                                                             ,
                                                              numericInput('parametric_yr', 'Pooled effect size', 1.2, min = 0, max = Inf, step = 0.1) %>%
                                                                shinyInput_label_embed(
                                                                  shiny_iconlink() %>%
@@ -334,9 +333,8 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                                    bs_embed_popover(title = paste0('The proportion of ', '\u03c4\u00b2', ' from confounded meta-analysis. If not provided, you will not get confidence intervals for the sensitivity analyses.')))
                                                       )
                                   ),
-                                  
                                   shinydashboard::box(width=7,
-                                                      title= strong("User-chosen sensitivity parameters and thresholds"),
+                                                      title= h4(strong("Specify sensitivity parameters and thresholds")),
                                                       column(width=6,
                                                              numericInput('parametric_muB', 'Mean bias factor across studies (on scale you specified above)', 1.5, min = 0, max = Inf, step = 0.01) %>%
                                                                shinyInput_label_embed(
@@ -361,7 +359,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                                                  shiny_iconlink() %>%
                                                                    bs_embed_popover(title = 'above for the proportion of effects above q; below for the proportion of effects below q')),
                                                              actionButton(inputId = 'parametric_calculate', label='Analyze')
-                                                      )
+                                                                   )
                                                       
                                   )
                                 ),
@@ -376,7 +374,7 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                              bs_embed_popover(title = "MAYA TO HELP INTEREPRET OUTPUT")),
                                 
                                 shinydashboard::box(width=6,
-                                                    title=strong("Bias factor range to include in plot"),
+                                                    title=h4(strong("Bias factor range to include in plot")),
                                                     numericInput('parametric_Bmin', 'Lower limit of bias factor (Bmin)', 1, min=0.1, max=Inf, step=0.1) %>%
                                                       shinyInput_label_embed(
                                                         shiny_iconlink() %>%
@@ -392,15 +390,20 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                 mainPanel(
                                   plotOutput('parametric_plot1')
                                 ),
+                                ### plot warnings:
+                                ## jl: all warnings from sens_plot should be output with the below now:
                                 mainPanel(
-                                  span( htmlOutput("parametric_warning_tail"), style="color:red"), width = 8
-                                ),
-                                mainPanel(
-                                  span( htmlOutput("parametric_warning_ci"), style="color:red"), width = 8
-                                ),
-                                mainPanel(
-                                  span( htmlOutput("parametric_warning_phatci"), style="color:red"), width = 8
+                                  span( htmlOutput("calibrated_sens_plot_messages"), style="color:red"), width = 8
                                 )
+                                # mainPanel(
+                                #   span( htmlOutput("parametric_warning_tail"), style="color:red"), width = 8
+                                # ),
+                                # mainPanel(
+                                #   span( htmlOutput("parametric_warning_ci"), style="color:red"), width = 8
+                                # ),
+                                # mainPanel(
+                                #   span( htmlOutput("parametric_warning_phatci"), style="color:red"), width = 8
+                                # )
                        ) ### closes tabPanel "Parametric"
                      ) ### closes tabsetPanel
             ), ### closes tabPanel "Fixed sensitivity parameters"
