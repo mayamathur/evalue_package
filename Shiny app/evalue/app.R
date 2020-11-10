@@ -14,4 +14,3 @@ server = source("server.R")
 
 # Run the application 
 shinyApp(ui = ui$value, server = server$value)
-

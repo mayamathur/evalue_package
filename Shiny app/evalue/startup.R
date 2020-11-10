@@ -1,4 +1,5 @@
 # install.packages("shinyWidgets")
+# install.packages("dplyr")
 
 library(shiny)
 # library(EValue) #include confounded_meta and sens_plot below to test, will eventually be loaded into EValue package and can remove the functions below

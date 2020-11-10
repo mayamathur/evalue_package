@@ -291,11 +291,11 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                   
                                   mainPanel(
                                     plotOutput('calibrated_plot1')
+                                  ),
+                                  ### plot warnings:
+                                  mainPanel(
+                                    span( htmlOutput("calibrated_sens_plot_messages"), style="color:red"), width = 8
                                   )
-                                  # ### plot warnings:
-                                  # mainPanel(
-                                  #   span( htmlOutput("calibrated_sens_plot_messages"), style="color:red"), width = 8
-                                  # )
                                 ) 
                        ), ### closes tabPanel "Calibrated"
                        
@@ -393,17 +393,8 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                 ### plot warnings:
                                 ## jl: all warnings from sens_plot should be output with the below now:
                                 mainPanel(
-                                  span( htmlOutput("calibrated_sens_plot_messages"), style="color:red"), width = 8
+                                  span( htmlOutput("parametric_sens_plot_messages"), style="color:red"), width = 8
                                 )
-                                # mainPanel(
-                                #   span( htmlOutput("parametric_warning_tail"), style="color:red"), width = 8
-                                # ),
-                                # mainPanel(
-                                #   span( htmlOutput("parametric_warning_ci"), style="color:red"), width = 8
-                                # ),
-                                # mainPanel(
-                                #   span( htmlOutput("parametric_warning_phatci"), style="color:red"), width = 8
-                                # )
                        ) ### closes tabPanel "Parametric"
                      ) ### closes tabsetPanel
             ), ### closes tabPanel "Fixed sensitivity parameters"

@@ -238,10 +238,13 @@ function(input, output, session) {
       withProgress(message="calculating...", value=1,{
         withCallingHandlers({
           shinyjs::html("calibrated_cm_messages", "")
-          suppressWarnings(confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
-                                           tail=tail, give.CI=TRUE, R=R, dat=dat))
+          confounded_meta(method=method, muB=muB,q=q, r=r, yi.name=yi.name, vi.name=vi.name,
+                                           tail=tail, give.CI=TRUE, R=R, dat=dat)
         },
         message = function(m){
+          shinyjs::html(id="calibrated_cm_messages", html=paste0(m$message, '<br>'), add=TRUE)
+        },
+        warning = function(m){
           shinyjs::html(id="calibrated_cm_messages", html=paste0(m$message, '<br>'), add=TRUE)
         }
         )
@@ -337,9 +340,12 @@ function(input, output, session) {
 
         withCallingHandlers({
           shinyjs::html("calibrated_sens_plot_messages", "")
-        suppressWarnings(sens_plot(method=method, type="line", q=q, yi.name=yi.name, vi.name=vi.name, Bmin=Bmin, Bmax=Bmax, tail=tail, give.CI=TRUE, R=R, dat=dat ))
+        sens_plot(method=method, type="line", q=q, yi.name=yi.name, vi.name=vi.name, Bmin=Bmin, Bmax=Bmax, tail=tail, give.CI=TRUE, R=R, dat=dat )
         },
         message = function(m){
+          shinyjs::html(id="calibrated_sens_plot_messages", html=paste0(m$message, '<br>'), add=TRUE)
+        },
+        warning = function(m){
           shinyjs::html(id="calibrated_sens_plot_messages", html=paste0(m$message, '<br>'), add=TRUE)
         }
         )
@@ -406,10 +412,13 @@ function(input, output, session) {
     parametric_cm <- reactive({
         withCallingHandlers({
           shinyjs::html("parametric_cm_messages", "")
-          suppressWarnings(confounded_meta(method=method_2,q=q_2, r=r_2, muB=muB_2, sigB=sigB_2, yr=yr_2, vyr=vyr_2,
-                                           t2=t2_2, vt2=vt2_2, CI.level=0.95, tail=tail_2))
+          confounded_meta(method=method_2,q=q_2, r=r_2, muB=muB_2, sigB=sigB_2, yr=yr_2, vyr=vyr_2,
+                                           t2=t2_2, vt2=vt2_2, CI.level=0.95, tail=tail_2)
         },
         message = function(m){
+          shinyjs::html(id="parametric_cm_messages", html=paste0(m$message, '<br>'), add=TRUE)
+        },
+        warning = function(m){
           shinyjs::html(id="parametric_cm_messages", html=paste0(m$message, '<br>'), add=TRUE)
         }
         )
@@ -519,10 +528,13 @@ function(input, output, session) {
 
       withCallingHandlers({
         shinyjs::html("parametric_sens_plot_messages", "")
-        suppressWarnings(sens_plot(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
-                                   Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 ))
+        sens_plot(method = method_2, type="line", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
+                                   Bmin=Bmin_2, Bmax=Bmax_2, sigB=sigB_2, tail=tail_2 )
       },
       message = function(m){
+        shinyjs::html(id="parametric_sens_plot_messages", html=paste0(m$message, '<br>'), add=TRUE)
+      },
+      warning = function(m){
         shinyjs::html(id="parametric_sens_plot_messages", html=paste0(m$message, '<br>'), add=TRUE)
       }
       )

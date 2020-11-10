@@ -8,15 +8,17 @@ library(MetaUtility)
 library(ggplot2)
 
 # for simulating meta-analysis data
-library(here())
-setwd(here())
-setwd("tests")
-source("testthat_helper.R")
+# library(here())
+# setwd(here())
+# setwd("tests")
+source("~/Box Sync/jlee/Maya/evalue/EValue/tests/helper_testthat.R")
+
+source("~/Box Sync/jlee/Maya/evalue/EValue/R/meta-analysis.R")
 
 
-setwd(here())
-setwd("tests_human_inspection/Datasets for website test")
-d = read.csv("gbc_prepped.csv")
+# setwd(here())
+# setwd("tests_human_inspection/Datasets for website test")
+d = read.csv("~/Box Sync/jlee/Maya/evalue/tests_human_inspection/Datasets for website test/gbc_prepped.csv")
 
 ##### With q = log(0.9) #####
 confounded_meta(q = log(.9),
