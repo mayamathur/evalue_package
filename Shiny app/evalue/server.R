@@ -215,7 +215,7 @@ function(input, output, session) {
       Bmin = isolate(log(input$calibrated_Bmin))
       Bmax = isolate(log(input$calibrated_Bmax))
       R = isolate(input$calibrated_R)
-      dat = mydata()
+      dat = isolate(mydata())
 
     } else {
       if(input$calibrated_scale=="Log-RR"){
@@ -230,7 +230,7 @@ function(input, output, session) {
         Bmin = isolate(input$calibrated_Bmin)
         Bmax = isolate(input$calibrated_Bmax)
         R = isolate(input$calibrated_R)
-        dat = mydata()
+        dat = isolate(mydata())
       }
     }
 
@@ -316,7 +316,7 @@ function(input, output, session) {
           Bmin = isolate(log(input$calibrated_Bmin))
           Bmax = isolate(log(input$calibrated_Bmax))
           R = isolate(input$calibrated_R)
-          dat = mydata()
+          dat = isolate(mydata())
 
         } else {
           if(input$calibrated_scale=="Log-RR"){
@@ -331,7 +331,7 @@ function(input, output, session) {
             Bmin = isolate(input$calibrated_Bmin)
             Bmax = isolate(input$calibrated_Bmax)
             R = isolate(input$calibrated_R)
-            dat = mydata()
+            dat = isolate(mydata())
           }
         }
 
