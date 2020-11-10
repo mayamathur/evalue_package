@@ -203,7 +203,8 @@ function(input, output, session) {
 
   calibrated_output <- observeEvent(input$calibrated_calculate, {
     ### isolate on parameters to not update until action button pressed again
-    if(input$calibrated_scale=="RR"){
+    scale = isolate(input$calibrated_scale)
+    if(scale=="RR"){
       q = isolate(log(input$calibrated_q))
       r = isolate(input$calibrated_r)
       tail = isolate(input$calibrated_tail)
@@ -218,7 +219,7 @@ function(input, output, session) {
       dat = isolate(mydata())
 
     } else {
-      if(input$calibrated_scale=="Log-RR"){
+      if(scale=="Log-RR"){
         q = isolate(input$calibrated_q)
         r = isolate(input$calibrated_r)
         tail = isolate(input$calibrated_tail)
@@ -307,7 +308,8 @@ function(input, output, session) {
     output$calibrated_plot1 = renderPlot({
       withProgress(message="generating plot...", value=1,{
         ### isolate on parameters to not update until action button pressed again
-        if(input$calibrated_scale=="RR"){
+        scale = isolate(input$calibrated_scale)
+        if(scale=="RR"){
           q = isolate(log(input$calibrated_q))
           r = isolate(input$calibrated_r)
           tail = isolate(input$calibrated_tail)
@@ -322,7 +324,7 @@ function(input, output, session) {
           dat = isolate(mydata())
 
         } else {
-          if(input$calibrated_scale=="Log-RR"){
+          if(scale=="Log-RR"){
             q = isolate(input$calibrated_q)
             r = isolate(input$calibrated_r)
             tail = isolate(input$calibrated_tail)
@@ -376,7 +378,8 @@ function(input, output, session) {
   ##### For Tab Panel Parametric Fixed sensitivity parameters #####
   parametric_output <- observeEvent(input$parametric_calculate, {
     ### isolate on parameters to not update until action button pressed again
-    if(input$parametric_scale=="RR"){
+    scale_2 = isolate(input$parametric_scale)
+    if(scale_2=="RR"){
       yr_2 = isolate(log(input$parametric_yr))
       t2_2 = isolate(input$parametric_t2)
       q_2 = isolate(log(input$parametric_q))
@@ -392,7 +395,7 @@ function(input, output, session) {
       Bmax_2 = isolate(log(input$parametric_Bmax))
 
     } else {
-      if(input$parametric_scale=="Log-RR"){
+      if(scale_2=="Log-RR"){
         yr_2 = isolate(input$parametric_yr)
         t2_2 = isolate(input$parametric_t2)
         q_2 = isolate(input$parametric_q)
@@ -489,7 +492,8 @@ function(input, output, session) {
   parametric_plot <- observeEvent(input$parametric_plot, {
     output$parametric_plot1 = renderPlot({
       ### isolate on parameters to not update until action button pressed again
-      if(input$parametric_scale=="RR"){
+      scale_2 = isolate(input$parametric_scale)
+      if(scale_2=="RR"){
         yr_2 = isolate(log(input$parametric_yr))
         t2_2 = isolate(input$parametric_t2)
         q_2 = isolate(log(input$parametric_q))
@@ -507,7 +511,7 @@ function(input, output, session) {
         give.CI_2 = TRUE
 
       } else {
-        if(input$parametric_scale=="Log-RR"){
+        if(scale_2=="Log-RR"){
           yr_2 = isolate(input$parametric_yr)
           t2_2 = isolate(input$parametric_t2)
           q_2 = isolate(input$parametric_q)
@@ -542,58 +546,6 @@ function(input, output, session) {
       ### output plot warnings:
       ## jl: warnings/messages should now be built into the plot outputs using withCallingHandlers to pull messages/warnings from sens_plot itself
 
-
-
-
-      ### Shiny user will be forced to choose tail, so don't need this warning
-      # # output$parametric_warning_tail = reactive({
-      # #   if ( !tail_2 %in% c("above", "below") ) {
-      # #     tail_2 = ifelse( yr_2 > log(1), "above", "below" )
-      # #     HTML(paste("WARNING: Assuming you want tail =", tail_2, "because it wasn't specified"))
-      # #   }
-      # # }) ## closes parametric_warning_tail
-      #
-      # output$parametric_warning_ci = reactive({
-      #   if ( is.na(vyr_2) | is.na(vt2_2) ) {
-      #     HTML( "No confidence interval because vyr or vt2 is NULL")
-      #   }
-      # }) ## closes parametric_warning_ci
-      #
-      # output$parametric_warning_phatci = reactive({
-      #   # get mean bias factor values for a vector of B's from Bmin to Bmax
-      #   t = data.frame( B = seq(Bmin_2, Bmax_2, .01), phat = NA, lo = NA, hi = NA )
-      #   t$eB = exp(t$B)
-      #
-      #   for ( i in 1:dim(t)[1] ) {
-      #     # r is irrelevant here
-      #     # suppress warnings about Phat being close to 0 or 1
-      #     #browser()
-      #     cm = suppressMessages( confounded_meta( method = method_2,
-      #                                             q = q_2,
-      #                                             r = NA,
-      #                                             muB=t$B[i],
-      #                                             sigB=sigB_2,
-      #                                             yr=yr_2,
-      #                                             vyr=vyr_2,
-      #                                             t2=t2_2,
-      #                                             vt2=vt2_2,
-      #                                             CI.level=CI.level_2,
-      #                                             tail=tail_2 ) )
-      #
-      #     t$phat[i] = cm$Est[ cm$Value=="Prop" ]
-      #     t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
-      #     t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
-      #   }
-      #
-      #   # can't compute a CI if the bounds aren't there
-      #   no.CI = any( is.na(t$lo) ) | any( is.na(t$hi) ) | (give.CI_2 == FALSE)
-      #
-      #   if ( no.CI==FALSE ){
-      #     HTML("Calculating parametric confidence intervals in the plot. For values of Phat that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
-      #   }
-      # }) ## closes parametric_warning_phatci
-
-
     }) ## closes parametric_plot1
   }) ## closes parametric_plot
 
@@ -612,108 +564,4 @@ function(input, output, session) {
   
   
   
-} ## closes function
-
-
-
-
-
-
-
-
-
-
-
-### EXTRA CODE BELOW, CAN PROBABLY DELETE BUT KEEP FOR NOW ###
-
-# ##### For Tab Panel Fixed sensitivity parameters #####
-# output$plot2 <- renderPlot({
-#   
-#   # observeEvent( input$make.plot, {
-#   yr_2 = log(input$yr_2)
-#   t2_2 = input$t2_2
-#   q_2 = log(input$q_2)
-#   vyr_2 = input$se_yr_2^2
-#   vt2_2 = input$se_t2_2^2
-#   muB_2 = log(input$muB_2)
-#   sigB_2 = input$sigB_2
-#   r_2 = input$r_2
-#   
-#   
-#   suppressWarnings(sens_plot( type="dist", q=q_2, yr=yr_2, vyr=vyr_2, t2=t2_2, vt2=vt2_2,
-#                                       muB=muB_2, sigB=sigB_2 ))
-#   
-#   
-#   #   } )
-#   
-# })
-
-##### For Tab Panel Range of sensitivity parameters #####   
-# output$plot1 <- renderPlot({
-#   
-#   if(input$scale=="RR"){
-#     yr = log(input$yr)
-#     t2 = input$t2
-#     q = log(input$q)
-#     vyr = input$se_yr^2
-#     vt2 = input$se_t2^2
-#     sigB = input$sigB
-#     Bmin = log(input$Bmin)
-#     Bmax = log(input$Bmax)
-#     tail = input$tail
-#   } else {
-#     if(input$scale=="Log-RR"){
-#       yr = input$yr
-#       t2 = input$t2
-#       q = input$q
-#       vyr = input$se_yr^2
-#       vt2 = input$se_t2^2
-#       sigB = input$sigB
-#       Bmin = input$Bmin
-#       Bmax = input$Bmax
-#       tail = input$tail
-#     }
-#   }
-#   
-#   suppressWarnings(sens_plot( type="line", q=q, yr=yr, vyr=vyr, t2=t2, vt2=vt2,
-#                                       Bmin=Bmin, Bmax=Bmax, sigB=sigB, tail=tail ))
-# })
-
-##### WARNINGS #####
-##### For Tab Panel Range of sensitivity parameters ##### 
-# output$kwarn <- reactive({
-#   numStudies <- input$k
-#   ifelse(numStudies <=10,
-#          "WARNING: These methods may not work well for meta-analyses with fewer than 10 studies.",
-#          "")
-# })
-
-##### For Tab Panel Fixed sensitivity parameters ##### 
-# output$kwarn_2 <- reactive({
-#   numStudies <- input$k_2
-#   ifelse(numStudies <=10,
-#          "WARNING: These methods may not work well for meta-analyses with fewer than 10 studies.",
-#          "")
-# })
-
-
-# output$phatwarn_2 <- reactive({
-#   yr_2 = log(input$yr_2)
-#   t2_2 = input$t2_2
-#   q_2 = log(input$q_2)
-#   vyr_2 = input$se_yr_2^2
-#   vt2_2 = input$se_t2_2^2
-#   muB_2 = log(input$muB_2)
-#   sigB_2 = input$sigB_2
-#   r_2 = input$r_2
-#   tail_2 = input$tail_2
-#   
-#   cm = suppressWarnings(confounded_meta(q=q_2, r = r_2, muB = muB_2, sigB = sigB_2, yr = yr_2, vyr = vyr_2,
-#                                         t2 = t2_2, vt2 = vt2_2, CI.level = 0.95, tail = tail_2))
-#   
-#   p = round( cm$Est[ cm$Value=="Prop" ], 3 )
-#   ifelse(p<0.15 | p>0.85,
-#          HTML(paste('WARNING: Extreme estimated proportion', 'The estimated proportion of meaningfully strong effects is <0.15 or >0.85. The methods implemented in this website do not always work well in these situations. We would recommend instead applying alternative methods that have the same interpretation (see the "More Resouces" tab).', sep = "<br/>")), "")
-# })
-
-
+} ## closes server.R function

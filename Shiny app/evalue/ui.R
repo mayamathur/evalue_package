@@ -372,6 +372,9 @@ navbarPage( "Sensitivity analysis for unmeasured confounding in meta-analyses", 
                                              bs_embed_popover(title = "MAYA TO HELP INTEREPRET OUTPUT")),
                                 wellPanel( textOutput("parametric_results_minconf"), span( textOutput("parametric_text3") ), shiny_iconlink() %>%
                                              bs_embed_popover(title = "MAYA TO HELP INTEREPRET OUTPUT")),
+                                mainPanel(
+                                  span( htmlOutput("parametric_cm_messages"), style="color:red"), width = 8
+                                ),
                                 
                                 shinydashboard::box(width=6,
                                                     title=h4(strong("Bias factor range to include in plot")),

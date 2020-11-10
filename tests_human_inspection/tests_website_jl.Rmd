@@ -25,6 +25,7 @@ library(dplyr)
 library(ICC)
 library(MetaUtility)
 library(ggplot2)
+library(boot)
 ```
 
 ### Below tests run on 11/10/20 with github code pull on 11/09/20 at 2:45pm:
@@ -48,15 +49,12 @@ confounded_meta(q = log(.9),
                 dat = d,
                 R = 500)
 ### R output:
-# The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-# The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-#   Value        Est SE CI.lo CI.hi
-# 1  Prop 0.02358491 NA    NA    NA
-# 2  Tmin 1.00000000 NA    NA    NA
-# 3  Gmin 1.00000000 NA    NA    NA
-# Warning message:
-# In confounded_meta(q = log(0.9), r = 0.1, muB = 0, tail = "below",  :
-#   Phat is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.
+# [1] "All values of t are equal to  1 \n Cannot calculate confidence intervals"
+#  Show Traceback
+#  
+#  Rerun with Debug
+#  Error in data.frame(lo.T, hi.T, SE.T, lo.G, hi.G, SE.G) : 
+#   arguments imply differing number of rows: 1, 0 
 
 ### Website output: 
 knitr::include_graphics("jl_website_test1a.png")
@@ -75,7 +73,7 @@ sens_plot(type = "line",
 ### R output:
 # Warning message:
 # In sens_plot(type = "line", q = log(0.9), tail = "below", Bmin = log(1),  :
-#   None of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R.
+#   Some of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot may not be shown for some values of the bias factor. You can try increasing R.
 
 ### Website output: 
 knitr::include_graphics("jl_website_test1b.png")
@@ -92,14 +90,15 @@ confounded_meta(q = log(.5),
                 yi.name = "yi",
                 vi.name = "vi",
                 dat = d,
-                R = 2000)
+                R = 500)
 ### R output:
-# The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-# The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-#   Value      Est SE CI.lo CI.hi
-# 1  Prop 1.000000 NA    NA    NA
-# 2  Tmin 2.133700 NA    NA    NA
-# 3  Gmin 3.689005 NA    NA    NA
+#   Value      Est          SE     CI.lo    CI.hi
+# 1  Prop 1.000000 0.001951293 0.9858491 1.000000
+# 2  Tmin 2.133700 0.025066232 2.0871944 2.183581
+# 3  Gmin 3.689005 0.051400052 3.5935762 3.791202
+# Warning message:
+# In norm.inter(t, adj.alpha) : extreme order statistics used as endpoints
+
 
 ### Website output: 
 knitr::include_graphics("jl_website_test2a.png")
@@ -112,7 +111,7 @@ sens_plot(type = "line",
           yi.name = "yi",
           vi.name = "vi",
           dat = d,
-          R = 2000)
+          R = 500)
 
 ### R output:
 # Warning message:
@@ -149,7 +148,7 @@ knitr::include_graphics("jl_website_test3.png")
 d = read.csv("Datasets for website test/flegal_prepped.csv")
 
 ## on log-RR scale:
-log(.5)
+# log(.5)
 confounded_meta(q = -0.6931472,
                 r = 0.5,
                 muB = 0.5,
@@ -159,12 +158,10 @@ confounded_meta(q = -0.6931472,
                 dat = d,
                 R = 500)
 ### R output:
-# The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-# The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-#   Value       Est SE CI.lo CI.hi
-# 1  Prop 0.8285714 NA    NA    NA
-# 2  Tmin 1.8341568 NA    NA    NA
-# 3  Gmin 3.0710781 NA    NA    NA
+#   Value       Est         SE     CI.lo     CI.hi
+# 1  Prop 0.8285714 0.03891938 0.7385156 0.8928571
+# 2  Tmin 1.8341568 0.02953164 1.7897376 1.9005732
+# 3  Gmin 3.0710782 0.06134111 2.9786123 3.2088566
 
 ### Website output: 
 knitr::include_graphics("jl_website_test4a.png")
@@ -181,7 +178,7 @@ sens_plot(type = "line",
 
 ### R output:
 # Warning message:
-# In sens_plot(type = "line", q = log(0.5), tail = "above", Bmin = log(1),  :
+# In sens_plot(type = "line", q = -0.6931472, tail = "above", Bmin = 1,  :
 #   None of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R.
 
 ### Website output: 
@@ -200,14 +197,12 @@ confounded_meta(q = log(.5),
                 yi.name = "yi",
                 vi.name = "vi",
                 dat = d,
-                R = 100000)
+                R = 10000)
 ### R output:
-# The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-# The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-#   Value       Est SE CI.lo CI.hi
-# 1  Prop 0.8285714 NA    NA    NA
-# 2  Tmin 2.1777251 NA    NA    NA
-# 3  Gmin 3.7792124 NA    NA    NA
+#   Value       Est         SE     CI.lo     CI.hi
+# 1  Prop 0.8285714 0.03971533 0.7357143 0.8928571
+# 2  Tmin 2.1777251 0.08610269 2.0699317 2.3537022
+# 3  Gmin 3.7792124 0.17615242 3.5581137 4.1386985
 
 ### Website output: 
 knitr::include_graphics("jl_website_test5.png")
@@ -226,15 +221,12 @@ confounded_meta(q = log(1.2),
                 dat = d,
                 R = 500)
 ### R output:
-# The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-# The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
-#   Value        Est SE CI.lo CI.hi
-# 1  Prop 0.03571429 NA    NA    NA
-# 2  Tmin 1.00000000 NA    NA    NA
-# 3  Gmin 1.00000000 NA    NA    NA
-# Warning message:
-# In confounded_meta(q = log(1.2), r = 1, muB = 0, tail = "above",  :
-#   Phat is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.
+# [1] "All values of t are equal to  1 \n Cannot calculate confidence intervals"
+#  Show Traceback
+#  
+#  Rerun with Debug
+#  Error in data.frame(lo.T, hi.T, SE.T, lo.G, hi.G, SE.G) : 
+#   arguments imply differing number of rows: 1, 0 
 
 ### Website output: 
 knitr::include_graphics("jl_website_test6.png")
@@ -254,7 +246,9 @@ confounded_meta(q = log(0),
                 dat = d,
                 R = 0)
 ### R output:
+# [1] "All values of t are equal to  NaN \n Cannot calculate confidence intervals"
 # The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
+# [1] "All values of t are equal to  NaN \n Cannot calculate confidence intervals"
 # The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.
 #   Value Est SE CI.lo CI.hi
 # 1  Prop   1 NA    NA    NA
@@ -262,7 +256,24 @@ confounded_meta(q = log(0),
 # 3  Gmin NaN NA    NA    NA
 
 ### Website output: 
-knitr::include_graphics("jl_website_test7.png")
+knitr::include_graphics("jl_website_test7a.png")
+
+
+sens_plot(type = "line",
+          q = log(0),
+          tail = "above",
+          Bmin = log(0),
+          Bmax = log(0),
+          yi.name = "yi",
+          vi.name = "vi",
+          dat = d,
+          R = 0)
+
+### R output:
+ # Error in seq.default(Bmin, Bmax, 0.01) : 'from' must be a finite number 
+
+### Website output: 
+knitr::include_graphics("jl_website_test7b.png")
 ```
 
 #### test8 data_calib_test_1-1.csv file
@@ -311,6 +322,132 @@ sens_plot(method = "parametric",
 knitr::include_graphics("jl_website_test8b.png")
 ```
 
+#### test9 data_calib_test_1-1.csv file
+```{r error=TRUE}
+d = read.csv("Datasets for website test/data_calib_test_1-1.csv")
+
+## parametric method test
+## vt2 = prop*t2^2
+## see what errors if all 0
+confounded_meta(method="parametric",
+                q=log(0),
+                r=0,
+                tail="above",
+                muB=log(0),
+                sigB=0,
+                yr=log(0),
+                vyr=0^2,
+                t2=0,
+                vt2=0*(0^2))
+### R output:
+# Error in confounded_meta(method = "parametric", q = log(0), r = 0, tail = "above",  : 
+#   Must have t2 > sigB^2
+
+### Website output: 
+knitr::include_graphics("jl_website_test9.png")
+```
+
+
+#### test10 kodama_prepped.csv
+```{r error=TRUE}
+d = read.csv("Datasets for website test/kodama_prepped.csv")
+
+## parametric method test
+## vt2 = prop*t2^2
+confounded_meta(method="parametric",
+                q=log(.5),
+                r=0.75,
+                tail="below",
+                muB=log(1.5),
+                sigB=.25,
+                yr=log(1.5),
+                vyr=0.1^2,
+                t2=0.25,
+                vt2=0.5*(0.25^2))
+### R output:
+#   Value        Est        SE CI.lo     CI.hi
+# 1  Prop 0.05471561 0.0874276     0 0.2260706
+# 2  Tmin 0.23791135 0.3332082     1 0.8909875
+# 3  Gmin        NaN       NaN   NaN       NaN
+# Warning messages:
+# 1: In confounded_meta(method = "parametric", q = log(0.5), r = 0.75,  :
+#   Phat is close to 0 or 1. We recommend choosing method = "calibrated" or alternatively using bias-corrected and accelerated bootstrapping to estimate all inference in this case.
+# 2: In sqrt(Tmin^2 - Tmin) : NaNs produced
+
+### Website output: 
+knitr::include_graphics("jl_website_test10a.png")
+
+
+sens_plot(method = "parametric",
+          type="line",
+          q=log(.5),
+          yr=log(1.5),
+          vyr=0.1^2,
+          t2=0.25,
+          vt2=0.5*(0.25^2),
+          Bmin=log(1),
+          Bmax=log(4),
+          sigB=0,
+          tail="below" )
+
+### R output:
+# Warning message:
+# In sens_plot(method = "parametric", type = "line", q = log(0.5),  :
+#   Calculating parametric confidence intervals in the plot. For values of Phat that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.
+
+### Website output: 
+knitr::include_graphics("jl_website_test10b.png")
+```
+
+
+#### test11 kodama_prepped.csv
+```{r error=TRUE}
+d = read.csv("Datasets for website test/kodama_prepped.csv")
+
+## on log-RR scale
+# log(1.2)
+## parametric method test
+## vt2 = prop*t2^2
+confounded_meta(method="parametric",
+                q=0.1823216,
+                r=0.2,
+                tail="below",
+                muB=.2,
+                sigB=.25,
+                yr=.4,
+                vyr=0.1^2,
+                t2=0.25,
+                vt2=0.1*(0.25^2))
+### R output:
+#   Value       Est         SE     CI.lo     CI.hi
+# 1  Prop 0.4837171 0.09211893 0.3031673 0.6642669
+# 2  Tmin 1.2252345 0.22744734 1.0000000 1.6710231
+# 3  Gmin 1.7505582 0.54144924 1.0000000 2.8117792
+
+### Website output: 
+knitr::include_graphics("jl_website_test11a.png")
+
+
+sens_plot(method = "parametric",
+          type="line",
+          q=0.1823216,
+          yr=.4,
+          vyr=0.1^2,
+          t2=0.25,
+          vt2=0.1*(0.25^2),
+          Bmin=1,
+          Bmax=6,
+          sigB=.25,
+          tail="below" )
+
+### R output:
+# Warning message:
+# In sens_plot(method = "parametric", type = "line", q = 0.1823216,  :
+#   Calculating parametric confidence intervals in the plot. For values of Phat that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.
+
+### Website output: 
+knitr::include_graphics("jl_website_test11b.png")
+```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 

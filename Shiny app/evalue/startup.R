@@ -16,6 +16,7 @@ library(MetaUtility)
 library(purrr)
 library(plogr)
 library(dplyr)
+library(boot)
 
 # keeps original error messages
 options(shiny.sanitize.errors = FALSE)
