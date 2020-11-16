@@ -10,6 +10,7 @@ sens_plot(
   q,
   CI.level = 0.95,
   tail = NA,
+  muB.toward.null = FALSE,
   give.CI = TRUE,
   Bmin = log(1),
   Bmax = log(4),
@@ -39,6 +40,8 @@ sens_plot(
 \item{tail}{\code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
 the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.}
 
+\item{muB.toward.null}{Whether you want to consider bias that has on average shifted studies' point estimates away from the null (\code{FALSE}; the default) or that has on average shifted studies' point estimates toward the null (\code{TRUE}). See Details.}
+
 \item{give.CI}{Logical. If \code{TRUE}, a pointwise confidence intervals is plotted.}
 
 \item{Bmin}{Lower limit of lower X-axis on the log scale (only needed if \code{type = "line"}).}
@@ -57,9 +60,9 @@ the proportion of effects below \code{q}. By default, is set to \code{"above"} i
 
 \item{vyr}{Estimated variance of pooled point estimate from confounded meta-analysis (only used if \code{method = "parametric"})}
 
-\item{t2}{Estimated heterogeneity (tau^2) from confounded meta-analysis (only used if \code{method = "parametric"})}
+\item{t2}{Estimated heterogeneity (\eqn{\tau^2}) from confounded meta-analysis (only used if \code{method = "parametric"})}
 
-\item{vt2}{Estimated variance of tau^2 from confounded meta-analysis (only used if \code{method = "parametric"})}
+\item{vt2}{Estimated variance of \eqn{\tau^2} from confounded meta-analysis (only used if \code{method = "parametric"})}
 
 \item{R}{Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}.}
 

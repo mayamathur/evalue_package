@@ -13,7 +13,7 @@ confounded_meta(
   give.CI = TRUE,
   R = 1000,
   muB = NA,
-  B.toward.null = FALSE,
+  muB.toward.null = FALSE,
   dat = NA,
   yi.name = NA,
   vi.name = NA,
@@ -32,7 +32,7 @@ confounded_meta(
 \item{r}{For \code{Tmin} and \code{Gmin}, value to which the proportion of meaningfully strong effect sizes is to be reduced.}
 
 \item{tail}{\code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
-the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.}
+the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method = "parametric"}) or median of the calibrated estimates (\code{method = "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.}
 
 \item{CI.level}{Confidence level as a proportion (e.g., 0.95).}
 
@@ -41,6 +41,8 @@ the proportion of effects below \code{q}. By default, is set to \code{"above"} i
 \item{R}{Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}.}
 
 \item{muB}{Mean bias factor on the log scale across studies (greater than 0). When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. If \code{muB} is not specified, then only \code{Tmin} and \code{Gmin} will be returned, not \code{Prop}.}
+
+\item{muB.toward.null}{Whether you want to consider bias that has on average shifted studies' point estimates away from the null (\code{FALSE}; the default) or that has on average shifted studies' point estimates toward the null (\code{TRUE}). See Details.}
 
 \item{dat}{Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.}
 
@@ -54,15 +56,13 @@ the proportion of effects below \code{q}. By default, is set to \code{"above"} i
 
 \item{vyr}{Estimated variance of pooled point estimate from confounded meta-analysis. Only used if \code{method = "parametric"}.}
 
-\item{t2}{Estimated heterogeneity (tau^2) from confounded meta-analysis. Only used if \code{method = "parametric"}.}
+\item{t2}{Estimated heterogeneity (\eqn{\tau^2}) from confounded meta-analysis. Only used if \code{method = "parametric"}.}
 
-\item{vt2}{Estimated variance of tau^2 from confounded meta-analysis. Only used if \code{method = "parametric"}.}
-
-\item{muB.toward.null}{Whether you want to consider bias that has on average shifted studies' point estimates away from the null (\code{FALSE}; the default) or that has on average shifted studies' point estimates towardd the null (\code{TRUE}). See Details.s}
+\item{vt2}{Estimated variance of \eqn{\tau^2} from confounded meta-analysis. Only used if \code{method = "parametric"}.}
 }
 \description{
-This function implements the sensitivity analyses of Mathur & VanderWeele (2019) and Mathur & VanderWeele (2020). It computes point estimates, standard errors, and confidence interval bounds
-for (1) \code{prop}, the proportion of studies with true causal effect sizes above or below a chosen threshold \code{q} as a function of the bias parameters;
+This function implements the sensitivity analyses of Mathur & VanderWeele (2019) and Mathur & VanderWeele (2020). It computes point estimates, standard errors, and confidence intervals
+for (1) \code{Prop}, the proportion of studies with true causal effect sizes above or below a chosen threshold \code{q} as a function of the bias parameters;
 (2) the minimum bias factor on the relative risk scale (\code{Tmin}) required to reduce to
 less than \code{r} the proportion of studies with true causal effect sizes more extreme than
 \code{q}; and (3) the counterpart to (2) in which bias is parameterized as the minimum
@@ -71,7 +71,7 @@ relative risk for both confounding associations (\code{Gmin}).
 \details{
 \subsection{Specifying the sensitivity parameters on the bias}{
 
-By convention, \code{muB} is taken to be greater than 0 (Mathur & VanderWeele, 2020a; Ding & VanderWeele, 2017). Confounding can operate either away from or toward the null, a choice specified via \code{muB.toward.null}. The most common choice for sensitivity analysis is to consider bias that operates on average away from the null, and this is \code{confounded_meta}'s default. In such an analysis, the pooled point estimate will be shifted back toward the null by \code{muB} to compensate for confounding (i.e., if \code{yr > 0}, it will be corrected downward; if \code{yr < 0}, it will be corrected upward). Alternatively, to consider bias that operates on average away from the null, you would still specify \code{muB > 0} but would also specify \code{muB.toward.null = TRUE}. For detailed guidance on choosing the sensitivity parameters \code{muB} and \code{sigB}, see Section 5 of Mathur & VanderWeele (2019).
+By convention, the average log-bias factor, \code{muB}, is taken to be greater than 0 (Mathur & VanderWeele, 2020a; Ding & VanderWeele, 2017). Confounding can operate on average either away from or toward the null, a choice specified via \code{muB.toward.null}. The most common choice for sensitivity analysis is to consider bias that operates on average away from the null, which is \code{confounded_meta}'s default. In such an analysis, correcting for the bias involves shifting studies' estimates back toward the null by \code{muB} (i.e., if \code{yr > 0}, the estimates will be corrected downward; if \code{yr < 0}, they will be corrected upward). Alternatively, to consider bias that operates on average away from the null, you would still specify \code{muB > 0} but would also specify \code{muB.toward.null = TRUE}. For detailed guidance on choosing the sensitivity parameters \code{muB} and \code{sigB}, see Section 5 of Mathur & VanderWeele (2019).
 }
 
 \subsection{Specifying the threshold \code{q}}{
@@ -81,19 +81,37 @@ For detailed guidance on choosing the threshold \code{q}, see the Supplement of 
 
 \subsection{Specifying the estimation method}{
 
-By default, \code{confounded_meta} performs estimation using a "calibrated" method (Mathur & VanderWeele, 2020b) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{dat}, \code{yi.name}, and \code{vi.name}.
+By default, \code{confounded_meta} performs estimation using a \strong{calibrated method} (Mathur & VanderWeele, 2020b) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified:
+\itemize{
+\item \code{q}
+\item \code{r} (if you want to estimate \code{Tmin} and \code{Gmin})
+\item \code{muB}
+\item \code{dat}
+\item \code{yi.name}
+\item \code{vi.name}
+}
 
-The parametric method that the population effects are approximately normal and that the number of studies is large, and it should only be used when the proportion estimate is between 0.15 and 0.85. Unlike the calibrated method, the parametric method can accommodate bias that is heterogeneous across studies (i.e., log-normal). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{sigB}, \code{yr}, \code{vyr} (if you want confidence intervals), \code{t2}, \code{vt2} (if you want confidence intervals).
+The \strong{parametric method} assumes that the population effects are approximately normal and that the number of studies is large. Parametric confidence intervals should only be used when the proportion estimate is between 0.15 and 0.85 (and \code{confounded_meta} will issue a warning otherwise). Unlike the calibrated method, the parametric method can accommodate bias that is heterogeneous across studies (specifically, bias that is log-normal across studies). When using this method, the following arguments need to be specified:
+\itemize{
+\item \code{q}
+\item \code{r} (if you want to estimate \code{Tmin} and \code{Gmin})
+\item \code{muB}
+\item \code{sigB}
+\item \code{yr}
+\item \code{vyr} (if you want confidence intervals)
+\item \code{t2}
+\item \code{vt2} (if you want confidence intervals)
+}
 }
 
 \subsection{Effect size measures other than log-relative risks}{
 
-If your meta-analysis uses effect sizes other than log-relative risks, you should first approximately convert them to log-relative risks, for example via \code{\link[=convert_measures]{convert_measures()}}.
+If your meta-analysis uses effect sizes other than log-relative risks, you should first approximately convert them to log-relative risks, for example via \code{\link[=convert_measures]{convert_measures()}} and then pass the converted point estimates or meta-analysis estimates to \code{confounded_meta}.
 }
 
 \subsection{When these methods should be used}{
 
-These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate \code{t2} is greater than 0; when instead the estimated heterogeneity is 0, you can simply report E-values for the point estimate via \code{\link[=evalue]{evalue()}} (VanderWeele & Ding, 2017; see Mathur & VanderWeele (2020a), Section 7.2 for interpretation in the meta-analysis context).
+These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate \code{t2} is greater than 0. For meta-analyses with fewer than 10 studies or with a heterogeneity estimate of 0, you can simply report E-values for the point estimate via \code{\link[=evalue]{evalue()}} (VanderWeele & Ding, 2017; see Mathur & VanderWeele (2020a), Section 7.2 for interpretation in the meta-analysis context).
 }
 }
 \examples{
@@ -101,7 +119,6 @@ These methods perform well only in meta-analyses with at least 10 studies; we do
 ##### Using Calibrated Method #####
 d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
                     ci=cpos, di=cneg, data=metafor::dat.bcg)
-
 
 # obtaining all three estimators and inference
 # number of bootstrap iterates
