@@ -30,6 +30,7 @@
 Phat_causal = function( q,
                         B,
                         tail,
+                        muB.toward.null,
                         dat,
                         yi.name,
                         vi.name) {
@@ -41,9 +42,12 @@ Phat_causal = function( q,
                                    sei = sqrt(dat[[vi.name]] ) )
   
   # confounding-adjusted calibrated estimates
-  # always shift the estimates in the direction that will DECREASE the proportion
-  if ( tail == "above" ) calib.t = calib - B
-  if ( tail == "below" ) calib.t = calib +B
+  # bias that went away from null; correction goes toward null
+  if ( median(calib) > 0 & muB.toward.null == FALSE ) calib.t = calib - B
+  if ( median(calib) < 0 & muB.toward.null == FALSE ) calib.t = calib + B
+  # bias that went toward null; correction goes away from null
+  if ( median(calib) > 0 & muB.toward.null == TRUE ) calib.t = calib + B
+  if ( median(calib) < 0 & muB.toward.null == TRUE ) calib.t = calib - B
   
   # confounding-adjusted Phat
   if ( tail == "above" ) Phat.t = mean( calib.t > q )
@@ -103,16 +107,16 @@ Tmin_causal = function( q,
   
   
   # here, check if any shifting is actually needed
-  # current Phat
+  # current Phat with no bias
   Phatc = Phat_causal(q = q,
                       B = 0,
                       tail = tail,
+                      # this doesn't matter because there's no bias yet
+                      muB.toward.null = FALSE,
                       dat = dat,
                       yi.name = yi.name,
                       vi.name = vi.name)
   if ( Phatc <= r ){
-    # this warning is now in confounded_meta
-    #warning("Phat is already less than or equal to r even with no confounding, so Tmin is not applicable. No confounding at all is required to make the specified shift.")
     return(1)
   }
   
@@ -143,6 +147,11 @@ Tmin_causal = function( q,
   # below or above q
   # if multiple calibrated estimates are exactly equal to calib.star, 
   #  all of these will be shifted just below q (if tail == "above")
+  #
+  # because we're taking Tmin to be the (exp) ABOLSUTE difference between 
+  #  the calib estimate that needs to move to q and q itself, Tmin
+  #  will automatically be the bias in whatever direction is needed to
+  #  make the shift
   ( Tmin = exp( abs(calib.star - q) + 0.001 ) )
   
   return(as.numeric(Tmin))
@@ -173,15 +182,17 @@ Tmin_causal = function( q,
 #' 
 #' @param R Number  of  bootstrap  iterates for confidence interval estimation. Only used if \code{method = "calibrated"} and \code{give.CI = TRUE}. 
 #' 
-#' @param muB Mean bias factor on the log scale across studies. When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. If \code{muB} is not specified, then only \code{Tmin} and \code{Gmin} will be returned, not \code{Prop}. 
+#' @param muB Mean bias factor on the log scale across studies (greater than 0). When considering bias that is of homogeneous strength across studies (i.e., \code{method = "calibrated"} or \code{method = "parametric"} with \code{sigB = 0}), \code{muB} represents the log-bias factor in each study. If \code{muB} is not specified, then only \code{Tmin} and \code{Gmin} will be returned, not \code{Prop}. 
+#' 
+#' @param muB.toward.null Whether you want to consider bias that has on average shifted studies' point estimates away from the null (\code{FALSE}; the default) or that has on average shifted studies' point estimates towardd the null (\code{TRUE}). See Details.
 #' 
 #' @param dat Dataframe containing studies' point estimates and variances. Only used if \code{method = "calibrated"}.
-#' @param yi.name Name of variable in \code{dat} containing studies' point estimates. Only used if \code{method = "calibrated"}.
+#' @param yi.name Name of variable in \code{dat} containing studies' point estimates on the log-relative risk scale. Only used if \code{method = "calibrated"}.
 #' @param vi.name Name of variable in \code{dat} containing studies' variance estimates. Only used if \code{method = "calibrated"}.
 #' 
 #' @param sigB Standard deviation of log bias factor across studies. Only used if \code{method = "parametric"}.
 #' 
-#' @param yr Pooled point estimate (on log scale) from confounded meta-analysis. Only used if \code{method = "parametric"}.
+#' @param yr Pooled point estimate (on log-relative risk scale) from confounded meta-analysis. Only used if \code{method = "parametric"}.
 #' 
 #' @param vyr Estimated variance of pooled point estimate from confounded meta-analysis. Only used if \code{method = "parametric"}.
 #' 
@@ -191,11 +202,24 @@ Tmin_causal = function( q,
 #' 
 #' @export
 #' @details
-#' These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. For detailed guidance on implementing and interpreting the sensitivity analyses, see in particular Section 5 of Mathur & VanderWeele (2019) and Section 1.2 of Mathur & VanderWeele (2020)'s Supplement. 
+#' ## Specifying the sensitivity parameters on the bias
+#' By convention, \code{muB} is taken to be greater than 0 (Mathur & VanderWeele, 2020a; Ding & VanderWeele, 2017). Confounding can operate either away from or toward the null, a choice specified via \code{muB.toward.null}. The most common choice for sensitivity analysis is to consider bias that operates on average away from the null, and this is \code{confounded_meta}'s default. In such an analysis, the pooled point estimate will be shifted back toward the null by \code{muB} to compensate for confounding (i.e., if \code{yr > 0}, it will be corrected downward; if \code{yr < 0}, it will be corrected upward). Alternatively, to consider bias that operates on average away from the null, you would still specify \code{muB > 0} but would also specify \code{muB.toward.null = TRUE}. For detailed guidance on choosing the sensitivity parameters \code{muB} and \code{sigB}, see Section 5 of Mathur & VanderWeele (2019).
 #' 
-#' By default, \code{confounded_meta} performs estimation using a "calibrated" method (Mathur & VanderWeele, 2020; Mathur & VanderWeele, 2019) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{dat}, \code{yi.name}, and \code{vi.name}.
+#' ## Specifying the threshold \code{q}
+#' For detailed guidance on choosing the threshold \code{q}, see the Supplement of Mathur & VanderWeele (2019).   
+#' 
+#' ## Specifying the estimation method
+#' By default, \code{confounded_meta} performs estimation using a "calibrated" method (Mathur & VanderWeele, 2020b) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{dat}, \code{yi.name}, and \code{vi.name}.
 #' 
 #' The parametric method that the population effects are approximately normal and that the number of studies is large, and it should only be used when the proportion estimate is between 0.15 and 0.85. Unlike the calibrated method, the parametric method can accommodate bias that is heterogeneous across studies (i.e., log-normal). When using this method, the following arguments need to be specified: \code{q}, \code{r} (if you want to estimate \code{Tmin} and \code{Gmin}), \code{muB}, \code{sigB}, \code{yr}, \code{vyr} (if you want confidence intervals), \code{t2}, \code{vt2} (if you want confidence intervals).
+#' 
+#' ## Effect size measures other than log-relative risks
+#' If your meta-analysis uses effect sizes other than log-relative risks, you should first approximately convert them to log-relative risks, for example via [EValue::convert_measures()] and then pass the converted point estimates or meta-analysis estimates to \code{confounded_meta}. 
+#' 
+#' ## When these methods should be used
+#' These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate \code{t2} is greater than 0; when instead the estimated heterogeneity is 0, you can simply report E-values for the point estimate via [EValue::evalue()] (VanderWeele & Ding, 2017; see Mathur & VanderWeele (2020a), Section 7.2 for interpretation in the meta-analysis context).
+#'  
+#' 
 #' @keywords meta-analysis
 #' @import
 #' metafor
@@ -204,9 +228,15 @@ Tmin_causal = function( q,
 #' boot
 #' 
 #' @references
-#' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+#' Mathur MB & VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
+#' 
+#' Mathur MB & VanderWeele TJ (2020b). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+#' 
+#' Mathur MB & VanderWeele TJ (2019). New statistical metrics for meta-analyses of heterogeneous effects. \emph{Statistics in Medicine}.
 #'
-#' Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses.
+#' Ding P & VanderWeele TJ (2016). Sensitivity analysis without assumptions. \emph{Epidemiology}.
+#' 
+#' VanderWeele TJ & Ding P (2017). Introducing the E-value. \emph{Annals of Internal Medicine}.
 #'
 #' Wang C-C & Lee W-C (2019). A simple method to estimate prediction intervals and
 #' predictive distributions: Summarizing meta-analyses
@@ -216,7 +246,6 @@ Tmin_causal = function( q,
 #' ##### Using Calibrated Method #####
 #' d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
 #'                     ci=cpos, di=cneg, data=metafor::dat.bcg)
-#' 
 #' 
 #' # obtaining all three estimators and inference
 #' # number of bootstrap iterates
@@ -309,6 +338,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                             R = 1000,
                             
                             muB = NA,
+                            muB.toward.null = FALSE,
                             
                             # only for calibrated
                             dat = NA,
@@ -364,13 +394,17 @@ confounded_meta = function( method="calibrated",  # for both methods
       if (vyr < 0) stop("Variance of point estimate cannot be negative")
     }
     
-    if ( ! is.na(vt2) ) {
+    if ( !is.na(vt2) ) {
       if (vt2 < 0) stop("Variance of heterogeneity cannot be negative")
     }
     
     if ( !is.na(sigB) ) {
       if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
       if ( sigB < 0 ) stop("Bias factor standard deviation cannot be negative")
+    }
+    
+    if ( !is.na(muB) & muB < 0 ) {
+      stop("Must have muB > 0. Use the muB.toward.null argument instead if you want to consider bias away from the null. See Details.")
     }
     
     
@@ -384,13 +418,22 @@ confounded_meta = function( method="calibrated",  # for both methods
       warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
     }
     
-    # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
-    # @@make sure Phat_causal is consistent with this
-    if ( yr > log(1) ) {
-      yr.corr = yr - muB
-    } else {
-      yr.corr = yr + muB
-    }
+    # # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
+    # # @@make sure Phat_causal is consistent with this
+    # if ( yr > log(1) ) {
+    #   yr.corr = yr - muB
+    # } else {
+    #   yr.corr = yr + muB
+    # }
+    
+    # bias-corrected mean
+    # usual case: bias shifts away from null, so correction shifts toward null
+    if ( muB.toward.null == FALSE & yr > log(1) ) yr.corr = yr - muB
+    if ( muB.toward.null == FALSE & yr < log(1) ) yr.corr = yr + muB
+    # less-usual case: bias shifts toward null, so correction shifts away from null
+    if ( muB.toward.null == TRUE & yr > log(1) ) yr.corr = yr + muB
+    if ( muB.toward.null == TRUE & yr < log(1) ) yr.corr = yr - muB
+
     
     if ( tail == "above" ) {
       
@@ -516,9 +559,11 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     
     ##### All Three Point Estimates #####
+    #bm
     Phat = Phat_causal( q = q, 
                         B = muB,
                         tail = tail,
+                        muB.toward.null = muB.toward.null,
                         dat = dat,
                         yi.name = yi.name,
                         vi.name = vi.name )
@@ -591,9 +636,15 @@ confounded_meta = function( method="calibrated",  # for both methods
   ##### Messages about Results #####
   if ( exists("Tmin") ) {
     if ( !is.na(Tmin) & Tmin == 1 ) {
-      warning("Phat is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
+      message("Phat is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
+    }
+    #browser()
+    if ( !is.na(Tmin) & muB.toward.null == TRUE ) {
+      message("You chose to consider bias that has on average shifted studies' estimates toward the null, rather than away from the null. This specification was applied when estimating Prop. Because Tmin and Gmin by definition consider the amount of bias required to reduce to less than r the proportion of studies with true causal effect sizes more extreme than q, that bias may be toward or away from the null as required to make the shift.")
     }
   }  
+  
+  
   
   
   ##### Return Results #####

@@ -21,7 +21,7 @@ library(boot)
 # keeps original error messages
 options(shiny.sanitize.errors = FALSE)
 
-source("~/Box Sync/jlee/Maya/evalue/EValue/R/meta-analysis.R")
+#source("~/Box Sync/jlee/Maya/evalue/EValue/R/meta-analysis.R")
 
 
 
