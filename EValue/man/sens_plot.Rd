@@ -38,7 +38,7 @@ sens_plot(
 \item{CI.level}{Pointwise confidence level as a proportion (e.g., 0.95).}
 
 \item{tail}{\code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
-the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method == "parametric"}) or median of the calibrated estimates (\code{method == "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.}
+the proportion of effects below \code{q}. By default, is set to \code{"above"} if the pooled point estimate (\code{method = "parametric"}) or median of the calibrated estimates (\code{method = "calibrated"}) is above 1 on the relative risk scale and is set to \code{"below"} otherwise.}
 
 \item{muB.toward.null}{Whether you want to consider bias that has on average shifted studies' point estimates away from the null (\code{FALSE}; the default) or that has on average shifted studies' point estimates toward the null (\code{TRUE}). See Details.}
 
@@ -83,7 +83,7 @@ true distributions of RRs with a red line marking exp(\code{q}).
 \details{
 This function calls \code{confounded_meta} to get the point estimate and confidence interval at each value of the bias factor. See \code{?confounded_meta} for details.
 
-Note that \code{Bmin} and \code{Bmax} are specified on the log scale for consistency with the \code{muB} argument and with the function \code{confounded_meta}, whereas \code{breaks.x1} and \code{breaks.x2} are specified on the RR scale to facilitate adjustments to the plot appearance.
+Note that \code{Bmin} and \code{Bmax} are specified on the log scale for consistency with the \code{muB} argument and with the function \code{confounded_meta}, whereas \code{breaks.x1} and \code{breaks.x2} are specified on the relative risk scale to facilitate adjustments to the plot appearance.
 }
 \examples{
 
@@ -184,7 +184,7 @@ sens_plot( type="dist",
 \references{
 Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
 
-Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses.
+Mathur MB & VanderWeele TJ (2020). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
 
 Wang C-C & Lee W-C (2019). A simple method to estimate prediction intervals and
 predictive distributions: Summarizing meta-analyses

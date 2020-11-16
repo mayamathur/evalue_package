@@ -1093,7 +1093,7 @@ test_that("Calibrated, test set #2 (causative)", {
 })
 
 
-test_that("Calibrated, test set #3 (exactly 200 estimates; manipulate muB.toward.null)") {
+test_that("Calibrated, test set #3 (exactly 200 estimates; manipulate muB.toward.null)", {
   
   # make data with exactly 200 calibrated estimates so that Tmin and Gmin should exactly hit r
   d = sim_data2( k = 200,
@@ -1173,13 +1173,13 @@ test_that("Calibrated, test set #3 (exactly 200 estimates; manipulate muB.toward
   calib = MetaUtility::calib_ests(yi = d$yi,
                                   sei = sqrt(d$vyi) )
   expect_equal( mean( calib - log(x0$Est[ x0$Value == "Tmin" ]) > q ), 
-        r ) )
+        r ) 
 
 
-}
+})
 
 
-test_that("Calibrated and parametric, test set #4 (exactly 200 estimates; Tmin represents bias AWAY from null)") {
+test_that("Calibrated and parametric, test set #4 (exactly 200 estimates; Tmin represents bias AWAY from null)", {
   
   # make data with exactly 200 calibrated estimates so that Tmin and Gmin should exactly hit r
   d = sim_data2( k = 200,
@@ -1248,7 +1248,7 @@ test_that("Calibrated and parametric, test set #4 (exactly 200 estimates; Tmin r
          sd = sqrt(meta$tau2),
          lower.tail = FALSE ), r )
   
-}
+})
 
 
 
