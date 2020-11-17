@@ -3,12 +3,38 @@
 
 #' An example meta-analysis
 #'
-#' An simple simulated meta-analysis with exponentially distributed population effects. 
+#' A simple simulated meta-analysis of 50 studies with exponentially distributed population effects.
 #'
 #' @docType data
 #' @keywords datasets
+#' @details
+#' The variables are as follows:
+#' \itemize{
+#'   \item \code{est} Point estimate on the log-relative risk scale.
+#'   \item \code{var} Variance of the log-relative risk.
+#' }
 "toyMeta"
 
+
+
+#' A meta-analysis on soy intake and breast cancer risk (Trock et al., 2006)
+#'
+#' A meta-analysis of observational studies (12 case-control and six cohort or nested case-control) on the association of soy-food intake with breast cancer risk. Data are from Trock et al.'s (2006) Table 1. This dataset was used as the applied example in Mathur & VanderWeele (2020). 
+#'
+#' @docType data
+#' @keywords datasets
+#' @references 
+#' Trock BJ, Hilakivi-Clarke L, Clark R (2006). Meta-analysis of soy intake and breast cancer risk. \emph{Journal of the National Cancer Institute}.
+#' 
+#' Mathur MB & VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
+#' @details
+#' The variables are as follows:
+#' \itemize{
+#'\item \code{author} Last name of the study's first author.
+#'   \item \code{est} Point estimate on the log-relative risk or log-odds ratio scale.
+#'   \item \code{var} Variance of the log-relative risk or log-odds ratio.
+#' }
+"soyMeta"
 
 
 ############################ META-ANALYSIS FUNCTIONS ############################ 
@@ -369,7 +395,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                             vyr = NA,
                             t2 = NA,
                             vt2 = NA
-                           ) {
+) {
   
   
   # # test only
@@ -451,7 +477,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     # less-usual case: bias that went toward null, so correction shifts away from null
     if ( muB.toward.null == TRUE & yr > log(1) ) yr.corr = yr + muB
     if ( muB.toward.null == TRUE & yr < log(1) ) yr.corr = yr - muB
-
+    
     
     if ( tail == "above" ) {
       
@@ -519,7 +545,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       lo.Phat = max( 0, Phat + qnorm( tail.prob )*SE.Phat )
       hi.Phat = min( 1, Phat - qnorm( tail.prob )*SE.Phat )
       
-     
+      
       # warn if bootstrapping needed
       if ( Phat < 0.15 | Phat > 0.85 ) warning('Phat is close to 0 or 1. We recommend choosing method = \"calibrated\" or alternatively using bias-corrected and accelerated bootstrapping to estimate all inference in this case.')
       
@@ -559,7 +585,7 @@ confounded_meta = function( method="calibrated",  # for both methods
   
   ##### CALIBRATED #####
   if( method == "calibrated" ){
-  
+    
     # no need to catch bad input for this method
     
     # if tail isn't provided, assume user wants the more extreme one (away from the null)
@@ -625,7 +651,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       if ( any( is.na( c(lo.Phat, hi.Phat, SE.Phat) ) ) ) {
         message("The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.")
       }
-
+      
       Tmin.Gmin.CI.lims = Tmin_Gmin_CI_lims( R,
                                              q,
                                              r,
@@ -634,7 +660,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                                              yi.name,
                                              vi.name,
                                              CI.level )
-
+      
       lo.T = as.numeric( Tmin.Gmin.CI.lims["lo.T"] )
       hi.T = as.numeric( Tmin.Gmin.CI.lims["hi.T"] )
       SE.T = as.numeric( Tmin.Gmin.CI.lims["SE.T"] )
@@ -965,18 +991,18 @@ sens_plot = function(method="calibrated",
     
     colors=c("black", "orange")
     
-  #browser()
+    #browser()
     p = ggplot2::ggplot( data = temp, aes(x=val, group=group ) ) +
       
-                            geom_density( aes( x=val, fill=group ), alpha=0.4 ) +
-                            theme_bw() +
+      geom_density( aes( x=val, fill=group ), alpha=0.4 ) +
+      theme_bw() +
       xlab("Study-specific relative risks") +
-                            ylab("") +
+      ylab("") +
       guides(fill=guide_legend(title=" ")) +
-                            scale_fill_manual(values=colors) +
-                            geom_vline( xintercept = exp(q), lty=2, color="red" ) +
-                            scale_x_continuous( limits=c(x.min, x.max), breaks = seq( round(x.min), round(x.max), 0.5) ) +
-                            ggtitle("Observed and true relative risk distributions") 
+      scale_fill_manual(values=colors) +
+      geom_vline( xintercept = exp(q), lty=2, color="red" ) +
+      scale_x_continuous( limits=c(x.min, x.max), breaks = seq( round(x.min), round(x.max), 0.5) ) +
+      ggtitle("Observed and true relative risk distributions") 
     
     graphics::plot(p)
   }
@@ -1012,24 +1038,24 @@ sens_plot = function(method="calibrated",
         # suppress warnings about Phat being close to 0 or 1
         #browser()
         cm = suppressWarnings( suppressMessages( confounded_meta( method = method,
-                                                q = q,
-                                                r = NA,
-                                                muB=t$B[i],
-                                                sigB=sigB,
-                                                yr=yr,
-                                                vyr=vyr,
-                                                t2=t2,
-                                                vt2=vt2,
-                                                CI.level=CI.level,
-                                                tail=tail,
-                                                muB.toward.null = muB.toward.null) ) )
+                                                                  q = q,
+                                                                  r = NA,
+                                                                  muB=t$B[i],
+                                                                  sigB=sigB,
+                                                                  yr=yr,
+                                                                  vyr=vyr,
+                                                                  t2=t2,
+                                                                  vt2=vt2,
+                                                                  CI.level=CI.level,
+                                                                  tail=tail,
+                                                                  muB.toward.null = muB.toward.null) ) )
         
         t$phat[i] = cm$Est[ cm$Value=="Prop" ]
         t$lo[i] = cm$CI.lo[ cm$Value=="Prop" ]
         t$hi[i] = cm$CI.hi[ cm$Value=="Prop" ]
       }
       
-
+      
       p = ggplot2::ggplot( t, aes(x=eB,
                                   y=phat ) ) +
         theme_bw() +
@@ -1093,7 +1119,7 @@ sens_plot = function(method="calibrated",
         diffs = c( 1, diff(res$Phat) )  
         res.short = res[ diffs != 0, ]
         
- 
+        
         # bootstrap a CI for each entry in res.short
         #browser()
         res.short = res.short %>% rowwise() %>%
@@ -1112,7 +1138,7 @@ sens_plot = function(method="calibrated",
         
         res = res %>% rename( B = B.x )
         
-  
+        
         ##### Warnings About Missing CIs Due to Boot Failures #####
         # if ALL CI limits are missing
         if ( all( is.na(res$lo) ) ) {
@@ -1137,7 +1163,7 @@ sens_plot = function(method="calibrated",
         
       }
       
-
+      
       #bm
       p = ggplot2::ggplot( data = res,
                            aes( x = exp(B),
@@ -1248,14 +1274,14 @@ Phat_CI_lims = function(.B,
 # @put as separate internal fn
 #bm
 Tmin_Gmin_CI_lims = function(
-                        R,
-                        q,
-                        r,
-                        tail,
-                        dat,
-                        yi.name,
-                        vi.name,
-                        CI.level) {
+  R,
+  q,
+  r,
+  tail,
+  dat,
+  yi.name,
+  vi.name,
+  CI.level) {
   
   tryCatch({
     boot.res = suppressWarnings( boot( data = dat,

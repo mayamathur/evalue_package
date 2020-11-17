@@ -11,6 +11,13 @@ An object of class \code{data.frame} with 50 rows and 2 columns.
 toyMeta
 }
 \description{
-An simple simulated meta-analysis with exponentially distributed population effects.
+A simple simulated meta-analysis of 50 studies with exponentially distributed population effects.
+}
+\details{
+The variables are as follows:
+\itemize{
+\item \code{est} Point estimate on the log-relative risk scale.
+\item \code{var} Variance of the log-relative risk.
+}
 }
 \keyword{datasets}
