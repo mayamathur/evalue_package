@@ -7,10 +7,10 @@ Authors@R: c(
     person("Louisa H.", "Smith", role = "aut"),
     person("Peng", "Ding", role = "aut"),
     person("Tyler J.", "VanderWeele", role = "aut"))
-Description: Conducts sensitivity analyses for unmeasured confounding in individual studies and in meta-analyses and for multiple biases (confounding, selection bias, and measurement error) in single studies.  
+Description: Conducts sensitivity analyses for unmeasured confounding,selection bias, and measurement error (individually or in combination) in individual studies. Also conducts sensitivity analyses for unmeasured confounding in meta-analyses.  
 LazyData: true
 License: GPL-2
-Imports: stats, graphics, ggplot2 (>= 2.2.1), metafor, msm, devtools, methods, boot, MetaUtility, dplyr
+Imports: stats, graphics, ggplot2 (>= 2.2.1), metafor, methods, boot, MetaUtility, dplyr
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
