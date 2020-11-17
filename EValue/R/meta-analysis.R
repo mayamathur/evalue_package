@@ -1,187 +1,5 @@
 
-############################ EXAMPLE DATASETS ############################ 
-
-#' An example meta-analysis
-#'
-#' A simple simulated meta-analysis of 50 studies with exponentially distributed population effects.
-#'
-#' @docType data
-#' @keywords datasets
-#' @details
-#' The variables are as follows:
-#' \itemize{
-#'   \item \code{est} Point estimate on the log-relative risk scale.
-#'   \item \code{var} Variance of the log-relative risk.
-#' }
-"toyMeta"
-
-
-
-#' A meta-analysis on soy intake and breast cancer risk (Trock et al., 2006)
-#'
-#' A meta-analysis of observational studies (12 case-control and six cohort or nested case-control) on the association of soy-food intake with breast cancer risk. Data are from Trock et al.'s (2006) Table 1. This dataset was used as the applied example in Mathur & VanderWeele (2020). 
-#'
-#' @docType data
-#' @keywords datasets
-#' @references 
-#' Trock BJ, Hilakivi-Clarke L, Clark R (2006). Meta-analysis of soy intake and breast cancer risk. \emph{Journal of the National Cancer Institute}.
-#' 
-#' Mathur MB & VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
-#' @details
-#' The variables are as follows:
-#' \itemize{
-#'\item \code{author} Last name of the study's first author.
-#'   \item \code{est} Point estimate on the log-relative risk or log-odds ratio scale.
-#'   \item \code{var} Variance of the log-relative risk or log-odds ratio.
-#' }
-"soyMeta"
-
-
-############################ META-ANALYSIS FUNCTIONS ############################ 
-
-#' Proportion of studies with causal effects above or below q
-#'
-#' An internal function that estimates the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call \code{confounded_meta} instead.
-#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
-#' @param B Single value of bias factor (log scale)
-
-#' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
-#' the proportion of effects below \code{q}.
-#' @param muB.toward.null Whether you want to consider bias that has on average shifted studies' point estimates away from the null (\code{FALSE}; the default) or that has on average shifted studies' point estimates toward the null (\code{TRUE}). See Details.
-#' @param dat Dataframe containing studies' point estimates and variances
-#' @param yi.name Name of variable in \code{dat} containing studies' point estimates
-#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates
-#' @import
-#' boot 
-#' @noRd
-Phat_causal = function( q,
-                        B,
-                        tail,
-                        muB.toward.null,
-                        dat,
-                        yi.name,
-                        vi.name) {
-  
-  if ( ! yi.name %in% names(dat) ) stop("dat does not contain a column named yi.name")
-  if ( ! vi.name %in% names(dat) ) stop("dat does not contain a column named vi.name")
-  
-  calib = MetaUtility::calib_ests( yi = dat[[yi.name]],
-                                   sei = sqrt(dat[[vi.name]] ) )
-  #browser()
-  # confounding-adjusted calibrated estimates
-  # bias that went away from null, so correction goes toward null
-  if ( median(calib) > 0 & muB.toward.null == FALSE ) calib.t = calib - B
-  if ( median(calib) < 0 & muB.toward.null == FALSE ) calib.t = calib + B
-  # bias that went toward null, so correction goes away from null
-  if ( median(calib) > 0 & muB.toward.null == TRUE ) calib.t = calib + B
-  if ( median(calib) < 0 & muB.toward.null == TRUE ) calib.t = calib - B
-  
-  # confounding-adjusted Phat
-  if ( tail == "above" ) Phat.t = mean( calib.t > q )
-  if ( tail == "below" ) Phat.t = mean( calib.t < q )
-  
-  return(Phat.t)
-}
-
-
-
-#' Transformation from bias factor to confounding strength scale
-#'
-#' An internal function. 
-#' @param x Bias factor (RR scale) to be transformed
-#' @noRd
-g = Vectorize( function(x) {
-  # define transformation in a way that is monotonic over the effective range of B (>1)
-  # to avoid ggplot errors in sens_plot
-  # helper function for confounded_meta
-  if (x < 1) return( x / 1e10 )
-  x + sqrt( x^2 - x )
-} )
-
-
-
-#' Minimum common bias factor to reduce proportion of studies with causal effects above or below q t less than r
-#'
-#' An internal function that estimates; users should call \code{confounded_meta} instead.
-#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
-#' @param r Value to which the proportion of strong effect sizes is to be reduced
-#' @param tail \code{above} for the proportion of effects above \code{q}; \code{below} for
-#' the proportion of effects below \code{q}.
-#' @param dat Dataframe containing studies' point estimates and variances
-#' @param yi.name Name of variable in \code{dat} containing studies' point estimates
-#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates
-#' @import
-#' MetaUtility 
-#' @noRd
-Tmin_causal = function( q,
-                        r,
-                        tail,
-                        
-                        dat,
-                        yi.name,
-                        vi.name ) {
-  
-  # # test only
-  # dat = d
-  # calib.temp = MetaUtility::calib_ests(yi = d$yi,
-  #                                      sei = sqrt(d$vyi))
-  # q = quantile(calib.temp, 0.8)
-  # r = 0.3
-  # yi.name = "yi"
-  # vi.name = "vyi"
-  # tail = "above"
-  
-  
-  # here, check if any shifting is actually needed
-  # current Phat with no bias
-  Phatc = Phat_causal(q = q,
-                      B = 0,
-                      tail = tail,
-                      # this doesn't matter because there's no bias yet
-                      muB.toward.null = FALSE,
-                      dat = dat,
-                      yi.name = yi.name,
-                      vi.name = vi.name)
-  if ( Phatc <= r ){
-    return(1)
-  }
-  
-  # evaluate the ECDF of the unshifted calib at those calib themselves
-  #  to get the possible values that Phat can take
-  #  this approach handles ties
-  calib = sort( calib_ests( yi = dat[[yi.name]], sei = sqrt(dat[[vi.name]]) ) )
-  Phat.options = unique( ecdf(calib)(calib) )
-  # always possible to choose 0
-  Phat.options = c(Phat.options, 0)
-  
-  # of Phats that are <= r, find the largest one (i.e., closest to r)
-  Phat.target = max( Phat.options[ Phat.options <= r ] ) 
-  
-  
-  # find calib.star, the calibrated estimate that needs to move to q
-  # example for tail == "above":
-  # calib.star is the largest calibrated estimate that needs to move to just
-  #  BELOW q after shifting
-  # k * Phat.target is the number of calibrated estimates that should remain
-  #  ABOVE q after shifting
-  k = length(calib)
-  if ( tail == "above" ) calib.star = calib[ k - (k * Phat.target) ]
-  if ( tail == "below" ) calib.star = calib[ (k * Phat.target) + 1 ]
-  
-  # pick the bias factor that shifts calib.star to q
-  #  and then add a tiny bit (0.001) to shift calib.star to just
-  # below or above q
-  # if multiple calibrated estimates are exactly equal to calib.star, 
-  #  all of these will be shifted just below q (if tail == "above")
-  #
-  # because we're taking Tmin to be the (exp) ABOLSUTE difference between 
-  #  the calib estimate that needs to move to q and q itself, Tmin
-  #  will automatically be the bias in whatever direction is needed to
-  #  make the shift
-  ( Tmin = exp( abs(calib.star - q) + 0.001 ) )
-  
-  return(as.numeric(Tmin))
-}
+############################ MAIN FUNCTIONS ############################ 
 
 
 #' Sensitivity analysis for unmeasured confounding in meta-analyses
@@ -229,13 +47,13 @@ Tmin_causal = function( q,
 #' @export
 #' @details
 #' ## Specifying the sensitivity parameters on the bias
-#' By convention, the average log-bias factor, \code{muB}, is taken to be greater than 0 (Mathur & VanderWeele, 2020a; Ding & VanderWeele, 2017). Confounding can operate on average either away from or toward the null, a choice specified via \code{muB.toward.null}. The most common choice for sensitivity analysis is to consider bias that operates on average away from the null, which is \code{confounded_meta}'s default. In such an analysis, correcting for the bias involves shifting studies' estimates back toward the null by \code{muB} (i.e., if \code{yr > 0}, the estimates will be corrected downward; if \code{yr < 0}, they will be corrected upward). Alternatively, to consider bias that operates on average away from the null, you would still specify \code{muB > 0} but would also specify \code{muB.toward.null = TRUE}. For detailed guidance on choosing the sensitivity parameters \code{muB} and \code{sigB}, see Section 5 of Mathur & VanderWeele (2019).
+#' By convention, the average log-bias factor, \code{muB}, is taken to be greater than 0 (Mathur & VanderWeele, 2019; Ding & VanderWeele, 2017). Confounding can operate on average either away from or toward the null, a choice specified via \code{muB.toward.null}. The most common choice for sensitivity analysis is to consider bias that operates on average away from the null, which is \code{confounded_meta}'s default. In such an analysis, correcting for the bias involves shifting studies' estimates back toward the null by \code{muB} (i.e., if \code{yr > 0}, the estimates will be corrected downward; if \code{yr < 0}, they will be corrected upward). Alternatively, to consider bias that operates on average away from the null, you would still specify \code{muB > 0} but would also specify \code{muB.toward.null = TRUE}. For detailed guidance on choosing the sensitivity parameters \code{muB} and \code{sigB}, see Section 5 of Mathur & VanderWeele (2019).
 #' 
 #' ## Specifying the threshold \code{q}
 #' For detailed guidance on choosing the threshold \code{q}, see the Supplement of Mathur & VanderWeele (2019).   
 #' 
 #' ## Specifying the estimation method
-#' By default, \code{confounded_meta} performs estimation using a \strong{calibrated method} (Mathur & VanderWeele, 2020b) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified:
+#' By default, \code{confounded_meta} performs estimation using a \strong{calibrated method} (Mathur & VanderWeele, 2020) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified:
 #' \itemize{
 #'  \item \code{q}
 #'  \item \code{r} (if you want to estimate \code{Tmin} and \code{Gmin})
@@ -262,7 +80,7 @@ Tmin_causal = function( q,
 #' If your meta-analysis uses effect sizes other than log-relative risks, you should first approximately convert them to log-relative risks, for example via [EValue::convert_measures()] and then pass the converted point estimates or meta-analysis estimates to \code{confounded_meta}. 
 #' 
 #' ## When these methods should be used
-#' These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate \code{t2} is greater than 0. For meta-analyses with fewer than 10 studies or with a heterogeneity estimate of 0, you can simply report E-values for the point estimate via [EValue::evalue()] (VanderWeele & Ding, 2017; see Mathur & VanderWeele (2020a), Section 7.2 for interpretation in the meta-analysis context).
+#' These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate \code{t2} is greater than 0. For meta-analyses with fewer than 10 studies or with a heterogeneity estimate of 0, you can simply report E-values for the point estimate via [EValue::evalue()] (VanderWeele & Ding, 2017; see Mathur & VanderWeele (2019), Section 7.2 for interpretation in the meta-analysis context).
 #'  
 #' 
 #' @keywords meta-analysis
@@ -273,9 +91,9 @@ Tmin_causal = function( q,
 #' boot
 #' 
 #' @references
-#' Mathur MB & VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
+#' Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
 #' 
-#' Mathur MB & VanderWeele TJ (2020b). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+#' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
 #' 
 #' Mathur MB & VanderWeele TJ (2019). New statistical metrics for meta-analyses of heterogeneous effects. \emph{Statistics in Medicine}.
 #'
@@ -421,7 +239,6 @@ confounded_meta = function( method="calibrated",  # for both methods
   
   if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
   
-  # @@depending on choice about muB parameterization, stop if muB < 0
   
   ##### PARAMETRIC #####
   if (method=="parametric"){
@@ -461,14 +278,6 @@ confounded_meta = function( method="calibrated",  # for both methods
       tail = ifelse( yr > log(1), "above", "below" )
       warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
     }
-    
-    # # bias-corrected mean depends on whether yr is causative, NOT on the desired tail
-    # # @@make sure Phat_causal is consistent with this
-    # if ( yr > log(1) ) {
-    #   yr.corr = yr - muB
-    # } else {
-    #   yr.corr = yr + muB
-    # }
     
     # bias-corrected mean
     # usual case: bias that went away from null, so correction shifts toward null
@@ -603,7 +412,6 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     
     ##### All Three Point Estimates #####
-    #bm
     Phat = Phat_causal( q = q, 
                         B = muB,
                         tail = tail,
@@ -682,7 +490,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     if ( !is.na(Tmin) & Tmin == 1 ) {
       message("Prop is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
     }
-    #browser()
+    
     if ( !is.na(Tmin) & muB.toward.null == TRUE ) {
       message("You chose to consider bias that has on average shifted studies' estimates toward the null, rather than away from the null. This specification was applied when estimating Prop. However, because Tmin and Gmin by definition consider the amount of bias required to reduce to less than r the proportion of studies with true causal effect sizes more extreme than q, that bias may be toward or away from the null as required to make the shift.")
     }
@@ -926,37 +734,6 @@ sens_plot = function(method="calibrated",
   
   val = group = eB = phat = lo = hi = B = B.x = Phat = NULL
   
-  ##### Warn About Unusued Args #####
-  
-  # # @@problem: arguments that have defaults
-  # 
-  # # arguments that are ONLY used for a certain type/method
-  # line.param.args = c(  "sigB",
-  #                       "yr",
-  #                       "vyr",
-  #                       "t2",
-  #                       "vt2" )
-  # 
-  # line.calib.args = c( "dat",
-  #                      "yi.name",
-  #                      "vi.name" )
-  # 
-  # if ( !( type  == "line" & method == "parametric" ) ) {
-  #   # find arguments that won't be used, yet were specified
-  #   useless = line.param.args[ vapply(x, FUN = exists, FUN.VALUE = 0) ]
-  # }
-  # 
-  # if ( !( type  == "line" & method == "calibrated" ) ) {
-  #   # find arguments that won't be used, yet were specifie
-  #   useless = line.calib.args[ vapply(x, FUN = exists, FUN.VALUE = 0) ]
-  # }
-  # 
-  # if ( length(useless) > 0 ){ 
-  #   message( paste( "Given your choice of type and method, the following arguments you passed were ignored:",
-  #                                                paste( useless, collapse = ", " ) ) )
-  # }
-  # 
-  
   ##### Distribution Plot ######
   if ( type=="dist" ) {
     
@@ -984,14 +761,10 @@ sens_plot = function(method="calibrated",
     
     # cut the dataframe to match axis limits
     # avoids warnings from stat_density about non-finite values being removed
-    # @@example of line that produce "no visible binding" error
-    # as.data.frame to avoid "`data` must be a data frame" error in check(), 
-    #  even though it doesn't occur when 
     temp = temp[ temp$val >= x.min & temp$val <= x.max, ]
     
     colors=c("black", "orange")
     
-    #browser()
     p = ggplot2::ggplot( data = temp, aes(x=val, group=group ) ) +
       
       geom_density( aes( x=val, fill=group ), alpha=0.4 ) +
@@ -1036,7 +809,6 @@ sens_plot = function(method="calibrated",
       for ( i in 1:dim(t)[1] ) {
         # r is irrelevant here
         # suppress warnings about Phat being close to 0 or 1
-        #browser()
         cm = suppressWarnings( suppressMessages( confounded_meta( method = method,
                                                                   q = q,
                                                                   r = NA,
@@ -1121,7 +893,6 @@ sens_plot = function(method="calibrated",
         
         
         # bootstrap a CI for each entry in res.short
-        #browser()
         res.short = res.short %>% rowwise() %>%
           mutate( Phat_CI_lims(.B = B,
                                R = R,
@@ -1163,9 +934,7 @@ sens_plot = function(method="calibrated",
         
       }
       
-      
-      #bm
-      p = ggplot2::ggplot( data = res,
+        p = ggplot2::ggplot( data = res,
                            aes( x = exp(B),
                                 y = Phat ) ) +
         theme_bw() +
@@ -1198,23 +967,138 @@ sens_plot = function(method="calibrated",
   } ## closes type=="line"
 } ## closes sens_plot function
 
+############################ INTERNAL FUNCTIONS ############################ 
+
+#' Proportion of studies with causal effects above or below q
+#'
+#' An internal function that estimates the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call \code{confounded_meta} instead.
+#' @import
+#' boot 
+#' @noRd
+Phat_causal = function( q,
+                        B,
+                        tail,
+                        muB.toward.null,
+                        dat,
+                        yi.name,
+                        vi.name) {
+  
+  if ( ! yi.name %in% names(dat) ) stop("dat does not contain a column named yi.name")
+  if ( ! vi.name %in% names(dat) ) stop("dat does not contain a column named vi.name")
+  
+  calib = MetaUtility::calib_ests( yi = dat[[yi.name]],
+                                   sei = sqrt(dat[[vi.name]] ) )
+  # confounding-adjusted calibrated estimates
+  # bias that went away from null, so correction goes toward null
+  if ( median(calib) > 0 & muB.toward.null == FALSE ) calib.t = calib - B
+  if ( median(calib) < 0 & muB.toward.null == FALSE ) calib.t = calib + B
+  # bias that went toward null, so correction goes away from null
+  if ( median(calib) > 0 & muB.toward.null == TRUE ) calib.t = calib + B
+  if ( median(calib) < 0 & muB.toward.null == TRUE ) calib.t = calib - B
+  
+  # confounding-adjusted Phat
+  if ( tail == "above" ) Phat.t = mean( calib.t > q )
+  if ( tail == "below" ) Phat.t = mean( calib.t < q )
+  
+  return(Phat.t)
+}
 
 
 
-# @put as separate internal fn
+#' Transformation from bias factor to confounding strength scale
+#'
+#' An internal function. 
+#' @noRd
+g = Vectorize( function(x) {
+  # define transformation in a way that is monotonic over the effective range of B (>1)
+  # to avoid ggplot errors in sens_plot
+  # helper function for confounded_meta
+  if (x < 1) return( x / 1e10 )
+  x + sqrt( x^2 - x )
+} )
+
+
+
+#' Minimum common bias factor to reduce proportion of studies with causal effects above or below q t less than r
+#'
+#' An internal function that estimates; users should call \code{confounded_meta} instead.
+#' @import
+#' MetaUtility 
+#' @noRd
+Tmin_causal = function( q,
+                        r,
+                        tail,
+                        
+                        dat,
+                        yi.name,
+                        vi.name ) {
+  
+  # # test only
+  # dat = d
+  # calib.temp = MetaUtility::calib_ests(yi = d$yi,
+  #                                      sei = sqrt(d$vyi))
+  # q = quantile(calib.temp, 0.8)
+  # r = 0.3
+  # yi.name = "yi"
+  # vi.name = "vyi"
+  # tail = "above"
+  
+  
+  # here, check if any shifting is actually needed
+  # current Phat with no bias
+  Phatc = Phat_causal(q = q,
+                      B = 0,
+                      tail = tail,
+                      # this doesn't matter because there's no bias yet
+                      muB.toward.null = FALSE,
+                      dat = dat,
+                      yi.name = yi.name,
+                      vi.name = vi.name)
+  if ( Phatc <= r ){
+    return(1)
+  }
+  
+  # evaluate the ECDF of the unshifted calib at those calib themselves
+  #  to get the possible values that Phat can take
+  #  this approach handles ties
+  calib = sort( calib_ests( yi = dat[[yi.name]], sei = sqrt(dat[[vi.name]]) ) )
+  Phat.options = unique( ecdf(calib)(calib) )
+  # always possible to choose 0
+  Phat.options = c(Phat.options, 0)
+  
+  # of Phats that are <= r, find the largest one (i.e., closest to r)
+  Phat.target = max( Phat.options[ Phat.options <= r ] ) 
+  
+  
+  # find calib.star, the calibrated estimate that needs to move to q
+  # example for tail == "above":
+  # calib.star is the largest calibrated estimate that needs to move to just
+  #  BELOW q after shifting
+  # k * Phat.target is the number of calibrated estimates that should remain
+  #  ABOVE q after shifting
+  k = length(calib)
+  if ( tail == "above" ) calib.star = calib[ k - (k * Phat.target) ]
+  if ( tail == "below" ) calib.star = calib[ (k * Phat.target) + 1 ]
+  
+  # pick the bias factor that shifts calib.star to q
+  #  and then add a tiny bit (0.001) to shift calib.star to just
+  # below or above q
+  # if multiple calibrated estimates are exactly equal to calib.star, 
+  #  all of these will be shifted just below q (if tail == "above")
+  #
+  # because we're taking Tmin to be the (exp) ABOLSUTE difference between 
+  #  the calib estimate that needs to move to q and q itself, Tmin
+  #  will automatically be the bias in whatever direction is needed to
+  #  make the shift
+  ( Tmin = exp( abs(calib.star - q) + 0.001 ) )
+  
+  return(as.numeric(Tmin))
+}
 
 
 #' CI for proportion of studies with causal effects above or below q
 #'
 #' An internal function that estimates a CI for the proportion of studies with true effect sizes above or below \code{q} given the bias factor \code{B}. Users should call \code{confounded_meta} instead.
-#' @param q True causal effect size chosen as the threshold for a meaningfully large effect
-#' @param .B Single value of bias factor (log scale)
-#' @param tail \code{"above"} for the proportion of effects above \code{q}; \code{"below"} for
-#' the proportion of effects below \code{q}.
-#' @param muB.toward.null Whether you want to consider bias that has on average shifted studies' point estimates away from the null (\code{FALSE}; the default) or that has on average shifted studies' point estimates toward the null (\code{TRUE}). See Details.
-#' @param dat Dataframe containing studies' point estimates and variances
-#' @param yi.name Name of variable in \code{dat} containing studies' point estimates
-#' @param vi.name Name of variable in \code{dat} containing studies' variance estimates
 #' @import
 #' boot 
 #' @noRd
@@ -1271,8 +1155,12 @@ Phat_CI_lims = function(.B,
 
 
 
-# @put as separate internal fn
-#bm
+#' CI for Tmin and Gmini
+#'
+#' An internal function that estimates a CI for Tmin and Gmin. Users should call \code{confounded_meta} instead.
+#' @import
+#' boot 
+#' @noRd
 Tmin_Gmin_CI_lims = function(
   R,
   q,
@@ -1337,6 +1225,56 @@ Tmin_Gmin_CI_lims = function(
   # return as data frame to play well with rowwise() and mutate()
   return( data.frame( lo.T, hi.T, SE.T, lo.G, hi.G, SE.G ) )
 }
+
+
+
+############################ EXAMPLE DATASETS ############################ 
+
+#' An example meta-analysis
+#'
+#' A simple simulated meta-analysis of 50 studies with exponentially distributed population effects.
+#'
+#' @docType data
+#' @keywords datasets
+#' @details
+#' The variables are as follows:
+#' \itemize{
+#'   \item \code{est} Point estimate on the log-relative risk scale.
+#'   \item \code{var} Variance of the log-relative risk.
+#' }
+"toyMeta"
+
+
+
+#' A meta-analysis on soy intake and breast cancer risk (Trock et al., 2006)
+#'
+#' A meta-analysis of observational studies (12 case-control and six cohort or nested case-control) on the association of soy-food intake with breast cancer risk. Data are from Trock et al.'s (2006) Table 1. This dataset was used as the applied example in Mathur & VanderWeele (2019). 
+#'
+#' @docType data
+#' @keywords datasets
+#' @references 
+#' Trock BJ, Hilakivi-Clarke L, Clark R (2006). Meta-analysis of soy intake and breast cancer risk. \emph{Journal of the National Cancer Institute}.
+#' 
+#' Mathur MB & VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
+#' @details
+#' The variables are as follows:
+#' \itemize{
+#'\item \code{author} Last name of the study's first author.
+#'   \item \code{est} Point estimate on the log-relative risk or log-odds ratio scale.
+#'   \item \code{var} Variance of the log-relative risk or log-odds ratio.
+#' }
+"soyMeta"
+
+
+############################ META-ANALYSIS FUNCTIONS ############################ 
+
+
+
+
+
+
+
+
 
 
 

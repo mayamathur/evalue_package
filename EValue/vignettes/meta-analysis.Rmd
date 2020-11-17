@@ -13,12 +13,12 @@ comment = "#>",
 class.output = "output",
 class.message = "message"
 )
-#library(EValue)
-# TEMP ONLY
-setwd("~/Dropbox/Personal computer/Independent studies/EValue package/evalue_package_git/EValue/data")
-load("soyMeta.RData")
-setwd("~/Dropbox/Personal computer/Independent studies/EValue package/evalue_package_git/EValue/R")
-source("meta-analysis.R")
+library(EValue)
+# # TEMP ONLY
+# setwd("~/Dropbox/Personal computer/Independent studies/EValue package/evalue_package_git/EValue/data")
+# load("soyMeta.RData")
+# setwd("~/Dropbox/Personal computer/Independent studies/EValue package/evalue_package_git/EValue/R")
+# source("meta-analysis.R")
 
 library(metafor)
 library(ggplot2)
