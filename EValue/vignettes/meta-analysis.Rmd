@@ -1,5 +1,5 @@
 ---
-title: "E-values for meta-analysis"
+title: "Unmeasured confounding in meta-analysis"
 vignette: >
   %\VignetteIndexEntry{E-values for meta-analysis}
   %\VignetteEngine{knitr::rmarkdown}
@@ -13,8 +13,9 @@ knitr::opts_chunk$set(
   class.output = "output",
   class.message = "message"
 )
+library(EValue)
 ```
 
 ```{r setup}
-library(EValue)
+
 ```
