@@ -11,7 +11,7 @@ An object of class \code{data.frame} with 20 rows and 3 columns.
 soyMeta
 }
 \description{
-A meta-analysis of observational studies (12 case-control and six cohort or nested case-control) on the association of soy-food intake with breast cancer risk. Data are from Trock et al.'s (2006) Table 1.
+A meta-analysis of observational studies (12 case-control and six cohort or nested case-control) on the association of soy-food intake with breast cancer risk. Data are from Trock et al.'s (2006) Table 1. This dataset was used as the applied example in Mathur & VanderWeele (2020).
 }
 \details{
 The variables are as follows:
@@ -23,5 +23,7 @@ The variables are as follows:
 }
 \references{
 Trock BJ, Hilakivi-Clarke L, Clark R (2006). Meta-analysis of soy intake and breast cancer risk. \emph{Journal of the National Cancer Institute}.
+
+Mathur MB & VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
 }
 \keyword{datasets}

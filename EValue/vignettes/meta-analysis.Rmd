@@ -1,21 +1,111 @@
 ---
-title: "Unmeasured confounding in meta-analysis"
+title: "Unmeasured confounding in meta-analyses"
 vignette: >
-  %\VignetteIndexEntry{E-values for meta-analysis}
+  %\VignetteIndexEntry{Unmeasured confounding in meta-analyses}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
+  
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  class.output = "output",
-  class.message = "message"
+collapse = TRUE,
+comment = "#>",
+class.output = "output",
+class.message = "message"
 )
-library(EValue)
+#library(EValue)
+# TEMP ONLY
+setwd("~/Dropbox/Personal computer/Independent studies/EValue package/evalue_package_git/EValue/data")
+load("soyMeta.RData")
+setwd("~/Dropbox/Personal computer/Independent studies/EValue package/evalue_package_git/EValue/R")
+source("meta-analysis.R")
+
+library(metafor)
+library(ggplot2)
+library(dplyr)
 ```
 
-```{r setup}
 
+
+## Example from [*Sensitivity Analysis for Unmeasured Confounding in Meta-Analyses*](https://www.tandfonline.com/doi/full/10.1080/01621459.2018.1529598)
+
+Trock et al. (2006)^[Trock BJ, Hilakivi-Clarke L, Clark R (2006). Meta-analysis of soy intake and breast cancer risk. *Journal of the National Cancer Institute*. 98(7):459-471.] conducted a meta-analysis of observational studies (12 case-control and 6 cohort or nested case-control) on the association of soy-food intake with breast cancer risk. First we will meta-analyze the studies:
+
+```{r}
+data(soyMeta)
+( m = rma.uni(yi = soyMeta$est,
+              vi = soyMeta$var,
+              method = "PM",
+              test = "knha") )
+yr = as.numeric(m$b)  # returned estimate is on log scale
+vyr = as.numeric(m$vb) 
+t2 = m$tau2
+vt2 = m$se.tau2^2 
 ```
+Now, following Mathur & VanderWeele (2019)^[Mathur MB & VanderWeele TJ (2019). Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses. *Journal of the American Statistical Association*, 115(529), 163-170.], we will parametrically estimate the proportion of meaningfully strong protective effects (which we chose to define in this context as $RR<0.90$). First we will do so without correcting for confounding by specifying $\texttt{muB} = 0$ and $\texttt{sigB} = 0$.^[Alternatively, the package $\texttt{MetaUtility::prop_stronger}$ will do this kind of naive analysis directly without the need to specify sensitivity parameters related to confounding.]
+
+
+```{r}
+( res0 = confounded_meta(method = "parametric",
+                         q = log(0.9),
+                         tail = "below",
+                         muB = 0,
+                         sigB = 0,
+                         yr = yr, 
+                         vyr = vyr,
+                         t2 = t2,
+                         vt2 = vt2) )
+```
+$\texttt{Prop}$ tells us that, prior to any correction for confounding, we estimate that `r round( 100 * res0$Est[res0$Value == "Prop"], 0)`% (95% CI: [`r round( 100 * res0$CI.lo[res0$Value == "Prop"], 0)`%, `r round( 100 * res0$CI.hi[res0$Value == "Prop"], 0)`%]) of effects are meaningfully protective by the criterion $RR<0.90$.
+
+Now let's introduce hypothetical confounding bias that is log-normal across studies. In particular, let's suppose that studies' relative risks are biased away from the null by a factor of 1.3 on average (i.e., $\texttt{muB} = \log{(1.3)}$), and that these "bias factors" vary across studies such that 50% of the apparent effect heterogeneity across studies ($\widehat{\tau}^2$) was actually due to variation in confounding severity (i.e., $\texttt{sigB} = \sqrt{\widehat{\tau}^2 / 2} =$ `r round(sqrt(t2 * .5), 2)`). We will consider bias that on average shifts studies' estimates away from the null, which is the usual choice in sensitivity analyses and is the default in $\texttt{confounded_meta}$. With the same function call, we will also estimate the severity of confounding that would be required to reduce to less than 10% ($r=0.10$) the proportion of studies with meaningfully protective true causal effects.  
+
+
+```{r}
+( res1 = confounded_meta(method = "parametric",
+                         q = log(0.9),
+                         tail = "below",
+                         r = 0.10,
+                         muB = log(1.3),
+                         sigB = 0.2,
+                         yr = yr, 
+                         vyr = vyr,
+                         t2 = t2,
+                         vt2 = vt2) )
+```
+$\texttt{Prop}$ tells us that, under the severity and variability of confounding bias described above, the percentage of meaningfully protective effects would be reduced from our previous naive estimate of `r round( 100 * res0$Est[res0$Value == "Prop"], 0)`% to `r round( 100 * res1$Est[res1$Value == "Prop"], 0)`% (95% CI: [`r round( 100 * res1$CI.lo[res1$Value == "Prop"], 0)`%, `r round( 100 * res1$CI.hi[res1$Value == "Prop"], 0)`%]). We no longer have a majority of meaningfully strong effects, but we do have a non-negligible minority (but the confidence interval indicates considerable uncertainty). $\texttt{Tmin}$ tells us that, when considering confounding of homogeneous strength across studies, we estimate that if each study's relative risk were biased away from the null by a factor of `r round( res1$Est[res1$Value == "Tmin"], 2)` (95% CI: [`r round( res1$CI.lo[res1$Value == "Tmin"], 2)`, `r round( res1$CI.hi[res0$Value == "Tmin"], 2)`]), this would be sufficiently severe confounding to reduce to less than 10% the percentage of meaningfully strong true causal effects. We can also express this statement in terms of confounding strength: $\texttt{Gmin}$ tells us that, if each study had confounder(s) that were associated with both soy intake and with breast cancer risk by relative risks of at least `r round( res1$Est[res1$Value == "Gmin"], 2)`-fold (95% CI: [`r round( res1$CI.lo[res1$Value == "Gmin"], 2)`-fold, `r round( res1$CI.hi[res0$Value == "Gmin"], 2)`]) each, then this *could* be sufficiently severe confounding to reduce to less than 10% the percentage of meaningfully strong true causal effects.^[VanderWeele TJ & Ding P (2017). Sensitivity analysis in observational research: Introducing the E-value. *Annals of Internal Medicine*, 167(4), 268-274.] We can plot the hypothetical severity of bias (here treated as homogeneous across studies, i.e., $\texttt{sigB}=0$) versus the estimated proportion of meaningfully strong effects as follows:
+```{r}
+sens_plot(method = "parametric",
+          type = "line",
+          q = log(0.9),
+          sigB = 0,
+          tail = "below",
+          
+          yr = yr, 
+          vyr = vyr,
+          t2 = t2,
+          vt2 = vt2)
+```
+
+
+The warning message reminds us that it is better to use the calibrated method when the proportion is extreme. This method also avoids assuming that the population effects are normal across studies, as we did when using the parametric method. However, the calibrated method only considers bias that is homogeneous across studies. Here is what the plot looks like when using the calibrated method: 
+
+```{r}
+sens_plot(method = "calibrated",
+          type = "line",
+          q = log(0.9),
+          tail = "below",
+          sigB = 0,
+          dat = soyMeta,
+          yi.name = "est",
+          vi.name = "var",
+          give.CI = FALSE)
+```
+
+Note the change in arguments that we pass to $\texttt{sens_plot}$: instead of passing pooled point estimates and variances from the confounded meta-analysis, we instead pass the dataset of study-level estimates and variances. This is because the calibrated method uses bootstrapping to estimate confidence intervals. Because the bootstrapping takes a few minutes to run, we have omitted the confidence interval via $\texttt{give.CI = FALSE}$ in this example.
+
+
+
+
+
+
