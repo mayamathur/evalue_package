@@ -47,9 +47,9 @@ We can also calculate an E-value for shifting an estimate to a number other than
 summary(evalues.RR(est = 2.5, true = 1.5))
 ```
 
-## Examples from [*Sensitivity Analysis in Observational Research: Introducing the E-value*](http://annals.org/aim/article-abstract/2643434/sensitivity-analysis-observational-research-introducing-e-value?doi=10.7326%2fM16-2607)
+## Examples from [*Sensitivity Analysis in Observational Research: Introducing the E-value*](https://www.acpjournals.org/doi/10.7326/M16-2607?doi=10.7326%2FM16-2607)
 
-A study by Victora et al. examing the relationship between breastfeeding and infant death by respiratory infection, finding that mortality was increased by a factor of 3.9 (95% CI 1.8, 8.7) among infants with with only formula.^[Victora CG, Smith PG, Vaughan JP, Nobre LC, Lombardi C, Teix- eira AM, et al. Evidence for protection by breast-feeding against in- fant deaths from infectious diseases in Brazil. Lancet. 1987;2:319-22.] However, smoking, which was not assessed in this study, may be a confounder. We can calculate E-values for the point estimate and the confidence interval:
+A study by Victora et al. examining the relationship between breastfeeding and infant death by respiratory infection, finding that mortality was increased by a factor of 3.9 (95% CI 1.8, 8.7) among infants with with only formula.^[Victora CG, Smith PG, Vaughan JP, Nobre LC, Lombardi C, Teix- eira AM, et al. Evidence for protection by breast-feeding against in- fant deaths from infectious diseases in Brazil. Lancet. 1987;2:319-22.] However, smoking, which was not assessed in this study, may be a confounder. We can calculate E-values for the point estimate and the confidence interval:
 
 ```{r}
 evalues.OR(est = 3.9, lo = 1.8, hi = 8.7, rare = TRUE)

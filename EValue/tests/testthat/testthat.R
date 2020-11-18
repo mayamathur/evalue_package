@@ -8,6 +8,7 @@
 # library(devtools)
 # library(dplyr)
 # library(ICC)
+# library(msm)
 # library(here())
 # setwd(here())
 # setwd("tests")
@@ -571,7 +572,6 @@ test_that("Parametric, test set #2 (causative)", {
                 cm[1,2] )
   
   # check standard error against deltamethod function
-  library(msm)
   SE = deltamethod( ~ 1 - pnorm( ( log(1.1) + log(2) - x1 ) / sqrt( x2 - 0.1^2 ) ),
                     mean = c( yr, t2 ), cov = diag( c(vyr, vt2) ) )
   expect_equal( SE, cm[1,3] )
@@ -643,7 +643,6 @@ test_that("Parametric, test set #3 (preventive)", {
                 cm[1,2] )
   
   # check standard error against deltamethod function
-  library(msm)
   SE = deltamethod( ~ pnorm( ( log(0.9) - log(1.2) - x1 ) / sqrt( x2 - 0.1^2 ) ),
                     mean = c( yr, t2 ), cov = diag( c(vyr, vt2) ) )
   expect_equal( SE, cm[1,3] )
