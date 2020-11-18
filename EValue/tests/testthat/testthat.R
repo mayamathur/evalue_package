@@ -1,5 +1,5 @@
 
-# no need to source helper_testthat.R explicitly
+# no need to source helper_testthat.R explicitly to pass CRAN checks
 #  because helper files that start with "helper" automatically 
 #  get sourced first: https://testthat.r-lib.org/reference/test_dir.html
 
@@ -8,7 +8,7 @@
 # library(devtools)
 # library(dplyr)
 # library(ICC)
-# library(msm)
+# library(msms)
 # library(here())
 # setwd(here())
 # setwd("tests")
