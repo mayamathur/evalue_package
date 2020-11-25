@@ -232,12 +232,16 @@ confounded_meta = function( method="calibrated",  # for both methods
   # vi.name = "vyi"
   
   
-  ##### Check for Bad Input - Common to Parametric and Calibrated Methods #####
+  ##### Check for Bad or Incomplete Input - Common to Parametric and Calibrated Methods #####
   if ( ! is.na(r) ) {
     if (r < 0 | r > 1) stop("r must be between 0 and 1")
   }
   
   if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
+  
+  if ( !is.na(muB) & muB < 0 ) {
+    stop("Must have muB > 0. Use the muB.toward.null argument instead if you want to consider bias away from the null. See Details.")
+  }
   
   
   ##### PARAMETRIC #####
@@ -264,9 +268,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       if ( sigB < 0 ) stop("Bias factor standard deviation cannot be negative")
     }
     
-    if ( !is.na(muB) & muB < 0 ) {
-      stop("Must have muB > 0. Use the muB.toward.null argument instead if you want to consider bias away from the null. See Details.")
-    }
+
     
     
     ##### Messages When Not All Output Can Be Computed #####
@@ -862,11 +864,6 @@ sens_plot = function(method="calibrated",
     
     
     if ( method == "calibrated" ) {
-      
-      #@@reject muB < 0:
-      # if ( !is.na(muB) & muB < 0 ) {
-      #   stop("Must have muB > 0. Use the muB.toward.null argument instead if you want to consider bias away from the null. See Details.")
-      # }
       
       # if tail isn't provided, assume user wants the more extreme one (away from the null)
       if ( is.na(tail) ) {
