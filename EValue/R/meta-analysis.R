@@ -863,6 +863,11 @@ sens_plot = function(method="calibrated",
     
     if ( method == "calibrated" ) {
       
+      #@@reject muB < 0:
+      # if ( !is.na(muB) & muB < 0 ) {
+      #   stop("Must have muB > 0. Use the muB.toward.null argument instead if you want to consider bias away from the null. See Details.")
+      # }
+      
       # if tail isn't provided, assume user wants the more extreme one (away from the null)
       if ( is.na(tail) ) {
         calib = calib_ests( yi = dat[[yi.name]], 
@@ -913,7 +918,7 @@ sens_plot = function(method="calibrated",
         ##### Warnings About Missing CIs Due to Boot Failures #####
         # if ALL CI limits are missing
         if ( all( is.na(res$lo) ) ) {
-          message( "None of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R." )
+          message( "None of the pointwise confidence intervals was estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R." )
           # avoid even trying to plot the CI if it's always NA to avoid geom_ribbon errors later
           give.CI = FALSE
         }
