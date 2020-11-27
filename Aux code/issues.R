@@ -10,11 +10,11 @@ d = read.csv("Datasets for website test/kodama_prepped.csv")
 
 
 
-confounded_meta(method="calibrated",
+confounded_meta(method="parametric",
                 q=log(.5),
                 r=0.75,
                 tail="below",
-                muB = -0.2,
+                muB = log(1.5),
                 
                 dat = d, 
                 yi.name = "yi",

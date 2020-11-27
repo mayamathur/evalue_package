@@ -3,16 +3,20 @@
 #  because helper files that start with "helper" automatically 
 #  get sourced first: https://testthat.r-lib.org/reference/test_dir.html
 
-# # for local testing:
-# library(testthat)
-# library(devtools)
-# library(dplyr)
-# library(ICC)
-# library(msms)
-# library(here())
-# setwd(here())
-# setwd("tests")
-# source("helper_testthat.R")
+# for local testing:
+library(testthat)
+library(devtools)
+library(dplyr)
+library(ICC)
+library(msm)
+library(here())
+setwd(here())
+#setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
+setwd("tests")
+source("helper_testthat.R")
+
+
+
 
 ###################### EVALUE: ANNALS PAPER EXAMPLES ######################
 
@@ -801,6 +805,55 @@ test_that("Parametric, test set #5 (exactly 200 estimates; manipulate muB.toward
 
 
 
+test_that("Parametric, test set #6 (Tmin gets set to 1)", {
+
+  
+  ##### tail = "below" case ######
+  # here, yr^c is positive, but tail = "below"
+  # for Tmin and Gmin, bias has to shift downward to get q
+  q = log(0.5)
+  muB = log(1.5)
+  sigB = sqrt(0.5*0.25)
+  yr = log(1.5)
+  vyr = 0.5
+  t2 = 0.25
+  vt2 = 0.5
+  r = 0.75
+  tail = "below"
+
+  cm = confounded_meta(method="parametric", q=q, r=r, muB=muB, sigB=sigB,
+                       yr=yr, vyr=vyr,
+                       t2=t2, vt2=vt2, tail = tail )
+
+
+  # Tmin
+  expect_equal( cm[2,2], 1 )
+  # Gmin
+  expect_equal( cm[3,2], 1 )
+  # their CIs should be NA
+  expect_equal( as.numeric( c(NA, NA, NA) ), as.numeric( cm[2, 3:5] ) )
+  
+
+  ##### tail = "above" case ######
+  # symmetric to above
+  q = log(1.5)
+  yr = log(0.5)
+  tail = "above"
+
+  cm = confounded_meta(method="parametric", q=q, r=r, muB=muB, sigB=sigB,
+                       yr=yr, vyr=vyr,
+                       t2=t2, vt2=vt2, tail = tail )
+
+
+  # Tmin
+  expect_equal( cm[2,2], 1 )
+  # Gmin
+  expect_equal( cm[3,2], 1 )
+  # their CIs should be NA
+  expect_equal( as.numeric( c(NA, NA, NA) ), as.numeric( cm[2, 3:5] ) )
+} )
+
+
 
 ##### Calibrated Method #####
 
@@ -1065,7 +1118,7 @@ test_that("Calibrated, test set #2 (causative)", {
   
   # fail to provide r
   # expect warning about setting tail because not specified
-  expect_warning( confounded_meta(method="calibrated",
+  expect_message( confounded_meta(method="calibrated",
                                   q = q,
                                   #r = r,
                                   tail = "above",
@@ -1178,7 +1231,9 @@ test_that("Calibrated, test set #3 (exactly 200 estimates; manipulate muB.toward
 })
 
 
-test_that("Calibrated and parametric, test set #4 (exactly 200 estimates; Tmin represents bias AWAY from null)", {
+test_that("Calibrated and parametric, test set #4 (exactly 200 estimates); Tmin shifts away from the null", {
+  
+  # in these examples, tail = above but yr < 0, so Tmin is shifting AWAY from null 
   
   # make data with exactly 200 calibrated estimates so that Tmin and Gmin should exactly hit r
   d = sim_data2( k = 200,
@@ -1194,9 +1249,10 @@ test_that("Calibrated and parametric, test set #4 (exactly 200 estimates; Tmin r
                  sd.w = 1,
                  true.effect.dist = "normal" )
   
-  q = log(0.9)  # ABOVE the true mean
+  q = log(0.9)  # q is ABOVE the true mean
   r = .05
   muB = log(1.5)
+ 
   
   ##### Calibrated #####
   x0 = confounded_meta(method="calibrated",
@@ -1248,6 +1304,11 @@ test_that("Calibrated and parametric, test set #4 (exactly 200 estimates; Tmin r
          lower.tail = FALSE ), r )
   
 })
+
+
+
+
+
 
 
 

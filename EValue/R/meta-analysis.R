@@ -255,7 +255,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     # the second condition is needed for Shiny app:
     #  if user deletes the input in box, then it's NA instead of NULL
-    if ( ! is.na(vyr) ) {
+    if ( !is.na(vyr) ) {
       if (vyr < 0) stop("Variance of point estimate cannot be negative")
     }
     
@@ -268,7 +268,6 @@ confounded_meta = function( method="calibrated",  # for both methods
       if ( sigB < 0 ) stop("Bias factor standard deviation cannot be negative")
     }
     
-
     
     
     ##### Messages When Not All Output Can Be Computed #####
@@ -277,40 +276,60 @@ confounded_meta = function( method="calibrated",  # for both methods
     ##### Point Estimates: Causative Case #####
     # if tail isn't provided, assume user wants the more extreme one (away from the null)
     if ( is.na(tail) ) {
-      tail = ifelse( yr > log(1), "above", "below" )
+      tail = ifelse( yr > 0, "above", "below" )
       warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
     }
     
     # bias-corrected mean
     # usual case: bias that went away from null, so correction shifts toward null
-    if ( muB.toward.null == FALSE & yr > log(1) ) yr.corr = yr - muB
-    if ( muB.toward.null == FALSE & yr < log(1) ) yr.corr = yr + muB
+    if ( muB.toward.null == FALSE & yr > 0 ) yr.corr = yr - muB
+    if ( muB.toward.null == FALSE & yr < 0 ) yr.corr = yr + muB
     # less-usual case: bias that went toward null, so correction shifts away from null
-    if ( muB.toward.null == TRUE & yr > log(1) ) yr.corr = yr + muB
-    if ( muB.toward.null == TRUE & yr < log(1) ) yr.corr = yr - muB
+    if ( muB.toward.null == TRUE & yr > 0 ) yr.corr = yr + muB
+    if ( muB.toward.null == TRUE & yr < 0 ) yr.corr = yr - muB
     
     
     if ( tail == "above" ) {
       
+      # point estimate for Phat
       if ( !is.na(muB) & !is.na(sigB) ) {
-        # prop above
+        # point estimate for Phat
         Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
         Phat = 1 - pnorm(Z) 
       } else {
         Phat = NA
       }
       
+      # point estimates for Tmin, Gmin
       if ( !is.na(r) ) {
         
-        # min bias factor
-        # the max is there in case no bias is needed
-        # (i.e., proportion of effects > q already < r without confounding)
-        Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2) - q + yr ) )
+        # first check if any shifting is actually needed
+        # current Phat with no bias
+        Phat.naive = 1 - pnorm( (q - yr) / sqrt(t2) )
+        
+        if ( Phat.naive <= r ) {
+          Tmin = 1
+        } else {
+          # min bias factor
+          # the max is there in case no bias is needed
+          # (i.e., the bias would be going in the other direction)
+          # (i.e., proportion of effects > q already < r without confounding)
+          Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2) - q + yr ) )
+          
+          # alternative way of handling this issue:
+          # Tmin could be less than 1 if yr has to be shifted POSITIVELY
+          #  rather than negatively to achieve r
+          #  e.g., yr^c = log(0.5), q = log(1s.5), r = 0.75
+          # for consistency with calibrated output, take Tmin's inverse so it's always positive
+          #if ( Tmin < 1 ) Tmin = 1 / Tmin
+        }
         
         # min confounding strength
         # suppress warnings to avoid warnings about NaN when term inside sqrt is negative
         Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
-      } else {
+      }
+      
+      if ( is.na(r) ) {
         Tmin = Gmin = NA
       }
     }
@@ -318,31 +337,51 @@ confounded_meta = function( method="calibrated",  # for both methods
     ##### Point Estimates: Preventive Case #####
     if ( tail == "below" ) {
       
+      # point estimate for Phat
       if ( !is.na(muB) & !is.na(sigB) ) {
-        # prop below
         Z = ( q - yr.corr ) / sqrt( t2 - sigB^2 )
         Phat = pnorm(Z) 
       } else {
         Phat = NA
       }
-      
+     
+      # point estimates for Tmin, Gmin
       if ( !is.na(r) ) {
-        # min bias factor
-        Tmin = exp( q - yr - qnorm(r) * sqrt(t2) )
+        
+        # first check if any shifting is actually needed
+        # current Phat with no bias
+        Phat.naive = pnorm( (q - yr) / sqrt(t2) )
+        
+        if ( Phat.naive <= r ) {
+          Tmin = 1
+        } else {
+          # the max is there in case no bias is needed
+          Tmin = max( 1, exp( q - yr - qnorm(r) * sqrt(t2) ) )
+          
+          # alternative way of handling this issue:
+          # # Tmin could be less than 1 if yr has to be shifted NEGATIVELY
+          # #  rather than positively to achieve r
+          # #  e.g., yr^c = log(1.5), q = log(0.5), r = 0.75
+          # # for consistency with calibrated output, take Tmin's inverse so it's always positive
+          # if ( Tmin < 1 ) Tmin = 1 / Tmin
+        }
         
         # min confounding strength
         Gmin = suppressWarnings( Tmin + sqrt( Tmin^2 - Tmin ) )
-      } else {
+      }
+      
+      if ( is.na(r) ) {
         Tmin = Gmin = NA
       }
+      
     }
     
     ##### Delta Method Inference: P-Hat #####
     # do inference only if given needed SEs
     if ( !is.na(vyr) & !is.na(vt2) & !is.na(muB) & !is.na(sigB) ){
       
-      # term in numerator depends on whether causative or preventive RR
-      num.term = ifelse( yr > log(1), q + muB - yr, q - muB - yr )
+      # term in numerator depends tail
+      num.term = ifelse( tail == "above", q + muB - yr, q - muB - yr )
       
       term1.1 = vyr / (t2 - sigB^2 )
       term1.2 = ( vt2 * (num.term)^2 ) / ( 4 * (t2 - sigB^2 )^3 )
@@ -366,12 +405,15 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     ##### Delta Method Inference: Tmin and Gmin #####
     # do inference only if given needed SEs and r
-    if ( !is.na(vyr) & !is.na(vt2) & !is.na(r) ){
+    # last condition: if Tmin has been set to 1, give NAs for inference
+    if ( !is.na(vyr) & !is.na(vt2) & !is.na(r) & Tmin != 1 ){
       
       ##### Tmin #####
-      if (yr > log(1) ) {
+      if ( tail == "above" ) {
+        
         term = ( vt2 * qnorm(1-r)^2 ) / ( 4 * t2 )
         SE.T = exp( sqrt(t2) * qnorm(1-r) - q + yr ) * sqrt( vyr + term  )
+        
       } else {
         term = ( vt2 * qnorm(r)^2 ) / ( 4 * t2 )
         SE.T = exp( q - yr - sqrt(t2) * qnorm(r) ) * sqrt( vyr + term  )
@@ -388,9 +430,10 @@ confounded_meta = function( method="calibrated",  # for both methods
       lo.G = max( 1, Gmin + qnorm( tail.prob )*SE.G )  # confounding RR can't be < 1
       hi.G = Gmin - qnorm( tail.prob )*SE.G  # but has no upper bound
       
-    } else {  # i.e., user didn't pass parameters needed for inference
+    } else {  # i.e., user didn't pass parameters needed for inference or Tmin = 1
       SE.T = SE.G = lo.T = lo.G = hi.T = hi.G = NA
     }
+    
     
   } # closes parametric method
   
@@ -404,7 +447,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       calib = calib_ests( yi = dat[[yi.name]], 
                           sei = sqrt( dat[[vi.name]] ) )
       
-      tail = ifelse( median(calib) > log(1), "above", "below" )
+      tail = ifelse( median(calib) > 0, "above", "below" )
       warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
     }
     
@@ -594,7 +637,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' # # commented out because takes a while too run
 #' # sens_plot( method = "calibrated",
 #' #            type="line",
-#' #            q=log(1),
+#' #            q=0,
 #' #            tail = "below",
 #' #            dat = toyMeta,
 #' #            yi.name = "est",
@@ -645,7 +688,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #'            vt2 = .001,
 #'            t2=0.4,
 #'            sigB = 0.1,
-#'            Bmin=log(1),
+#'            Bmin=0,
 #'            Bmax=log(4) )
 #' 
 #' ##### Distribution Line Plot #####
@@ -673,7 +716,7 @@ sens_plot = function(method="calibrated",
                      tail=NA,
                      muB.toward.null = FALSE,
                      give.CI=TRUE,
-                     Bmin = log(1),
+                     Bmin = 0,
                      Bmax = log(4),
                      breaks.x1=NA,
                      breaks.x2=NA,
@@ -710,7 +753,7 @@ sens_plot = function(method="calibrated",
   # dat = d
   # yi.name = "yi"
   # vi.name = "vi"
-  # Bmin = log(1)
+  # Bmin = 0
   # Bmax = log(5)
   # CI.level = 0.95
   # tail = "above"
@@ -727,7 +770,7 @@ sens_plot = function(method="calibrated",
   # t2 = 0.3
   # vt2 = 0.02
   # r = 0.1
-  # Bmin = log(1)
+  # Bmin = 0
   # Bmax = log(5)
   # CI.level = 0.95
   # tail = "above"
@@ -796,7 +839,7 @@ sens_plot = function(method="calibrated",
       
       
       if ( is.na(tail) ) {
-        tail = ifelse( yr > log(1), "above", "below" )
+        tail = ifelse( yr > 0, "above", "below" )
         warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
       }
       
@@ -870,7 +913,7 @@ sens_plot = function(method="calibrated",
         calib = calib_ests( yi = dat[[yi.name]], 
                             sei = sqrt( dat[[vi.name]] ) )
         
-        tail = ifelse( median(calib) > log(1), "above", "below" )
+        tail = ifelse( median(calib) > 0, "above", "below" )
         warning( paste( "Assuming you want tail =", tail, "because it wasn't specified") )
       }
       
@@ -936,7 +979,7 @@ sens_plot = function(method="calibrated",
         
       }
       
-        p = ggplot2::ggplot( data = res,
+      p = ggplot2::ggplot( data = res,
                            aes( x = exp(B),
                                 y = Phat ) ) +
         theme_bw() +
@@ -1201,6 +1244,10 @@ Tmin_Gmin_CI_lims = function(
     hi.T = bootCIs.Tmin$bca[5]  # but has no upper bound
     SE.T = sd(boot.res$t)
     
+    # avoid issues with creating df below and with g() transformation
+    if ( is.null(lo.T) ) lo.T = NA
+    if ( is.null(hi.T) ) hi.T = NA
+    
     
     ##### Gmin #####
     lo.G = max( 1, g(lo.T) )  # confounding RR can't be < 1
@@ -1209,8 +1256,6 @@ Tmin_Gmin_CI_lims = function(
     
     
     # avoid issues with creating df below
-    if ( is.null(lo.T) ) lo.T = NA
-    if ( is.null(hi.T) ) hi.T = NA
     if ( is.null(lo.G) ) lo.G = NA
     if ( is.null(hi.G) ) hi.G = NA
     
@@ -1267,18 +1312,6 @@ Tmin_Gmin_CI_lims = function(
 #'   \item \code{var} Variance of the log-relative risk or log-odds ratio.
 #' }
 "soyMeta"
-
-
-############################ META-ANALYSIS FUNCTIONS ############################ 
-
-
-
-
-
-
-
-
-
 
 
 
