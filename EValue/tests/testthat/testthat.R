@@ -706,29 +706,36 @@ test_that("Parametric, test set #4, (no bias needed to reduce this Phat to less 
 
 test_that("Parametric, test set #5 (exactly 200 estimates; manipulate muB.toward.null)", {
   
-  # make data with exactly 200 calibrated estimates so that Tmin and Gmin should exactly hit r
-  d = sim_data2( k = 200,
-                 m = 200,
-                 b0 = log(1.1), # intercept
-                 bc = 0, # effect of continuous moderator
-                 bb = 0, # effect of binary moderator
-                 V = 1,
-                 Vzeta = 0, # used to calcuate within-cluster variance
-                 
-                 muN = 100,
-                 minN = 100,
-                 sd.w = 1,
-                 true.effect.dist = "normal" )
-
-  # shift AWAY from null
-  q = log(1.1)  # set q to the (true) mean
-  r = .2
-  muB = log(1.5)
+  est = -99
+  # example will fail if we accidentally generate data with point estimate < 0
+  while( est < 0 ) {
+    # make data with exactly 200 calibrated estimates so that Tmin and Gmin should exactly hit r
+    d = sim_data2( k = 200,
+                   m = 200,
+                   b0 = log(1.1), # intercept
+                   bc = 0, # effect of continuous moderator
+                   bb = 0, # effect of binary moderator
+                   V = 1,
+                   Vzeta = 0, # used to calcuate within-cluster variance
+                   
+                   muN = 100,
+                   minN = 100,
+                   sd.w = 1,
+                   true.effect.dist = "normal" )
+    
+    # shift AWAY from null
+    q = log(1.1)  # set q to the (true) mean
+    r = .2
+    muB = log(1.5)
+    
+    # first no bias
+    meta = rma.uni( yi = d$yi,
+                    sei = sqrt(d$vyi),
+                    method = "REML")
+    est = meta$b
+  }
   
-  # first no bias
-  meta = rma.uni( yi = d$yi,
-                  sei = sqrt(d$vyi),
-                  method = "REML")
+ 
   
   x0 = confounded_meta(method="parametric",
                        q = q,

@@ -109,6 +109,13 @@ The \strong{parametric method} assumes that the population effects are approxima
 If your meta-analysis uses effect sizes other than log-relative risks, you should first approximately convert them to log-relative risks, for example via \code{\link[=convert_measures]{convert_measures()}} and then pass the converted point estimates or meta-analysis estimates to \code{confounded_meta}.
 }
 
+\subsection{Interpreting \code{Tmin} and \code{Gmin}}{
+
+\code{Tmin} is defined as the minimum bias factor on the relative risk scale, common to all meta-analyzed studies, that would be required to reduce to less than \code{r} the proportion of studies with true causal effect sizes stronger than the threshold \code{q}. \code{Gmin} is defined as the minimum confounding strength on the relative risk scale -- that is, the relative risk relating unmeasured confounder(s) to both the exposure and the outcome -- common to all meta-analyzed studies, that would be required to reduce to less than \code{r} the proportion of studies with true causal effect sizes stronger than the threshold \code{q}. \code{Gmin} is a one-to-one transformation of \code{Gmin} given by \eqn{Gmin = Tmin + \sqrt{Tmin * (Tmin - 1)} }. If the estimated proportion of meaningfully strong effect sizes is already less than \code{r} even without the introduction of any bias, \code{Tmin} and \code{Gmin} will be set to 1.
+
+The direction of bias represented by \code{Tmin} and \code{Gmin} is dependent on the argument \code{tail}: when \code{tail = "above"}, these metrics consider bias that had operated to \emph{increase} the point estimate \code{yr}, and when \code{tail = "below"}, these metrics consider bias that had operated to \emph{decrease} the point estimate \code{yr}. This applies regardless of whether such bias operates toward or away from the null. As such, the direction of bias represented by \code{Tmin} and \code{Gmin} may or may not match that specified by the argument \code{muB.toward.null} (which is used only for estimation of \code{Prop}).
+}
+
 \subsection{When these methods should be used}{
 
 These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate \code{t2} is greater than 0. For meta-analyses with fewer than 10 studies or with a heterogeneity estimate of 0, you can simply report E-values for the point estimate via \code{\link[=evalue]{evalue()}} (VanderWeele & Ding, 2017; see Mathur & VanderWeele (2019), Section 7.2 for interpretation in the meta-analysis context).
