@@ -498,6 +498,7 @@ confounded_meta = function( method="calibrated",  # for both methods
                                   q = q,
                                   tail = tail,
                                   dat = dat,
+                                  muB.toward.null = muB.toward.null,
                                   yi.name = yi.name,
                                   vi.name = vi.name,
                                   CI.level = CI.level)
@@ -507,7 +508,7 @@ confounded_meta = function( method="calibrated",  # for both methods
       SE.Phat = as.numeric( Phat.CI.lims[3] )
       
       if ( any( is.na( c(lo.Phat, hi.Phat, SE.Phat) ) ) ) {
-        message("The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.")
+        message("The confidence interval and/or standard error for the proportion were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing the number of bootstrap iterates or choosing a less extreme threshold.")
       }
       
       Tmin.Gmin.CI.lims = Tmin_Gmin_CI_lims( R,
@@ -526,9 +527,9 @@ confounded_meta = function( method="calibrated",  # for both methods
       hi.G = as.numeric( Tmin.Gmin.CI.lims["hi.G"] )
       SE.G = as.numeric( Tmin.Gmin.CI.lims["SE.G"] )
       
-      
-      if ( any( is.na( c(lo.T, hi.T, SE.T, lo.G, hi.G, SE.G) ) ) ) {
-        message("The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing R.")
+      # last condition is because we don't actually do bootstrapping if Tmin = 1
+      if ( any( is.na( c(lo.T, hi.T, SE.T, lo.G, hi.G, SE.G) ) ) & ( !is.na(Tmin) & Tmin != 1 ) ) {
+        message("The confidence interval and/or standard error for Tmin and Gmin were not estimable via bias-corrected and accelerated bootstrapping. You can try increasing the number of bootstrap iterates or choosing a less extreme threshold.")
       }
       
     }  # closes "if ( !is.na(r) )"
@@ -961,7 +962,7 @@ sens_plot = function(method="calibrated",
         ##### Warnings About Missing CIs Due to Boot Failures #####
         # if ALL CI limits are missing
         if ( all( is.na(res$lo) ) ) {
-          message( "None of the pointwise confidence intervals was estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing R." )
+          message( "None of the pointwise confidence intervals was estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot is omitted. You can try increasing the number of bootstrap iterates or choosing a less extreme threshold." )
           # avoid even trying to plot the CI if it's always NA to avoid geom_ribbon errors later
           give.CI = FALSE
         }
@@ -970,7 +971,7 @@ sens_plot = function(method="calibrated",
         # outer "if" handles case in which AT LEAST ONE CI limit is NA because of boot failures
         if ( any( !is.na(res$lo) ) & any( !is.na(res$hi) ) ) {
           
-          message( "Some of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot may not be shown for some values of the bias factor. This usually happens at values with a proportion estimate close to 0 or 1. Otherwise, you can try increasing R." )
+          message( "Some of the pointwise confidence intervals were not estimable via bias-corrected and accelerated bootstrapping, so the confidence band on the plot may not be shown for some values of the bias factor. This usually happens at values with a proportion estimate close to 0 or 1. You can try increasing the number of bootstrap iterates or choosing a less extreme threshold." )
           
           if ( any( res$lo[ !is.na(res$lo) ] > res$Phat[ !is.na(res$lo) ] ) | any( res$hi[ !is.na(res$lo) ] < res$Phat[ !is.na(res$lo) ] ) ) {
             
