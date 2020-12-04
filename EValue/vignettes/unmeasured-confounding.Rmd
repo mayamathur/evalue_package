@@ -1,7 +1,7 @@
 ---
-title: "E-value equivalents for meta-analysis"
+title: "E-values for unmeasured confounding"
 vignette: >
-  %\VignetteIndexEntry{E-value equivalents for meta-analysis}
+  %\VignetteIndexEntry{E-values for unmeasured confounding}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
