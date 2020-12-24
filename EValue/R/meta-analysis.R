@@ -217,7 +217,10 @@ confounded_meta = function( method="calibrated",  # for both methods
                             yr = NA,
                             vyr = NA,
                             t2 = NA,
-                            vt2 = NA
+                            vt2 = NA,
+                            
+                            ...
+                          
 ) {
   
   
@@ -236,16 +239,32 @@ confounded_meta = function( method="calibrated",  # for both methods
   # yi.name = "yi"
   # vi.name = "vyi"
   
+  ##### Look for Additional Passed Arguments #####
+  dots = list(...)
+  
+  # should warnings be simplified for use with the Shiny website?
+  if ( "simplifyWarnings" %in% names(dots) ){
+    simplifyWarnings =  dots$simplifyWarnings
+  } else {
+    simplifyWarnings = FALSE
+  }
+  
   
   ##### Check for Bad or Incomplete Input - Common to Parametric and Calibrated Methods #####
   if ( ! is.na(r) ) {
     if (r < 0 | r > 1) stop("r must be between 0 and 1")
   }
   
-  if ( is.na(r) ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
+  if ( is.na(r) ){
+    if ( simplifyWarnings == FALSE ) message("Cannot compute Tmin or Gmin without r. Returning only prop.")
+    if ( simplifyWarnings == TRUE ) message("Cannot compute bias or confounding strength required to shift to r unless you provide r. Returning only the proportion.")
+  }
   
   if ( !is.na(muB) & muB < 0 ) {
-    stop("Must have muB > 0. Use the muB.toward.null argument instead if you want to consider bias away from the null. See Details.")
+    if ( simplifyWarnings == FALSE ) stop("Must have muB > 0. Use the muB.toward.null argument instead if you want to consider bias away from the null. See Details.")
+    
+    if ( simplifyWarnings == TRUE ) stop("Must have muB > 0.")
+    
   }
   
   
@@ -276,7 +295,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     
     ##### Messages When Not All Output Can Be Computed #####
-    if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without vyr and vt2. Returning only point estimates.")
+    if ( is.na(vyr) | is.na(vt2) ) message("Cannot compute inference without variances of point estimate and of heterogeneity estimate. Returning only point estimates.")
     
     ##### Point Estimates: Causative Case #####
     # if tail isn't provided, assume user wants the more extreme one (away from the null)
@@ -402,7 +421,11 @@ confounded_meta = function( method="calibrated",  # for both methods
       
       
       # warn if bootstrapping needed
-      if ( Phat < 0.15 | Phat > 0.85 ) warning('Prop is close to 0 or 1. We recommend choosing method = \"calibrated\" or alternatively using bias-corrected and accelerated bootstrapping to estimate all inference in this case.')
+      if ( Phat < 0.15 | Phat > 0.85 ) {
+        if ( simplifyWarnings == FALSE) warning('Prop is close to 0 or 1. We recommend choosing method = \"calibrated\" or alternatively using bias-corrected and accelerated bootstrapping to estimate all inference in this case.')
+        
+       # no warning for the simplifyWarnings == TRUE case because website has its own version 
+      }
       
     } else {
       SE.Phat = lo.Phat = hi.Phat = NA
@@ -539,7 +562,9 @@ confounded_meta = function( method="calibrated",  # for both methods
   ##### Messages about Results #####
   if ( exists("Tmin") ) {
     if ( !is.na(Tmin) & Tmin == 1 ) {
-      message("Prop is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
+      if (simplifyWarnings == FALSE) message("Prop is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
+      
+      if (simplifyWarnings == TRUE) message("The proportion is already less than or equal to r even with no confounding, so the amount of bias and of confounding strength required to make the specified shift are simply equal to 1. No confounding at all is required to make the specified shift.")
     }
     
     if ( !is.na(Tmin) & muB.toward.null == TRUE ) {
@@ -903,7 +928,7 @@ sens_plot = function(method="calibrated",
       } else {
         graphics::plot( p + ggplot2::geom_ribbon( aes(ymin=lo, ymax=hi), alpha=0.15 ) )
         
-        warning("Calculating parametric confidence intervals in the plot. For values of Phat that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
+        warning("Calculating parametric confidence intervals in the plot. For values of the proportion that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
       }
       
       
@@ -1205,7 +1230,7 @@ Phat_CI_lims = function(.B,
 
 
 
-#' CI for Tmin and Gmini
+#' CI for Tmin and Gmin
 #'
 #' An internal function that estimates a CI for Tmin and Gmin. Users should call \code{confounded_meta} instead.
 #' @import
