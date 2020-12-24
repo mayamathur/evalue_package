@@ -4,7 +4,7 @@
 
 #' Sensitivity analysis for unmeasured confounding in meta-analyses
 #' 
-#' This function implements the sensitivity analyses of Mathur & VanderWeele (2019) and Mathur & VanderWeele (2020). It computes point estimates, standard errors, and confidence intervals
+#' This function implements the sensitivity analyses of Mathur & VanderWeele (2020a, 2020b). It computes point estimates, standard errors, and confidence intervals
 #' for (1) \code{Prop}, the proportion of studies with true causal effect sizes above or below a chosen threshold \code{q} as a function of the bias parameters;
 #' (2) the minimum bias factor on the relative risk scale (\code{Tmin}) required to reduce to
 #' less than \code{r} the proportion of studies with true causal effect sizes more extreme than
@@ -47,13 +47,13 @@
 #' @export
 #' @details
 #' ## Specifying the sensitivity parameters on the bias
-#' By convention, the average log-bias factor, \code{muB}, is taken to be greater than 0 (Mathur & VanderWeele, 2019; Ding & VanderWeele, 2017). Confounding can operate on average either away from or toward the null, a choice specified via \code{muB.toward.null}. The most common choice for sensitivity analysis is to consider bias that operates on average away from the null, which is \code{confounded_meta}'s default. In such an analysis, correcting for the bias involves shifting studies' estimates back toward the null by \code{muB} (i.e., if \code{yr > 0}, the estimates will be corrected downward; if \code{yr < 0}, they will be corrected upward). Alternatively, to consider bias that operates on average away from the null, you would still specify \code{muB > 0} but would also specify \code{muB.toward.null = TRUE}. For detailed guidance on choosing the sensitivity parameters \code{muB} and \code{sigB}, see Section 5 of Mathur & VanderWeele (2019).
+#' By convention, the average log-bias factor, \code{muB}, is taken to be greater than 0 (Mathur & VanderWeele, 2020a; Ding & VanderWeele, 2017). Confounding can operate on average either away from or toward the null, a choice specified via \code{muB.toward.null}. The most common choice for sensitivity analysis is to consider bias that operates on average away from the null, which is \code{confounded_meta}'s default. In such an analysis, correcting for the bias involves shifting studies' estimates back toward the null by \code{muB} (i.e., if \code{yr > 0}, the estimates will be corrected downward; if \code{yr < 0}, they will be corrected upward). Alternatively, to consider bias that operates on average away from the null, you would still specify \code{muB > 0} but would also specify \code{muB.toward.null = TRUE}. For detailed guidance on choosing the sensitivity parameters \code{muB} and \code{sigB}, see Section 5 of Mathur & VanderWeele (2020a).
 #' 
 #' ## Specifying the threshold \code{q}
-#' For detailed guidance on choosing the threshold \code{q}, see the Supplement of Mathur & VanderWeele (2019).   
+#' For detailed guidance on choosing the threshold \code{q}, see the Supplement of Mathur & VanderWeele (2020a).   
 #' 
 #' ## Specifying the estimation method
-#' By default, \code{confounded_meta} performs estimation using a \strong{calibrated method} (Mathur & VanderWeele, 2020) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified:
+#' By default, \code{confounded_meta} performs estimation using a \strong{calibrated method} (Mathur & VanderWeele, 2020b) that extends work by Wang et al. (2019). This method makes no assumptions about the distribution of population effects and performs well in meta-analyses with as few as 10 studies, and performs well even when the proportion being estimated is close to 0 or 1. However, it only accommodates bias whose strength is the same in all studies (homogeneous bias). When using this method, the following arguments need to be specified:
 #' \itemize{
 #'  \item \code{q}
 #'  \item \code{r} (if you want to estimate \code{Tmin} and \code{Gmin})
@@ -85,7 +85,7 @@
 #' The direction of bias represented by \code{Tmin} and \code{Gmin} is dependent on the argument \code{tail}: when \code{tail = "above"}, these metrics consider bias that had operated to \emph{increase} studies' point estimates, and when \code{tail = "below"}, these metrics consider bias that had operated to \emph{decrease} studies' point estimates. Such bias could operate toward or away from the null depending on whether the pooled point estimate \code{yr} happens to fall above or below the null. As such, the direction of bias represented by \code{Tmin} and \code{Gmin} may or may not match that specified by the argument \code{muB.toward.null} (which is used only for estimation of \code{Prop}).
 #' 
 #' ## When these methods should be used
-#' These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate \code{t2} is greater than 0. For meta-analyses with fewer than 10 studies or with a heterogeneity estimate of 0, you can simply report E-values for the point estimate via [EValue::evalue()] (VanderWeele & Ding, 2017; see Mathur & VanderWeele (2019), Section 7.2 for interpretation in the meta-analysis context).
+#' These methods perform well only in meta-analyses with at least 10 studies; we do not recommend reporting them in smaller meta-analyses. Additionally, it only makes sense to consider proportions of effects stronger than a threshold when the heterogeneity estimate \code{t2} is greater than 0. For meta-analyses with fewer than 10 studies or with a heterogeneity estimate of 0, you can simply report E-values for the point estimate via [EValue::evalue()] (VanderWeele & Ding, 2017; see Mathur & VanderWeele (2020a), Section 7.2 for interpretation in the meta-analysis context).
 #'  
 #' 
 #' @keywords meta-analysis
@@ -96,9 +96,9 @@
 #' boot
 #' 
 #' @references
-#' Mathur MB & VanderWeele TJ (2019). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
+#' Mathur MB & VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
 #' 
-#' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
+#' Mathur MB & VanderWeele TJ (2020b). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
 #' 
 #' Mathur MB & VanderWeele TJ (2019). New statistical metrics for meta-analyses of heterogeneous effects. \emph{Statistics in Medicine}.
 #'
@@ -610,9 +610,9 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' ggplot2
 #' @importFrom dplyr %>% rowwise mutate rename
 #' @references
-#' Mathur MB & VanderWeele TJ (2020). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
-#'
-#' Mathur MB & VanderWeele TJ (2020). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
+#' Mathur MB & VanderWeele TJ (2020a). Sensitivity analysis for unmeasured confounding in meta-analyses. \emph{Journal of the American Statistical Association}.
+#' 
+#' Mathur MB & VanderWeele TJ (2020b). Robust metrics and sensitivity analyses for meta-analyses of heterogeneous effects. \emph{Epidemiology}.
 #'
 #' Wang C-C & Lee W-C (2019). A simple method to estimate prediction intervals and
 #' predictive distributions: Summarizing meta-analyses
@@ -1300,7 +1300,7 @@ Tmin_Gmin_CI_lims = function(
 
 #' A meta-analysis on soy intake and breast cancer risk (Trock et al., 2006)
 #'
-#' A meta-analysis of observational studies (12 case-control and six cohort or nested case-control) on the association of soy-food intake with breast cancer risk. Data are from Trock et al.'s (2006) Table 1. This dataset was used as the applied example in Mathur & VanderWeele (2019). 
+#' A meta-analysis of observational studies (12 case-control and six cohort or nested case-control) on the association of soy-food intake with breast cancer risk. Data are from Trock et al.'s (2006) Table 1. This dataset was used as the applied example in Mathur & VanderWeele (2020a). 
 #'
 #' @docType data
 #' @keywords datasets
