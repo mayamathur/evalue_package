@@ -44,6 +44,8 @@
 #' 
 #' @param vt2 Estimated variance of \eqn{\tau^2} from confounded meta-analysis. Only used if \code{method = "parametric"}.
 #' 
+#' @param \dots Additional arguments passed to \code{confounded_meta}.
+#' 
 #' @export
 #' @details
 #' ## Specifying the sensitivity parameters on the bias
@@ -288,7 +290,12 @@ confounded_meta = function( method="calibrated",  # for both methods
     }
     
     if ( !is.na(sigB) ) {
-      if ( t2 <= sigB^2 ) stop("Must have t2 > sigB^2")
+      if ( t2 <= sigB^2 ) {
+        if (simplifyWarnings == FALSE) stop("Must have t2 > sigB^2")
+        
+        # on the website, this can only happen if they set t2=0 but proportion due to confounding > 0
+        if (simplifyWarnings == TRUE) stop("Cannot have a nonzero proportion of heterogeneity due to variation in confounding bias when there is no heterogeneity to begin with")
+      }
       if ( sigB < 0 ) stop("Bias factor standard deviation cannot be negative")
     }
     

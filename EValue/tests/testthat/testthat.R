@@ -3,17 +3,17 @@
 #  because helper files that start with "helper" automatically 
 #  get sourced first: https://testthat.r-lib.org/reference/test_dir.html
 
-# for local testing:
-library(testthat)
-library(devtools)
-library(dplyr)
-library(ICC)
-library(msm)
-library(here())
-setwd(here())
-#setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
-setwd("tests")
-source("helper_testthat.R")
+# # for local testing:
+# library(testthat)
+# library(devtools)
+# library(dplyr)
+# library(ICC)
+# library(msm)
+# library(here())
+# setwd(here())
+# #setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
+# setwd("tests")
+# source("helper_testthat.R")
 
 
 
