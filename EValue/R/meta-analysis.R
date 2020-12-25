@@ -564,7 +564,8 @@ confounded_meta = function( method="calibrated",  # for both methods
     if ( !is.na(Tmin) & Tmin == 1 ) {
       if (simplifyWarnings == FALSE) message("Prop is already less than or equal to r even with no confounding, so Tmin and Gmin are simply equal to 1. No confounding at all is required to make the specified shift.")
       
-      if (simplifyWarnings == TRUE) message("The proportion is already less than or equal to r even with no confounding, so the amount of bias and of confounding strength required to make the specified shift are simply equal to 1. No confounding at all is required to make the specified shift.")
+      # no warning for website because it produces its own
+      #if (simplifyWarnings == TRUE) message("The proportion is already less than or equal to r even with no confounding, so the amount of bias and of confounding strength required to make the specified shift are simply equal to 1. No confounding at all is required to make the specified shift.")
     }
     
     if ( !is.na(Tmin) & muB.toward.null == TRUE ) {
