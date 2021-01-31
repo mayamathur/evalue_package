@@ -937,6 +937,8 @@ sens_plot = function(method="calibrated",
         graphics::plot( p + ggplot2::geom_ribbon( aes(ymin=lo, ymax=hi), alpha=0.15 ) )
         
         warning("Calculating parametric confidence intervals in the plot. For values of the proportion that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
+        
+        #@ plot isn't returned with method = "parametric"
       }
       
       
