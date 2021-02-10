@@ -332,12 +332,13 @@ confounded_meta = function( method="calibrated",  # for both methods
       }
       
       # point estimates for Tmin, Gmin
-      if ( !is.na(r) ) {
+      #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN: NOW CHECKS FOR SIGB
+      if ( !is.na(r) & !is.na(sigB) ) {
         
         # first check if any shifting is actually needed
         # current Phat with no bias
         #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
-        Phat.naive = 1 - pnorm( (q - yr) / sqrt(t2) )
+        Phat.naive = 1 - pnorm( (q - yr) / sqrt(t2 - sigB^2) )
         
         if ( Phat.naive <= r ) {
           Tmin = 1
@@ -346,7 +347,8 @@ confounded_meta = function( method="calibrated",  # for both methods
           # the max is there in case no bias is needed
           # (i.e., the bias would be going in the other direction)
           # (i.e., proportion of effects > q already < r without confounding)
-          Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2) - q + yr ) )
+          #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
+          Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2 - sigB^2) - q + yr ) )
           
           # alternative way of handling this issue:
           # Tmin could be less than 1 if yr has to be shifted POSITIVELY
@@ -378,17 +380,18 @@ confounded_meta = function( method="calibrated",  # for both methods
       }
      
       # point estimates for Tmin, Gmin
-      if ( !is.na(r) ) {
+      #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
+      if ( !is.na(r) & !is.na(sigB) ) {
         
         # first check if any shifting is actually needed
         # current Phat with no bias
-        Phat.naive = pnorm( (q - yr) / sqrt(t2) )
+        Phat.naive = pnorm( (q - yr) / sqrt(t2 - sigB^2) )
         
         if ( Phat.naive <= r ) {
           Tmin = 1
         } else {
           # the max is there in case no bias is needed
-          Tmin = max( 1, exp( q - yr - qnorm(r) * sqrt(t2) ) )
+          Tmin = max( 1, exp( q - yr - qnorm(r) * sqrt(t2 - sigB^2) ) )
           
           # alternative way of handling this issue:
           # # Tmin could be less than 1 if yr has to be shifted NEGATIVELY
@@ -442,17 +445,19 @@ confounded_meta = function( method="calibrated",  # for both methods
     ##### Delta Method Inference: Tmin and Gmin #####
     # do inference only if given needed SEs and r
     # last condition: if Tmin has been set to 1, give NAs for inference
-    if ( !is.na(vyr) & !is.na(vt2) & !is.na(r) & Tmin != 1 ){
+    #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
+    if ( !is.na(vyr) & !is.na(vt2) & !is.na(r) & !is.na(sigB) & Tmin != 1 ){
       
       ##### Tmin #####
       if ( tail == "above" ) {
-        
-        term = ( vt2 * qnorm(1-r)^2 ) / ( 4 * t2 )
-        SE.T = exp( sqrt(t2) * qnorm(1-r) - q + yr ) * sqrt( vyr + term  )
+        #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
+        term = ( vt2 * qnorm(1-r)^2 ) / ( 4 * (t2-sigB^2) )
+        SE.T = exp( sqrt(t2 - sigB^2) * qnorm(1-r) - q + yr ) * sqrt( vyr + term  )
         
       } else {
-        term = ( vt2 * qnorm(r)^2 ) / ( 4 * t2 )
-        SE.T = exp( q - yr - sqrt(t2) * qnorm(r) ) * sqrt( vyr + term  )
+        #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
+        term = ( vt2 * qnorm(r)^2 ) / ( 4 * (t2-sigB^2) )
+        SE.T = exp( q - yr - sqrt(t2 - sigB^2) * qnorm(r) ) * sqrt( vyr + term  )
       }
       
       tail.prob = ( 1 - CI.level ) / 2
