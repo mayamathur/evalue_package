@@ -336,6 +336,7 @@ confounded_meta = function( method="calibrated",  # for both methods
         
         # first check if any shifting is actually needed
         # current Phat with no bias
+        #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
         Phat.naive = 1 - pnorm( (q - yr) / sqrt(t2) )
         
         if ( Phat.naive <= r ) {
