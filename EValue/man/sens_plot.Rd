@@ -135,11 +135,11 @@ sens_plot( method = "calibrated",
            q=log(1.1),
            dat = d,
            yi.name = "yi",
-           vi.name = "vi",
+           vi.name = "vyi",
            give.CI = FALSE )
 
 # # with confidence band
-# # commented out because  it takes a while
+# # commented out because it takes a while
 # # this example gives bootstrap warnings because of its small sample size
 # sens_plot( method = "calibrated",
 #            type="line",
@@ -147,7 +147,7 @@ sens_plot( method = "calibrated",
 #            R = 500,  # should be higher in practice (e.g., 1000)
 #            dat = d,
 #            yi.name = "yi",
-#            vi.name = "vi",
+#            vi.name = "vyi",
 #            give.CI = TRUE )
 
 

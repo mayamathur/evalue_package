@@ -331,7 +331,6 @@ confounded_meta = function( method="calibrated",  # for both methods
         Phat = NA
       }
       
-      #bm
       # point estimates for Tmin, Gmin
       if ( !is.na(r) & !is.na(sigB) ) {
         
@@ -700,11 +699,11 @@ confounded_meta = function( method="calibrated",  # for both methods
 #'            q=log(1.1),
 #'            dat = d,
 #'            yi.name = "yi",
-#'            vi.name = "vi",
+#'            vi.name = "vyi",
 #'            give.CI = FALSE )
 #' 
 #' # # with confidence band
-#' # # commented out because  it takes a while
+#' # # commented out because it takes a while
 #' # # this example gives bootstrap warnings because of its small sample size
 #' # sens_plot( method = "calibrated",
 #' #            type="line",
@@ -712,7 +711,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' #            R = 500,  # should be higher in practice (e.g., 1000)
 #' #            dat = d,
 #' #            yi.name = "yi",
-#' #            vi.name = "vi",
+#' #            vi.name = "vyi",
 #' #            give.CI = TRUE )
 #' 
 #' 
@@ -813,6 +812,8 @@ sens_plot = function(method="calibrated",
   # tail = "above"
   # breaks.x1 = NA
   # breaks.x2 = NA
+  # give.CI = TRUE
+  # muB.toward.null = TRUE
   
   val = group = eB = phat = lo = hi = B = B.x = Phat = NULL
   
@@ -933,12 +934,14 @@ sens_plot = function(method="calibrated",
       
       if ( no.CI ){
         graphics::plot(p)
+        return(p)
       } else {
-        graphics::plot( p + ggplot2::geom_ribbon( aes(ymin=lo, ymax=hi), alpha=0.15 ) )
         
         warning("Calculating parametric confidence intervals in the plot. For values of the proportion that are less than 0.15 or greater than 0.85, these confidence intervals may not perform well.")
         
-        #@ plot isn't returned with method = "parametric"
+        p = p + ggplot2::geom_ribbon( aes(ymin=lo, ymax=hi), alpha=0.15 )
+        graphics::plot( p )
+        return(p)
       }
       
       
@@ -958,6 +961,7 @@ sens_plot = function(method="calibrated",
       
       res = data.frame( B = seq(Bmin, Bmax, .01) )
       
+
       # evaluate Phat causal at each value of B
       res = res %>% rowwise() %>%
         mutate( Phat = Phat_causal( q = q, 

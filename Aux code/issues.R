@@ -34,4 +34,11 @@ detach("package:EValue")
 #                 dat = d,
 #                 R=500)
 
-
+sens_plot( method = "calibrated",
+           type="line",
+           q=log(1.1),
+           R = 500,  # should be higher in practice (e.g., 1000)
+           dat = d,
+           yi.name = "yi",
+           vi.name = "vyi",
+           give.CI = TRUE )
