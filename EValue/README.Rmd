@@ -61,4 +61,4 @@ Read more about how to specify [multiple biases](articles/multiple-bias.html) an
 
 ## Other options
 
-If all you need to do is calculate an E-value for unmeasured confounding, just try out the [online calculator](https://​www.evalue-calculator.com). Graphical interfaces are also linked under each of the types of sensitivity analysis in the header.
+If all you need to do is calculate an E-value for unmeasured confounding, just try out the [online calculator](https://www.evalue-calculator.com). Graphical interfaces are also linked under each of the types of sensitivity analysis in the header.
