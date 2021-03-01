@@ -190,7 +190,8 @@
 #' 
 #' # passing only arguments needed for Tmin, Gmin point estimates
 #' confounded_meta( method = "parametric",
-#'                  q=log(0.90),
+#'                  q = log(0.90),
+#'                  sigB = 0,
 #'                  r = 0.10,
 #'                  tail = "below",
 #'                  yr=yr,
@@ -699,7 +700,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #'            q=log(1.1),
 #'            dat = d,
 #'            yi.name = "yi",
-#'            vi.name = "vyi",
+#'            vi.name = "vi",
 #'            give.CI = FALSE )
 #' 
 #' # # with confidence band
@@ -711,7 +712,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #' #            R = 500,  # should be higher in practice (e.g., 1000)
 #' #            dat = d,
 #' #            yi.name = "yi",
-#' #            vi.name = "vyi",
+#' #            vi.name = "vi",
 #' #            give.CI = TRUE )
 #' 
 #' 

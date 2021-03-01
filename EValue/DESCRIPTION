@@ -1,7 +1,7 @@
 Package: EValue
 Type: Package
 Title: Sensitivity Analyses for Unmeasured Confounding and Other Biases in Observational Studies and Meta-Analyses
-Version: 4.1.1
+Version: 4.1.2
 Authors@R: c(
     person("Maya B.", "Mathur", email = "mmathur@stanford.edu", role = c("cre", "aut")),
     person("Louisa H.", "Smith", role = "aut"),

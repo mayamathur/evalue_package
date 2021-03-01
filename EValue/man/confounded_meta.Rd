@@ -203,7 +203,8 @@ confounded_meta( method = "parametric",
 
 # passing only arguments needed for Tmin, Gmin point estimates
 confounded_meta( method = "parametric",
-                 q=log(0.90),
+                 q = log(0.90),
+                 sigB = 0,
                  r = 0.10,
                  tail = "below",
                  yr=yr,

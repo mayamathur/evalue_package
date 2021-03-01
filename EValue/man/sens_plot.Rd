@@ -135,7 +135,7 @@ sens_plot( method = "calibrated",
            q=log(1.1),
            dat = d,
            yi.name = "yi",
-           vi.name = "vyi",
+           vi.name = "vi",
            give.CI = FALSE )
 
 # # with confidence band
@@ -147,7 +147,7 @@ sens_plot( method = "calibrated",
 #            R = 500,  # should be higher in practice (e.g., 1000)
 #            dat = d,
 #            yi.name = "yi",
-#            vi.name = "vyi",
+#            vi.name = "vi",
 #            give.CI = TRUE )
 
 

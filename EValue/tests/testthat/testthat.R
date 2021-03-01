@@ -4,17 +4,17 @@
 #  get sourced first: https://testthat.r-lib.org/reference/test_dir.html
 
 # # for local testing:
-library(testthat)
-library(devtools)
-library(dplyr)
-library(ICC)
-library(msm)
-library(MetaUtility)
-library(here())
-setwd(here())
-#setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
-setwd("tests")
-source("helper_testthat.R")
+# library(testthat)
+# library(devtools)
+# library(dplyr)
+# library(ICC)
+# library(msm)
+# library(MetaUtility)
+# library(here())
+# setwd(here())
+# #setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
+# setwd("tests")
+# source("helper_testthat.R")
 
 
 
@@ -529,7 +529,6 @@ test_that("Reject negative outcomes", {
 
 ###################### CONFOUNDED_META AND SENS_PLOT ######################
 
-#bm
 
 ##### Parametric Method #####
 test_that("Parametric, test set #1 (setting q equal to observed mean without bias should yield 50%)", {
