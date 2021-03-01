@@ -4,16 +4,16 @@
 #  get sourced first: https://testthat.r-lib.org/reference/test_dir.html
 
 # # for local testing:
-# library(testthat)
-# library(devtools)
-# library(dplyr)
-# library(ICC)
-# library(msm)
-# library(here())
-# setwd(here())
-# #setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
-# setwd("tests")
-# source("helper_testthat.R")
+library(testthat)
+library(devtools)
+library(dplyr)
+library(ICC)
+library(msm)
+library(here())
+setwd(here())
+#setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
+setwd("tests")
+source("helper_testthat.R")
 
 
 
@@ -528,6 +528,8 @@ test_that("Reject negative outcomes", {
 
 ###################### CONFOUNDED_META AND SENS_PLOT ######################
 
+#bm
+
 ##### Parametric Method #####
 test_that("Parametric, test set #1 (setting q equal to observed mean without bias should yield 50%)", {
   expect_equal( 0.5, confounded_meta(method="parametric",
@@ -587,12 +589,12 @@ test_that("Parametric, test set #2 (causative)", {
   
   ##### TMin ######
   # point estimate
-  expect_equal( exp( qnorm(1-r) * sqrt(t2) - q + yr ),
+  expect_equal( exp( qnorm(1-r) * sqrt(t2 - sigB^2) - q + yr ),
                 cm[2,2] )
   
   # check standard error against deltamethod function
   #qnorm( 1 - 0.1 ) # because deltamethod can't take its derivatve
-  SE = deltamethod( ~ exp( 1.281552 * sqrt(x2) - log(1.1) + x1 ), mean = c( log(1.4), 0.3 ), cov = diag( c(0.5, 0.02) ) )
+  SE = deltamethod( ~ exp( 1.281552 * sqrt(x2) - log(1.1) + x1 ), mean = c( log(1.4), 0.3 - .1^2 ), cov = diag( c(0.5, 0.02) ) )
   
   expect_equal( SE, cm[2,3], tol = 0.001 )
   
@@ -616,9 +618,7 @@ test_that("Parametric, test set #2 (causative)", {
   # CI limits
   expect_equal( max(1, cm[3,2] - SE*qnorm(0.975)), cm[3,4] )
   expect_equal( cm[3,2] + SE*qnorm(0.975), cm[3,5] )
-  
-  ##### sens_plot
-  
+
 })
 
 
@@ -658,12 +658,12 @@ test_that("Parametric, test set #3 (preventive)", {
   
   ##### TMin ######
   # point estimate
-  expect_equal( exp( q - yr - qnorm(r) * sqrt(t2) ),
+  expect_equal( exp( q - yr - qnorm(r) * sqrt(t2 - sigB^2) ),
                 cm[2,2] )
   
   # check standard error against deltamethod function
   #qnorm( 0.1 ) # because deltamethod can't take its derivative
-  SE = deltamethod( ~ exp( log(0.9) - x1 - (-1.281552) * sqrt(x2) ), mean = c( log(0.6), 0.2 ), cov = diag( c(0.2, 0.01) ) )
+  SE = deltamethod( ~ exp( log(0.9) - x1 - (-1.281552) * sqrt(x2) ), mean = c( log(0.6), 0.2 - .1^2 ), cov = diag( c(0.2, 0.01) ) )
   
   expect_equal( SE, cm[2,3], tol = 0.001 )
   
