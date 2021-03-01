@@ -276,7 +276,7 @@ confounded_meta = function( method="calibrated",  # for both methods
     
     ##### Check for Bad Input #####
     if ( t2 < 0 ) stop("Heterogeneity cannot be negative")
-    #if ( is.na(sigB) ) stop("Must provide sigB for parametric method")
+    if ( is.na(sigB) ) stop("Must provide sigB for parametric method")
     
     
     # the second condition is needed for Shiny app:
@@ -331,13 +331,12 @@ confounded_meta = function( method="calibrated",  # for both methods
         Phat = NA
       }
       
+      #bm
       # point estimates for Tmin, Gmin
-      #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN: NOW CHECKS FOR SIGB
       if ( !is.na(r) & !is.na(sigB) ) {
         
         # first check if any shifting is actually needed
         # current Phat with no bias
-        #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
         Phat.naive = 1 - pnorm( (q - yr) / sqrt(t2 - sigB^2) )
         
         if ( Phat.naive <= r ) {
@@ -347,7 +346,6 @@ confounded_meta = function( method="calibrated",  # for both methods
           # the max is there in case no bias is needed
           # (i.e., the bias would be going in the other direction)
           # (i.e., proportion of effects > q already < r without confounding)
-          #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
           Tmin = max( 1, exp( qnorm(1-r) * sqrt(t2 - sigB^2) - q + yr ) )
           
           # alternative way of handling this issue:
@@ -380,7 +378,6 @@ confounded_meta = function( method="calibrated",  # for both methods
       }
      
       # point estimates for Tmin, Gmin
-      #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
       if ( !is.na(r) & !is.na(sigB) ) {
         
         # first check if any shifting is actually needed
@@ -445,17 +442,14 @@ confounded_meta = function( method="calibrated",  # for both methods
     ##### Delta Method Inference: Tmin and Gmin #####
     # do inference only if given needed SEs and r
     # last condition: if Tmin has been set to 1, give NAs for inference
-    #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
     if ( !is.na(vyr) & !is.na(vt2) & !is.na(r) & !is.na(sigB) & Tmin != 1 ){
       
       ##### Tmin #####
       if ( tail == "above" ) {
-        #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
         term = ( vt2 * qnorm(1-r)^2 ) / ( 4 * (t2-sigB^2) )
         SE.T = exp( sqrt(t2 - sigB^2) * qnorm(1-r) - q + yr ) * sqrt( vyr + term  )
         
       } else {
-        #@UPDATED THIS TO ALLOW HETERO BIAS IN TMIN/GMIN
         term = ( vt2 * qnorm(r)^2 ) / ( 4 * (t2-sigB^2) )
         SE.T = exp( q - yr - sqrt(t2 - sigB^2) * qnorm(r) ) * sqrt( vyr + term  )
       }
