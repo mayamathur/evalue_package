@@ -7,7 +7,7 @@ Authors@R: c(
     person("Louisa H.", "Smith", role = "aut"),
     person("Peng", "Ding", role = "aut"),
     person("Tyler J.", "VanderWeele", role = "aut"))
-Description: Conducts sensitivity analyses for unmeasured confounding, selection bias, and measurement error (individually or in combination; VanderWeele & Ding (2017) <doi:10.7326/M16-2607>; Smith & VanderWeele (2019) <doi:10.1097/EDE.0000000000001032>; VanderWeele & Li (2019) <doi:10.1093/aje/kwz133>; Smith & VanderWeele (2021) <doi:arXiv:2005.02908>). Also conducts sensitivity analyses for unmeasured confounding in meta-analyses (Mathur & VanderWeele (2020a) <doi:10.1080/01621459.2018.1529598>; Mathur & VanderWeele (2020b) <doi:10.1097/EDE.0000000000001180>).  
+Description: Conducts sensitivity analyses for unmeasured confounding, selection bias, and measurement error (individually or in combination; VanderWeele & Ding (2017) <doi:10.7326/M16-2607>; Smith & VanderWeele (2019) <doi:10.1097/EDE.0000000000001032>; VanderWeele & Li (2019) <doi:10.1093/aje/kwz133>; Smith & VanderWeele (2021) <arXiv:2005.02908>). Also conducts sensitivity analyses for unmeasured confounding in meta-analyses (Mathur & VanderWeele (2020a) <doi:10.1080/01621459.2018.1529598>; Mathur & VanderWeele (2020b) <doi:10.1097/EDE.0000000000001180>).  
 LazyData: true
 License: GPL-2
 Imports: stats, graphics, ggplot2 (>= 2.2.1), metafor, methods, boot, MetaUtility, dplyr
