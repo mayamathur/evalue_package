@@ -385,7 +385,7 @@ summary {
 #&gt;             point    lower upper
 #&gt; RR       10.73000  8.02000 14.36
 #&gt; E-values 20.94777 15.52336    NA</code></pre>
-<p>For more on E-values for unmeasured confounding, see the <a href="articles/unmeasured-confounding.html">vignette</a>.</p>
+<p>For more on E-values for unmeasured confounding, see the <a href="https://cran.r-project.org/web/packages/EValue/vignettes/unmeasured-confounding.html">vignette</a>.</p>
 <p>More complex assessment of several biases is also easy. To bound the bias due to unmeasured confounding, selection bias, and differential outcome misclassification, we can use background knowledge about the strength of the biases to propose sensitivity analysis parameters:</p>
 <pre class="r"><code>biases &lt;- multi_bias(confounding(),
                      selection(&quot;general&quot;, &quot;increased risk&quot;),
@@ -396,11 +396,11 @@ multi_bound(biases,
             RRSUsA1 = 1.25, RRUsYA1 = 2.5,
             ORYAaS = 1.75)
 #&gt; [1] 2.386364</code></pre>
-<p>Read more about how to specify <a href="articles/multiple-bias.html">multiple biases</a> and see several worked <a href="articles/multiple-bias-examples.html">examples</a>.</p>
+<p>Read more about how to specify <a href="https://cran.r-project.org/web/packages/EValue/vignettes/multiple-bias.html">multiple biases</a> and see several worked <a href="https://cran.r-project.org/web/packages/EValue/vignettes/multiple-bias-examples.html">examples</a>.</p>
 </div>
 <div id="other-options" class="section level2">
 <h2>Other options</h2>
-<p>If all you need to do is calculate an E-value for unmeasured confounding, just try out the <a href="https://​www.evalue-calculator.com">online calculator</a>. Graphical interfaces are also linked under each of the types of sensitivity analysis in the header.</p>
+<p>If all you need to do is calculate an E-value for unmeasured confounding, just try out the <a href="https://www.evalue-calculator.com">online calculator</a>. Graphical interfaces are also linked under each of the types of sensitivity analysis in the header.</p>
 </div>
 </div>
 
