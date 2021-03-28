@@ -19,7 +19,7 @@
 #' @param delta The contrast of interest in the exposure
 #' @param sd The standard deviation of the outcome (or residual standard
 #'   deviation); see Details
-#' @param true The true standardized mean difference to which to shift the
+#' @param true The true standardized mean difference to which to Shift the
 #'   observed point estimate. Typically set to 0 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @export
@@ -94,7 +94,7 @@ evalues.OLS = function( est, se = NA, sd, delta = 1, true = 0, ... ) {
   # rescale to reflect a contrast of size delta
   est = toMD( est, delta = delta )
   se = toMD( se, delta = delta )
-
+  
   return( evalues.MD( est = est, se = se, true = true ) )
 }
 
@@ -107,7 +107,7 @@ evalues.OLS = function( est, se = NA, sd, delta = 1, true = 0, ... ) {
 #' confidence interval limit closer to the null.
 #' @param est The point estimate as a standardized difference (i.e., Cohen's d)
 #' @param se The standard error of the point estimate
-#' @param true The true standardized mean difference to which to shift the
+#' @param true The true standardized mean difference to which to Shift the
 #'   observed point estimate. Typically set to 0 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @export
@@ -168,7 +168,7 @@ evalues.MD = function( est, se = NA, true = 0, ... ) {
 #' @param hi The upper limit of the confidence interval
 #' @param rare 1 if outcome is rare (<15 percent at end of follow-up); 0 if
 #'   outcome is not rare (>15 percent at end of follow-up)
-#' @param true The true HR to which to shift the observed point estimate.
+#' @param true The true HR to which to Shift the observed point estimate.
 #'   Typically set to 1 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @export
@@ -212,7 +212,7 @@ evalues.HR = function( est, lo = NA, hi = NA, rare = NA, true = 1, ... ) {
 #' @param hi The upper limit of the confidence interval
 #' @param rare 1 if outcome is rare (<15 percent at end of follow-up); 0 if
 #'   outcome is not rare (>15 percent at end of follow-up)
-#' @param true The true OR to which to shift the observed point estimate.
+#' @param true The true OR to which to Shift the observed point estimate.
 #'   Typically set to 1 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @keywords e-value
@@ -225,7 +225,7 @@ evalues.HR = function( est, lo = NA, hi = NA, rare = NA, true = 1, ... ) {
 #'
 #' ## Example 2
 #' ## Hsu and Small (2013 Biometrics) Data
-#' ## sensitivity analysis after log-linear or logistic regression
+#' ## sensitivity analysis af1er log-linear or logistic regression
 #'
 #' head(lead)
 #'
@@ -282,7 +282,7 @@ evalues.OR = function( est, lo = NA, hi = NA, rare = NA, true = 1, ... ) {
 #' @param est The point estimate
 #' @param lo The lower limit of the confidence interval
 #' @param hi The upper limit of the confidence interval
-#' @param true The true RR to which to shift the observed point estimate.
+#' @param true The true RR to which to Shift the observed point estimate.
 #'   Typically set to 1 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @keywords e-value
@@ -309,10 +309,10 @@ evalues.RR = function( est, lo = NA, hi = NA, true = 1, ... ) {
   
   # warn user if using non-null true value
   if ( true != 1 ) wrapmessage(c("You are calculating a \"non-null\" E-value,",
-                                  "i.e., an E-value for the minimum amount of unmeasured",
-                                  "confounding needed to move the estimate and confidence",
-                                  "interval to your specified true value rather than to",
-                                  "the null value."))
+                                 "i.e., an E-value for the minimum amount of unmeasured",
+                                 "confounding needed to move the estimate and confidence",
+                                 "interval to your specified true value rather than to",
+                                 "the null value."))
   
   # check if CI crosses null
   null.CI = NA
@@ -414,7 +414,7 @@ twoXtwoRR = function( n11, n10, n01, n00, alpha = 0.05 ){
 #'call the relevant \code{evalues.XX()} function rather than this internal
 #'function.
 #'@param x The risk ratio
-#'@param true The true RR to which to shift the observed point estimate.
+#'@param true The true RR to which to Shift the observed point estimate.
 #'  Typically set to 1 to consider a null true effect.
 #'@export
 #'@keywords internal
@@ -476,7 +476,7 @@ threshold = function( x, true = 1 ) {
 #' @param n10 Number of exposed, non-diseased individuals
 #' @param n01 Number of unexposed, diseased individuals
 #' @param n00 Number of unexposed, non-diseased individuals
-#' @param true True value of risk difference to which to shift the point
+#' @param true True value of risk difference to which to Shift the point
 #'   estimate. Usually set to 0 to consider the null.
 #' @param alpha Alpha level
 #' @param grid Spacing for grid search of E-value
@@ -495,10 +495,10 @@ threshold = function( x, true = 1 ) {
 #' ##Smoker    397            78557
 #' ##Nonsmoker 51             108778
 #'
-#' # E-value to shift observed risk difference to 0
+#' # E-value to Shift observed risk difference to 0
 #' evalues.RD(397, 78557, 51, 108778)
 #'
-#' # E-values to shift observed risk difference to other null values
+#' # E-values to Shift observed risk difference to other null values
 #' evalues.RD(397, 78557, 51, 108778, true = 0.001)
 
 
@@ -579,6 +579,430 @@ evalues.RD = function( n11, n10, n01, n00,
 
 
 
+
+# USAGE NOTES ----------------------
+
+
+# Algorithm structure:
+# IC_evalue > RD_distance > RDt_bound > RDt_var
+
+# If you eventually move these fns to package, note that:
+#  - Will need to think through fns' assumptions about signs 
+#    (e.g., RDc < 0 case)
+#  - Have not dealt with weird cases like if IC^c is already less than IC^t 
+#    IC_evalue will probably complain about sqrt(RR * (RR - 1)) being undef'nd in that case
+#  - Search "#@" for notes on other assumptions in fns that would need to be gnlz'd  
+
+# BIG STATS FUNCTIONS ----------------------
+
+# bias-corrected variance for one stratum
+# Ding & VanderWeele, eAppendix 5 (delta method)
+# handles either positive or negative bias
+#@think about the fact that recoding depends on confounding rather than true p1, p0
+
+#' Variance of a proportion
+#'
+#' An internal function that quickly calculates the variance of a proportion.
+#' @import
+#' @noRd
+var_prop = function(p, n) ( p * (1 - p) ) / n
+
+#' Variance of bias-corrected risk difference
+#'
+#' An internal function that estimates the variance of a bias-corrected risk difference when the bias factor (on the ratio scale) is \code{.maxB}. Users should call \code{evalues.int.contr} instead. Assumes we are considering bias away from the null. 
+#' @import
+#' @noRd
+RDt_var = function(f, p1, p0, n1, n0, .maxB) {
+  
+  # if risk difference < 0, reverse strata's coding in order to
+  #  apply same bound
+  if ( p1 - p0 < 0 ){
+    .p0 = p1
+    .p1 = p0
+    .n0 = n1
+    .n1 = n0
+  } else {
+    .p0 = p0
+    .p1 = p1
+    .n0 = n0
+    .n1 = n1
+  }
+  
+  f.var = var_prop(p = f, n = .n1 + .n0)
+  p1.var = var_prop(p = .p1, n = .n1)
+  p0.var = var_prop(p = .p0, n = .n0)
+  
+  term1 = p1.var + p0.var * .maxB^2
+  term2 = ( f + (1 - f) / .maxB )^2
+  term3 = ( .p1 - .p0 * .maxB )^2 * ( 1 - 1/.maxB )^2 * f.var
+  
+  return( term1 * term2 + term3 )
+}
+
+
+
+
+#' Bounds on risk differences in each stratum and on the interaction contrast
+#'
+#' An internal function that calculates bounds on each stratum and on the interaction contrast given specified bias factors and bias directions in each stratum. The bounds on the risk differences are the same as those produced by \code{evalues.RD()}. This function is essentially only used for calcating E-values for the interaction contrast and is not exported to avoid confusion with \code{evalues.RD()}.
+#' @import
+#' @noRd
+RDt_bound = function( p1_1,
+                      p1_0,
+                      n1_1,
+                      n1_0,
+                      f1,
+                      maxB_1,  
+                      biasDir_1, # direction of bias in stratum 1
+                      
+                      p0_1,
+                      p0_0,
+                      n0_1,
+                      n0_0,
+                      f0,
+                      maxB_0 = NA,
+                      biasDir_0,
+                      
+                      alpha = 0.05 ) {
+  
+  if ( is.na(maxB_0) ) {
+    maxB_0 = maxB_1
+    message("Assuming the bias factor is the same in each stratum because you didn't provide maxB_0")
+  }
+  
+  
+  ### Corrected point estimate
+  # corrected RD for each stratum - pg 376
+  if ( biasDir_1 == "positive" ) RDt_t = ( p1_1 - p1_0 * maxB_1 ) * ( f1 + ( 1 - f1 ) / maxB_1 )
+  if ( biasDir_1 == "negative" ) RDt_t = ( p1_1 * maxB_1 - p1_0 ) * ( f1 + ( 1 - f1 ) / maxB_1 )
+  
+  if ( biasDir_0 == "positive" ) RDt_c = ( p0_1 - p0_0 * maxB_0 ) * ( f0 + ( 1 - f0 ) / maxB_0 )
+  if ( biasDir_0 == "negative" ) RDt_c = ( p0_1 * maxB_0 - p0_0 ) * ( f0 + ( 1 - f0 ) / maxB_0 )
+  
+  # # old version (agrees numerically with the above)
+  # RDt_t = ( p1_1 - p1_0 * .maxB ) * ( f1 + ( 1 - f1 ) / .maxB )
+  # # corrected RD for X=0 (men) stratum (Shift downward) - pg 376
+  # RDt_c = ( p0_1 * .maxB - p0_0 ) * ( f0 + ( 1 - f0 )/.maxB )  # without recoding f
+  
+  # calculate interaction contrast
+  ICt = RDt_t - RDt_c
+  
+  # sanity check
+  # should recover uncorrected RDs when there is no bias
+  if ( maxB_1 == 1 ) expect_equal(RDt_t, p1_1 - p1_0)
+  if ( maxB_0 == 1 ) expect_equal(RDt_c, p0_1 - p0_0)
+  
+  
+  ### Corrected confidence interval
+  # calculate var for each stratum (W and M) separately
+  # as in Ding & VanderWeele, eAppendix 5 (delta method)
+  VarRDt_t = RDt_var(f = f1,
+                     p1 = p1_1,
+                     p0 = p1_0,
+                     n1 = n1_1,
+                     n0 = n1_0,
+                     .maxB = maxB_1 )
+  
+  VarRDt_c = RDt_var(f = f0,
+                     p1 = p0_1,
+                     p0 = p0_0,
+                     n1 = n0_1,
+                     n0 = n0_0,
+                     .maxB = maxB_0 )
+  
+  VarICt = VarRDt_t + VarRDt_c
+  
+  
+  ### Organize and return results
+  res = data.frame( stratum = c("1", "0", "effectMod"),
+                    
+                    RD = c( RDt_t, RDt_c, ICt),
+                    
+                    se = c( sqrt(VarRDt_t), sqrt(VarRDt_c), sqrt(VarICt) ) )
+  
+  crit = qnorm( 1 - alpha/2 )
+  res$lo = res$RD - crit * res$se
+  res$hi = res$RD + crit * res$se
+  res$pval = 2 * ( 1 - pnorm( abs( res$RD / res$se ) ) )
+  
+  return(res)
+}
+
+
+
+
+
+#' Distance of bias-corrected risk difference for a stratum (or interaction contrast) versus desired true value
+#'
+#' An internal function used for calculating E-values for interaction contrasts.
+#' @import
+#' @noRd
+
+# stratum: name of stratum as returned by RDt_bound ("1", "0", or "effectMod" for interaction contrast)
+# varName: the statistic (of those returned by RDt_bound: "RD", "lo", "hi") whose distance from "true" should be measured
+# true: value to which to compare the bias-corrected estimate
+# ...: args to be passed to RDt_bound
+RD_distance = function(stratum,
+                       varName,  
+                       true,  
+                       ...) {
+
+  .RDs = RDt_bound(...)
+  
+  abs( .RDs[[varName]][ .RDs$stratum == stratum ] - true )
+}
+
+
+
+#' Inner helper function for calculating E-values for interaction contrasts
+#'
+#' An internal function called by the wrapper function \code{evalues.IC}. The present function does NOT consider monontonic bias in arbitrary direction; for that, the wrapper function will call \code{IC_evalue_inner} once for EACH candidate bias direction and then will compare the results. This function also gives E-values for each stratum separately if wanted (based on \code{varName}), which are the same as those from \code{evalues.RD}. 
+#' @import
+#' @noRd
+
+# see argument structure in evalues.IC, with the following differences
+# monotonicBias: TRUE/FALSE 
+# monotonicBiasDirection: "positive" or "negative" only
+IC_evalue_inner = function( stratum,
+                            varName,
+                            true = 0,
+                            monotonicBias = FALSE,
+                            monotonicBiasDirection = NA,
+                            
+                            p1_1,
+                            p1_0,
+                            n1_1,
+                            n1_0,
+                            f1,
+                            
+                            p0_1,
+                            p0_0,
+                            n0_1,
+                            n0_0,
+                            f0,
+                            
+                            alpha = 0.05 ) {
+  
+  # catch wrong input
+  if ( monotonicBias == FALSE & !is.na(monotonicBiasDirection) ) warning("You specified that bias could be non-monotonic, so the argument monotonicBiasDirection will be ignored.")
+  
+  # prepare to pass all arguments to another fn
+  # https://stackoverflow.com/questions/29327423/use-match-call-to-pass-all-arguments-to-other-function
+  # "-1" removes the name of the fn that was called ("IC_evalue")
+  .args = as.list(match.call()[-1])
+  # remove other args that are not to be passed to RD_distance
+  .args = .args[ !names(.args) %in% c("monotonicBias", "monotonicBiasDirection") ]
+  
+  
+  ### Set up the bounding factor fn to be maximized to get the E-value
+  # depends on biasDir assumptions
+  #@assumes W stratum > 0 and M is < 0
+  #so basically need to warn user to recode exposure if IC^c < 0 
+  if ( monotonicBias == FALSE ) {
+    boundfn = function(x){
+      .args$maxB_1 = x
+      .args$biasDir_1 = "positive"
+      .args$maxB_0 = x
+      .args$biasDir_0 = "negative"
+      do.call( RD_distance, .args )
+    }
+  }
+  
+  if ( monotonicBias == TRUE & monotonicBiasDirection == "positive" ) {
+    boundfn = function(x){
+      .args$maxB_1 = x
+      .args$biasDir_1 = "positive"
+      .args$maxB_0 = 1  # no bias in this stratum
+      .args$biasDir_0 = "positive"
+      do.call( RD_distance, .args )
+    }
+  }
+  
+  if ( monotonicBias == TRUE & monotonicBiasDirection == "negative" ) {
+    boundfn = function(x){
+      .args$maxB_1 = 1 # no bias in this stratum
+      .args$biasDir_1 = "negative"
+      .args$maxB_0 = x
+      .args$biasDir_0 = "negative"
+      do.call( RD_distance, .args )
+    }
+  }
+  
+  #@ revisit upper bound of search space (500)
+  opt = optimize( f = boundfn,
+                  interval = c(0, 500),
+                  maximum = FALSE )
+  
+  #@revisit this
+  if ( abs( opt$objective - true ) > 0.001 ) warning("E-value didn't move estimate close enough to true value; look into optimize() call")
+  
+  return( data.frame( evalue = g(opt$minimum),
+                      biasFactor = opt$minimum,  # not the bias factor, but the regular bias
+                      bound = opt$objective ) )  # should be equal to true
+  
+}
+
+
+# looks at monotonic bias without assuming direction by calling IC_evalue twice
+# NOT in shape for package
+# lots of dataset-specific things in here
+
+# varName: "RD" or "lo"
+
+
+# monotonicBias: TRUE/FALSE
+# monotonicBiasDirection: NA, "positive", "negative", "unknown"
+# mention that probs can be adjusted for other confounders
+
+#' Compute an E-value for unmeasured confounding for additive effect modification
+#' 
+#' @param monotonicBias TRUE/FALSE
+#' @param monotonicBiasDirection "positive", "negative", or "unknown", or NA
+#' @param true
+#' 
+#' @param p1_1 The probability of the outcome in stratum Z=1 for exposure X=1
+#' @param p1_0 The probability of the outcome in stratum Z=1 for exposure X=0
+#' @param n1_1 The sample size in stratum Z=1 with exposure X=1
+#' @param n1_0 The sample size in stratum Z=1 with exposure X=0
+#' @param f1 The prevalence (or incidence) in stratum Z=1 of exposure X=1
+#' 
+#' @param p0_1 The probability of the outcome in stratum Z=0 for exposure X=1
+#' @param p0_0 The probability of the outcome in stratum Z=0 for exposure X=0
+#' @param n0_1 The sample size in stratum Z=0 with exposure X=1
+#' @param n0_0 The sample size in stratum Z=0 with exposure X=0
+#' @param f0 The prevalence (or incidence) in stratum Z=0 of exposure X=1
+#' 
+#' @param alpha The alpha-level for the p-value and confidence interval. 
+#' @import
+#' 
+
+#bm
+
+# for example:
+# # enter example datasets (Letenneur)
+# # Y: dementia
+# # X: low education
+# # n: sample size
+# 
+# # data for women
+# nw_1 = 2988
+# nw_0 = 364
+# dw = data.frame(  Y = c(1, 1, 0, 0),
+#                   X = c(1, 0, 1, 0),
+#                   n = c( 158, 6, nw_1-158, nw_0-6 ) )
+# 
+# # data for men
+# nm_1 = 1790
+# nm_0 = 605
+# dm = data.frame(  Y = c(1, 1, 0, 0),
+#                   X = c(1, 0, 1, 0),
+#                   n = c( 64, 17, nm_1-64, nm_0-17 ) )
+# 
+# # P(Y = 1 | X = 1) and P(Y = 1 | X = 0) for women and for men
+# ( pw_1 = dw$n[ dw$X == 1 & dw$Y == 1 ] / sum(dw$n[ dw$X == 1 ]) )
+# ( pw_0 = dw$n[ dw$X == 0 & dw$Y == 1 ] / sum(dw$n[ dw$X == 0 ]) )
+# ( pm_1 = dm$n[ dm$X == 1 & dm$Y == 1 ] / sum(dm$n[ dm$X == 1 ]) )
+# ( pm_0 = dm$n[ dm$X == 0 & dm$Y == 1 ] / sum(dm$n[ dm$X == 0 ]) )
+# 
+# # prevalence of low education among women and among men
+# fw = nw_1 / (nw_1 + nw_0)
+# fm = nm_1 / (nm_1 + nm_0)
+evalues.IC = function(
+  stat,
+  monotonicBias = FALSE,
+  monotonicBiasDirection = NA,
+  true = 0,
+  
+  p1_1,
+  p1_0,
+  n1_1,
+  n1_0,
+  f1,
+  
+  p0_1,
+  p0_0,
+  n0_1,
+  n0_0,
+  f0,
+  
+  alpha = 0.05
+) {
+  
+  # prepare to pass all arguments to the inner fn
+  # https://stackoverflow.com/questions/29327423/use-match-call-to-pass-all-arguments-to-other-function
+  # "-1" removes the name of the present fn that was called
+  .args = as.list(match.call()[-1])
+  
+  # we want the effect modification E-value (not stratum E-values)
+  .args$stratum = "effectMod"
+  
+  # do we want E-value for estimate or CI?
+  if ( stat == "est" ) .args$varName = "RD"
+  # @assumes lower CI limit
+  if ( stat == "CI" ) .args$varName = "lo"
+  
+  # remove args that shouldn't be passed along
+  .args = .args[ names(.args) != "stat" ]
+  
+  ### Case 0: Non-monotonic bias
+  if ( monotonicBias == FALSE ) {
+    
+    res = do.call( IC_evalue_inner, .args )
+    
+    return( list( evalue = res$evalue,
+                  biasDir = "non-monotonic",
+                  biasFactor = res$biasFactor ) )
+  }
+  
+  ### Cases 1-2: Monotonic bias; known direction
+  # only need to call IC_evalue_inner once for these cases
+  if ( monotonicBias == TRUE & monotonicBiasDirection %in% c("positive", "negative") ) {
+    
+    res = do.call( IC_evalue_inner, .args )
+    
+    return( list( evalue = res$evalue,
+                  biasDir = monotonicBias,
+                  biasFactor = res$biasFactor ) )
+  }
+  
+  ### Case 3: Unknown bias direction
+  # now we have to consider both positive and negative bias and choose the 
+  #  winning candidate E-value (i.e., the smaller one)
+  if ( monotonicBias == TRUE & monotonicBiasDirection == "unknown" ) {
+    
+    # E-value candidate 1: Shift stratum 1 down to match stratum 0
+    .args1 = .args
+    .args1$monotonicBiasDirection = "positive"
+    
+    cand1 = do.call( IC_evalue_inner, .args1 )
+    
+    
+    # E-value candidate 1: Shift stratum 1 down to match stratum 0
+    .args2 = .args
+    .args2$monotonicBiasDirection = "negative"
+    
+    cand2 = do.call( IC_evalue_inner, .args2 )
+    
+    # Choose candidate E-value that is smaller
+    winner = min(cand1$evalue, cand2$evalue)
+    
+    return( list( evalue = winner,
+                  evalueBiasDir = ifelse( winner == cand1$evalue, "positive", "negative"),
+                  candidates = data.frame( biasDir = c("positive", "negative"),
+                                           evalue = c(cand1$evalue, cand2$evalue),
+                                           biasFactor = c(cand1$biasFactor, cand2$biasFactor),
+                                           isMin = c(cand1$evalue == winner, cand2$evalue == winner) ) ) )
+    
+    
+    
+  }
+  
+}
+
+
+
+
+
 #' Plot bias factor as function of confounding relative risks
 #'
 #' Plots the bias factor required to explain away a provided relative risk.
@@ -623,7 +1047,7 @@ bias_plot = function( RR, xmax ) {
   
   text( high + 3, high + 1, label )
   
-  legend( "bottomleft", expression(
+  legend( "bottomlef1", expression(
     RR[EU]*RR[UD]/( RR[EU]+RR[UD]-1 )==RR
   ), 
   lty = 1:2,
@@ -690,7 +1114,7 @@ evalue.default <- function(est, ...) {
 #'   of class "estimate", assumed to be on the same scale as `est`.
 #' @param hi Optional. Upper bound of the confidence interval. If not an object
 #'   of class "estimate", assumed to be on the same scale as `est`.
-#' @param true A number to which to shift the observed estimate to. Defaults to
+#' @param true A number to which to Shift the observed estimate to. Defaults to
 #'   1 for ratio measures ([RR()], [OR()], [HR()]) and 0 for additive measures
 #'   ([OLS()], [MD()]).
 #' @param se The standard error of the point estimate, for `est` of class "OLS"
@@ -705,7 +1129,7 @@ evalue.default <- function(est, ...) {
 #'
 #'   The estimate is converted appropriately before the E-value is calculated.
 #'   See [conversion functions][convert_measures] for more details. The point
-#'   estimate and confidence limits after conversion are returned, as is the
+#'   estimate and confidence limits af1er conversion are returned, as is the
 #'   E-value for the point estimate and the confidence limit closest to the
 #'   proposed "true" value (by default, the null value.)
 #'
@@ -741,7 +1165,7 @@ evalue.default <- function(est, ...) {
 #' summary(evalue(RR(2), true = 1.5))
 #' 
 #' ## Hsu and Small (2013 Biometrics) Data
-#' ## sensitivity analysis after log-linear or logistic regression
+#' ## sensitivity analysis af1er log-linear or logistic regression
 #' head(lead)
 #'
 #' ## log linear model -- obtain the conditional risk ratio
