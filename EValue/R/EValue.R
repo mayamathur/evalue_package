@@ -609,7 +609,7 @@ var_prop = function(p, n) ( p * (1 - p) ) / n
 
 #' Variance of bias-corrected risk difference
 #'
-#' An internal function that estimates the variance of a bias-corrected risk difference when the bias factor (on the ratio scale) is \code{.maxB}. Users should call \code{evalues.int.contr} instead. Assumes we are considering bias away from the null. 
+#' An internal function that estimates the variance of a bias-corrected risk difference when the bias factor (on the ratio scale) is \code{.maxB}. Users should call \code{evalues.int.contr} instead. Assumes we are considering bias away from the null. Does not make assumptions about sign of risk difference.
 #' @import
 #' @noRd
 RDt_var = function(f, p1, p0, n1, n0, .maxB) {
@@ -644,7 +644,7 @@ RDt_var = function(f, p1, p0, n1, n0, .maxB) {
 
 #' Bounds on risk differences in each stratum and on the interaction contrast
 #'
-#' An internal function that calculates bounds on each stratum and on the interaction contrast given specified bias factors and bias directions in each stratum. The bounds on the risk differences are the same as those produced by \code{evalues.RD()}. This function is essentially only used for calcating E-values for the interaction contrast and is not exported to avoid confusion with \code{evalues.RD()}.
+#' An internal function that calculates bounds on each stratum and on the interaction contrast given specified bias factors and bias directions in each stratum. The bounds on the risk differences are the same as those produced by \code{evalues.RD()}. This function is essentially only used for calcating E-values for the interaction contrast and is not exported to avoid confusion with \code{evalues.RD()}. Does not make assumptions on sign of the risk differences or interaction contrast because it just shifts each stratum in the specified direction, by the specified max bias factor.
 #' @import
 #' @noRd
 RDt_bound = function( p1_1,
@@ -670,55 +670,58 @@ RDt_bound = function( p1_1,
     message("Assuming the bias factor is the same in each stratum because you didn't provide maxB_0")
   }
   
+  # ### Catch bad input
+  # #@test this
+  # if ( (p1_1 - p1_0) - (p0_1 - p0_0) < 0 ) {
+  #   stop("Confounded interaction contrast is ")
+  # }
+  
   
   ### Corrected point estimate
   # corrected RD for each stratum - pg 376
-  if ( biasDir_1 == "positive" ) RDt_t = ( p1_1 - p1_0 * maxB_1 ) * ( f1 + ( 1 - f1 ) / maxB_1 )
-  if ( biasDir_1 == "negative" ) RDt_t = ( p1_1 * maxB_1 - p1_0 ) * ( f1 + ( 1 - f1 ) / maxB_1 )
+  # maxes and mins to avoid RDt > 1 or RDt < -1
+  #@test those
+  if ( biasDir_1 == "positive" ) RDt_1 = max( -1, ( p1_1 - p1_0 * maxB_1 ) * ( f1 + ( 1 - f1 ) / maxB_1 ) )
+  if ( biasDir_1 == "negative" ) RDt_1 = min( 1, ( p1_1 * maxB_1 - p1_0 ) * ( f1 + ( 1 - f1 ) / maxB_1 ) )
   
-  if ( biasDir_0 == "positive" ) RDt_c = ( p0_1 - p0_0 * maxB_0 ) * ( f0 + ( 1 - f0 ) / maxB_0 )
-  if ( biasDir_0 == "negative" ) RDt_c = ( p0_1 * maxB_0 - p0_0 ) * ( f0 + ( 1 - f0 ) / maxB_0 )
+  if ( biasDir_0 == "positive" ) RDt_0 = max( -1, ( p0_1 - p0_0 * maxB_0 ) * ( f0 + ( 1 - f0 ) / maxB_0 ) )
+  if ( biasDir_0 == "negative" ) RDt_0 = min( 1, ( p0_1 * maxB_0 - p0_0 ) * ( f0 + ( 1 - f0 ) / maxB_0 ) )
   
   # # old version (agrees numerically with the above)
-  # RDt_t = ( p1_1 - p1_0 * .maxB ) * ( f1 + ( 1 - f1 ) / .maxB )
+  # RDt_1 = ( p1_1 - p1_0 * .maxB ) * ( f1 + ( 1 - f1 ) / .maxB )
   # # corrected RD for X=0 (men) stratum (Shift downward) - pg 376
-  # RDt_c = ( p0_1 * .maxB - p0_0 ) * ( f0 + ( 1 - f0 )/.maxB )  # without recoding f
+  # RDt_0 = ( p0_1 * .maxB - p0_0 ) * ( f0 + ( 1 - f0 )/.maxB )  # without recoding f
   
   # calculate interaction contrast
-  ICt = RDt_t - RDt_c
-  
-  # sanity check
-  # should recover uncorrected RDs when there is no bias
-  if ( maxB_1 == 1 ) expect_equal(RDt_t, p1_1 - p1_0)
-  if ( maxB_0 == 1 ) expect_equal(RDt_c, p0_1 - p0_0)
+  ICt = RDt_1 - RDt_0
   
   
   ### Corrected confidence interval
   # calculate var for each stratum (W and M) separately
   # as in Ding & VanderWeele, eAppendix 5 (delta method)
-  VarRDt_t = RDt_var(f = f1,
+  VarRDt_1 = RDt_var(f = f1,
                      p1 = p1_1,
                      p0 = p1_0,
                      n1 = n1_1,
                      n0 = n1_0,
                      .maxB = maxB_1 )
   
-  VarRDt_c = RDt_var(f = f0,
+  VarRDt_0 = RDt_var(f = f0,
                      p1 = p0_1,
                      p0 = p0_0,
                      n1 = n0_1,
                      n0 = n0_0,
                      .maxB = maxB_0 )
   
-  VarICt = VarRDt_t + VarRDt_c
+  VarICt = VarRDt_1 + VarRDt_0
   
   
   ### Organize and return results
   res = data.frame( stratum = c("1", "0", "effectMod"),
                     
-                    RD = c( RDt_t, RDt_c, ICt),
+                    RD = c( RDt_1, RDt_0, ICt),
                     
-                    se = c( sqrt(VarRDt_t), sqrt(VarRDt_c), sqrt(VarICt) ) )
+                    se = c( sqrt(VarRDt_1), sqrt(VarRDt_0), sqrt(VarICt) ) )
   
   crit = qnorm( 1 - alpha/2 )
   res$lo = res$RD - crit * res$se
@@ -734,7 +737,7 @@ RDt_bound = function( p1_1,
 
 #' Distance of bias-corrected risk difference for a stratum (or interaction contrast) versus desired true value
 #'
-#' An internal function used for calculating E-values for interaction contrasts.
+#' An internal function used for calculating E-values for interaction contrasts. Does not make assumptions about signs of risk differences or interaction contrast, nor whether the confounded estimate is below or above the true value.
 #' @import
 #' @noRd
 
@@ -786,6 +789,30 @@ IC_evalue_inner = function( stratum,
   # catch wrong input
   if ( monotonicBias == FALSE & !is.na(monotonicBiasDirection) ) warning("You specified that bias could be non-monotonic, so the argument monotonicBiasDirection will be ignored.")
   
+  # catch RDc < 0
+  # this would break the monotonicBias == FALSE case
+  if ( (p1_1 - p1_0) < (p0_1 - p0_0) ) {
+    stop( "The confounded interaction contrast (stratum 1 - stratum 0) is negative. Please recode the stratum variable so that the interaction contrast is positive." )
+  }
+  
+  #bm
+  # # catch cases where E-value should just be set to 1
+  # #@these need tests
+  # # @I think RD in each stratum can be in either direction?
+  # # @it's just the EMM that needs to be >0?
+  # #bm
+  # if ( stratum == "1" & p1_1 - p0_1 <= true ) {
+  #   wrapmessage("p1 - p0 <= true already, so the E-value for the point estimate is 1.") 
+  # }
+    
+  #@ from main package:
+    # # clean up CI reporting
+    # # if CI crosses null, set its E-value to 1
+    # if ( !is.na(null.CI) & null.CI == TRUE ){
+    #   E[ 2:3 ] = 1
+    #   wrapmessage("Confidence interval crosses the true value, so its E-value is 1.") 
+    # }
+  
   # prepare to pass all arguments to another fn
   # https://stackoverflow.com/questions/29327423/use-match-call-to-pass-all-arguments-to-other-function
   # "-1" removes the name of the fn that was called ("IC_evalue")
@@ -796,11 +823,10 @@ IC_evalue_inner = function( stratum,
   
   ### Set up the bounding factor fn to be maximized to get the E-value
   # depends on biasDir assumptions
-  #@assumes W stratum > 0 and M is < 0
-  #so basically need to warn user to recode exposure if IC^c < 0 
   if ( monotonicBias == FALSE ) {
     boundfn = function(x){
       .args$maxB_1 = x
+      #**here's where we assume RD1 > RD0:
       .args$biasDir_1 = "positive"
       .args$maxB_0 = x
       .args$biasDir_0 = "negative"
@@ -808,15 +834,7 @@ IC_evalue_inner = function( stratum,
     }
   }
   
-  if ( monotonicBias == TRUE & monotonicBiasDirection == "positive" ) {
-    boundfn = function(x){
-      .args$maxB_1 = x
-      .args$biasDir_1 = "positive"
-      .args$maxB_0 = 1  # no bias in this stratum
-      .args$biasDir_0 = "positive"
-      do.call( RD_distance, .args )
-    }
-  }
+
   
   if ( monotonicBias == TRUE & monotonicBiasDirection == "negative" ) {
     boundfn = function(x){
@@ -907,6 +925,9 @@ IC_evalue_inner = function( stratum,
 # # prevalence of low education among women and among men
 # fw = nw_1 / (nw_1 + nw_0)
 # fm = nm_1 / (nm_1 + nm_0)
+
+#bm: All existing tests are being passed; now should continue working on evalues.IC to catch bad input, generalize, etc. :) You got this! 
+
 evalues.IC = function(
   stat,
   monotonicBias = FALSE,
@@ -927,6 +948,7 @@ evalues.IC = function(
   
   alpha = 0.05
 ) {
+  
   
   # prepare to pass all arguments to the inner fn
   # https://stackoverflow.com/questions/29327423/use-match-call-to-pass-all-arguments-to-other-function

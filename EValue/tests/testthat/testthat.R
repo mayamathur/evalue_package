@@ -1708,6 +1708,87 @@ test_that( "RDt_bound, test set #2", {
 })
 
 
+# ~~~ Bound from RDt_bound should be symmetric after flipping signs of both RDs ----------------------
+
+test_that( "RDt_bound, test set #3", {
+
+  # shift each stratum by different amount
+  B1 = 1.5 
+  B0 = 1.2
+  
+  # both RDs > 0
+  ( x = RDt_bound( p1_1 = .8,
+                 p1_0 = .6,
+                 n1_1 = 20,
+                 n1_0 = 200,
+                 f1 = 0.5,
+                 biasDir_1 = "positive",
+                 maxB_1 = B1,
+                 
+                 p0_1 = .8,
+                 p0_0 = .75,
+                 n0_1 = 30,
+                 n0_0 = 40,
+                 f0 = 0.5,
+                 biasDir_0 = "positive",
+                 maxB_0 = B0 ) )
+  
+  # both RDs < 0
+  # strata labels reversed so that the interaction contrast itself remains positive
+  ( x2 = RDt_bound( p0_1 = .6,
+                 p0_0 = .8,
+                 n0_1 = 200,
+                 n0_0 = 20,
+                 f0 = 0.5,
+                 biasDir_0 = "negative",
+                 maxB_0 = B1,
+                 
+                 p1_1 = .75,
+                 p1_0 = .8,
+                 n1_1 = 40,
+                 n1_0 = 30,
+                 f1 = 0.5,
+                 biasDir_1 = "negative",
+                 maxB_1 = B0 ) )
+  
+  # interaction contrast should be exactly the same 
+  expect_equal( x[3, 3:6], x2[3, 3:6] )
+  
+  # strata are reversed and signs are reversed
+  # inference stays same
+  # but CIs flip 
+  expect_equal( as.numeric( x[1, c("se","pval")] ), as.numeric( x2[2, c("se", "pval")] ) )
+  expect_equal( as.numeric( x[2, c("se","pval")] ), as.numeric( x2[1, c("se", "pval")] ) )
+  expect_equal( x[1, "RD"], -x2[2, "RD"] )
+  expect_equal( x[2, "RD"], -x2[1, "RD"] )
+})
+
+
+# E-value should be the same when flipping strata signs
+test_that( "evalues.IC test", {
+  x = evalues.IC(  stat = "est",
+                   true = 0.1,
+                   monotonicBias = FALSE,
+                   
+                   p1_1 = .5,
+                   p1_0 = .3,
+                   n1_1 = 100,
+                   n1_0 = 20,
+                   f1 = .6,
+                   
+                   p0_1 = .4,
+                   p0_0 = .35,
+                   n0_1 = 40,
+                   n0_0 = 60,
+                   f0 = .2,
+                   
+                   alpha = 0.05 )
+  
+    
+    
+} )
+
+
 
 
 # ~~~ E-value from IC_evalue should be the solution to RDt_bound and should agree with theory in paper ----------------------
