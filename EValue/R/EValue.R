@@ -676,7 +676,6 @@ RDt_bound = function( p1_1,
   #   stop("Confounded interaction contrast is ")
   # }
   
-  
   ### Corrected point estimate
   # corrected RD for each stratum - pg 376
   # maxes and mins to avoid RDt > 1 or RDt < -1
@@ -786,34 +785,71 @@ IC_evalue_inner = function( stratum,
                             
                             alpha = 0.05 ) {
   
-  # catch wrong input
-  if ( monotonicBias == FALSE & !is.na(monotonicBiasDirection) ) warning("You specified that bias could be non-monotonic, so the argument monotonicBiasDirection will be ignored.")
+  ##### Catch bad input #####
   
+  if ( !varName %in% c("RD", "lo") ) stop("Invalid varName")
+  
+
   # catch RDc < 0
-  # this would break the monotonicBias == FALSE case
-  if ( (p1_1 - p1_0) < (p0_1 - p0_0) ) {
+  # this would break the monotonicBias == FALSE case (see comment below)
+  # first calculate RDc (confounded estimate) and its CI limit
+  RDc = RDt_bound(  p1_1 = p1_1,
+                    p1_0 = p1_0,
+                    n1_1 = n1_1,
+                    n1_0 = n1_0,
+                    f1 = f1,
+                    
+                    p0_1 = p0_1,
+                    p0_0 = p0_0,
+                    n0_1 = n0_1,
+                    n0_0 = n0_0,
+                    f0 = f0,
+                    
+                    # no bias
+                    maxB_1 = 1,
+                    maxB_0 = 1,
+                    biasDir_1 = "positive",
+                    biasDir_0 = "positive",
+                    
+                    alpha = alpha )
+  
+  if ( RDc$RD[ RDc$stratum == "effectMod" ] < 0 ) {
     stop( "The confounded interaction contrast (stratum 1 - stratum 0) is negative. Please recode the stratum variable so that the interaction contrast is positive." )
   }
   
-  #bm
-  # # catch cases where E-value should just be set to 1
-  # #@these need tests
-  # # @I think RD in each stratum can be in either direction?
-  # # @it's just the EMM that needs to be >0?
-  # #bm
-  # if ( stratum == "1" & p1_1 - p0_1 <= true ) {
-  #   wrapmessage("p1 - p0 <= true already, so the E-value for the point estimate is 1.") 
-  # }
+ 
+  # catch RDc < true already
+  # this would also break the monotonicBias == FALSE case (see comment below)
+  if ( stratum == "effectMod" &
+       varName == "RD" &
+       RDc$RD[ RDc$stratum == "effectMod" ] <= true ) {
+    wrapmessage( "The confounded interaction contrast (stratum 1 - stratum 0) is already less than the true value you specified, so the E-value is 1." )
     
-  #@ from main package:
-    # # clean up CI reporting
-    # # if CI crosses null, set its E-value to 1
-    # if ( !is.na(null.CI) & null.CI == TRUE ){
-    #   E[ 2:3 ] = 1
-    #   wrapmessage("Confidence interval crosses the true value, so its E-value is 1.") 
-    # }
+    return( data.frame( evalue = 1,
+                        biasFactor = 1,
+                        bound = NA ) )
+  }
   
-  # prepare to pass all arguments to another fn
+  # catch RDc < true alrseady
+  # this would also break the monotonicBias == FALSE case (see comment below)
+  if ( stratum == "effectMod" &
+       varName == "lo" &
+       RDc$lo[ RDc$stratum == "effectMod" ] <= true ) {
+    wrapmessage( "The confounded interaction contrast (stratum 1 - stratum 0) is already less than the true value you specified, so the E-value is 1." )
+    
+    return( data.frame( evalue = 1,
+                        biasFactor = 1,
+                        bound = NA ) )
+  }
+  
+  
+  # need to calculate confounded lower bd to check that one
+  
+  # note: we are not catching the case where stratum = "1" or "0" but RDc < true
+  #  because the wrapper fn will only ever pass stratum = "effectMod" to the present fn
+  
+
+  ##### Prepare to pass all arguments to another fn #####
   # https://stackoverflow.com/questions/29327423/use-match-call-to-pass-all-arguments-to-other-function
   # "-1" removes the name of the fn that was called ("IC_evalue")
   .args = as.list(match.call()[-1])
@@ -824,9 +860,11 @@ IC_evalue_inner = function( stratum,
   ### Set up the bounding factor fn to be maximized to get the E-value
   # depends on biasDir assumptions
   if ( monotonicBias == FALSE ) {
-    boundfn = function(x){
+    dist_from_true = function(x){
       .args$maxB_1 = x
-      #**here's where we assume RD1 > RD0:
+      # **here's where we assume RD1 > RD0 (i.e., IC_c > 0):
+      # **and also IC_c > true because we're applying the bias factors to DECREASE
+      #  rather than increase IC_c
       .args$biasDir_1 = "positive"
       .args$maxB_0 = x
       .args$biasDir_0 = "negative"
@@ -834,10 +872,8 @@ IC_evalue_inner = function( stratum,
     }
   }
   
-
-  
   if ( monotonicBias == TRUE & monotonicBiasDirection == "negative" ) {
-    boundfn = function(x){
+    dist_from_true = function(x){
       .args$maxB_1 = 1 # no bias in this stratum
       .args$biasDir_1 = "negative"
       .args$maxB_0 = x
@@ -846,13 +882,43 @@ IC_evalue_inner = function( stratum,
     }
   }
   
-  #@ revisit upper bound of search space (500)
-  opt = optimize( f = boundfn,
-                  interval = c(0, 500),
-                  maximum = FALSE )
+  if ( monotonicBias == TRUE & monotonicBiasDirection == "positive" ) {
+    dist_from_true = function(x){
+      .args$maxB_1 = x 
+      .args$biasDir_1 = "positive"
+      .args$maxB_0 = 1  # no bias in this stratum
+      .args$biasDir_0 = "positive"
+      do.call( RD_distance, .args )
+    }
+  }
   
-  #@revisit this
-  if ( abs( opt$objective - true ) > 0.001 ) warning("E-value didn't move estimate close enough to true value; look into optimize() call")
+
+  # iteratively increase upper bound of search space
+  # because using a too-high value can cause it to not find the sol'n, for some reason
+  searchUpper = 4 # upper bound of bias factor search
+  proximity = 99  # initialize to a value that will enter the loop
+  while( proximity > 0.001 ) {
+    #@test a situation that enter this part
+    searchUpper = searchUpper * 1.5
+    opt = optimize( f = dist_from_true,
+                    interval = c(1, searchUpper),
+                    maximum = FALSE )
+    # closeness of thee distance to 0
+    proximity = abs( opt$objective )
+    
+    #@give up
+    if( searchUpper >= 200 & proximity > 0.001 ) stop("E-value didn't move estimate close enough to true value; look into optimize() call")
+  }
+  
+  # #@ revisit upper bound of search space (500)
+  # opt = optimize( f = dist_from_true,
+  #                 interval = c(0, 500),
+  #                 maximum = FALSE )
+  # 
+  # #@revisit this
+  # if ( abs( opt$objective ) > 0.001 ) 
+  
+  #bm
   
   return( data.frame( evalue = g(opt$minimum),
                       biasFactor = opt$minimum,  # not the bias factor, but the regular bias
@@ -949,8 +1015,16 @@ evalues.IC = function(
   alpha = 0.05
 ) {
   
+  ##### Catch Bad Input #####
+  if ( !stat %in% c("est", "CI") ) stop("Argument 'stat' is invalid")
+  if ( !monotonicBias %in% c(FALSE, TRUE) ) stop("Argument 'monotonicBias' is invalid")
+  if ( !monotonicBiasDirection %in% c(NA, "positive", "negative", "unknown") ) stop("Argument 'monotonicBiasDirection' is invalid")
+  if ( monotonicBias == TRUE & is.na(monotonicBiasDirection) ) stop("If monotonicBias is TRUE, must provide monotonicBiasDirection")
+  if ( monotonicBias == FALSE & !is.na(monotonicBiasDirection) ) warning("You specified monotonicBias = FALSE, so the argument monotonicBiasDirection will be ignored.")
   
-  # prepare to pass all arguments to the inner fn
+  
+  ##### Prepare Args to Pass to IC_evalue_inner #####
+  # collect args passed to present fn
   # https://stackoverflow.com/questions/29327423/use-match-call-to-pass-all-arguments-to-other-function
   # "-1" removes the name of the present fn that was called
   .args = as.list(match.call()[-1])
@@ -960,7 +1034,7 @@ evalues.IC = function(
   
   # do we want E-value for estimate or CI?
   if ( stat == "est" ) .args$varName = "RD"
-  # @assumes lower CI limit
+  # **assumes lower CI limit (i.e., again assumes strata coded such that IC_c > 0)
   if ( stat == "CI" ) .args$varName = "lo"
   
   # remove args that shouldn't be passed along
@@ -983,7 +1057,7 @@ evalues.IC = function(
     res = do.call( IC_evalue_inner, .args )
     
     return( list( evalue = res$evalue,
-                  biasDir = monotonicBias,
+                  biasDir = monotonicBiasDirection,
                   biasFactor = res$biasFactor ) )
   }
   
@@ -1008,8 +1082,19 @@ evalues.IC = function(
     # Choose candidate E-value that is smaller
     winner = min(cand1$evalue, cand2$evalue)
     
+    # .argsWinner = .args1
+    # .argsWinner = .argsWinner[ !names(.argsWinner) %in% c("monotonicBias",
+    #                                                       "monotonicBiasDirection",
+    #                                                       "true",
+    #                                                       "stratum",
+    #                                                       "varName") ]
+    # .argsWinner$maxB_1 = cand1$
+    
+    browser()
+    
     return( list( evalue = winner,
-                  evalueBiasDir = ifelse( winner == cand1$evalue, "positive", "negative"),
+                  #@ docs: explain that this is direction for winning bias
+                  biasDir = ifelse( winner == cand1$evalue, "positive", "negative"),
                   candidates = data.frame( biasDir = c("positive", "negative"),
                                            evalue = c(cand1$evalue, cand2$evalue),
                                            biasFactor = c(cand1$biasFactor, cand2$biasFactor),

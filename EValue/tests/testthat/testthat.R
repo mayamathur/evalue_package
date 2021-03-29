@@ -618,7 +618,7 @@ test_that("Parametric, test set #2 (causative)", {
   # CI limits
   expect_equal( max(1, cm[3,2] - SE*qnorm(0.975)), cm[3,4] )
   expect_equal( cm[3,2] + SE*qnorm(0.975), cm[3,5] )
-
+  
 })
 
 
@@ -735,7 +735,7 @@ test_that("Parametric, test set #5 (exactly 200 estimates; manipulate muB.toward
     est = meta$b
   }
   
- 
+  
   
   x0 = confounded_meta(method="parametric",
                        q = q,
@@ -800,7 +800,7 @@ test_that("Parametric, test set #5 (exactly 200 estimates; manipulate muB.toward
   
   # this is a case where Tmin represents bias TOWARD the null
   # check that their numerical value is correct
-
+  
   
   yr.corr = meta$beta - log(x0$Est[ x0$Value == "Tmin" ])
   expect_equal( pnorm( q = q, 
@@ -813,7 +813,7 @@ test_that("Parametric, test set #5 (exactly 200 estimates; manipulate muB.toward
 
 
 test_that("Parametric, test set #6 (Tmin gets set to 1)", {
-
+  
   
   ##### tail = "below" case ######
   # here, yr^c is positive, but tail = "below"
@@ -827,12 +827,12 @@ test_that("Parametric, test set #6 (Tmin gets set to 1)", {
   vt2 = 0.5
   r = 0.75
   tail = "below"
-
+  
   cm = confounded_meta(method="parametric", q=q, r=r, muB=muB, sigB=sigB,
                        yr=yr, vyr=vyr,
                        t2=t2, vt2=vt2, tail = tail )
-
-
+  
+  
   # Tmin
   expect_equal( cm[2,2], 1 )
   # Gmin
@@ -840,18 +840,18 @@ test_that("Parametric, test set #6 (Tmin gets set to 1)", {
   # their CIs should be NA
   expect_equal( as.numeric( c(NA, NA, NA) ), as.numeric( cm[2, 3:5] ) )
   
-
+  
   ##### tail = "above" case ######
   # symmetric to above
   q = log(1.5)
   yr = log(0.5)
   tail = "above"
-
+  
   cm = confounded_meta(method="parametric", q=q, r=r, muB=muB, sigB=sigB,
                        yr=yr, vyr=vyr,
                        t2=t2, vt2=vt2, tail = tail )
-
-
+  
+  
   # Tmin
   expect_equal( cm[2,2], 1 )
   # Gmin
@@ -1167,7 +1167,7 @@ test_that("Calibrated, test set #3 (exactly 200 estimates; manipulate muB.toward
                  minN = 100,
                  sd.w = 1,
                  true.effect.dist = "normal" )
-
+  
   
   # shif1 AWAY from null
   q = log(1.1)  # set q to the (true) mean
@@ -1176,28 +1176,28 @@ test_that("Calibrated, test set #3 (exactly 200 estimates; manipulate muB.toward
   
   # first no bias
   x0 = confounded_meta(method="calibrated",
-                      q = q,
-                      r = r,
-                      tail = "above",
-                      muB = 0,
-                      
-                      give.CI=FALSE,
-                      dat = d,
-                      yi.name = "yi",
-                      vi.name = "vyi")
+                       q = q,
+                       r = r,
+                       tail = "above",
+                       muB = 0,
+                       
+                       give.CI=FALSE,
+                       dat = d,
+                       yi.name = "yi",
+                       vi.name = "vyi")
   
   # bias TOWARD null
   x1 = confounded_meta(method="calibrated",
-                      q = q,
-                      r = r,
-                      tail = "above",
-                      muB = muB,
-                      muB.toward.null = TRUE,
-                      
-                      give.CI=FALSE,
-                      dat = d,
-                      yi.name = "yi",
-                      vi.name = "vyi")
+                       q = q,
+                       r = r,
+                       tail = "above",
+                       muB = muB,
+                       muB.toward.null = TRUE,
+                       
+                       give.CI=FALSE,
+                       dat = d,
+                       yi.name = "yi",
+                       vi.name = "vyi")
   
   # since bias correction INCREASES the mean in this case, 
   #  we should have MORE meaningfully strong effects
@@ -1217,7 +1217,7 @@ test_that("Calibrated, test set #3 (exactly 200 estimates; manipulate muB.toward
   
   expect_equal( x2$Est[ x2$Value == "Prop" ] < x0$Est[ x0$Value == "Prop" ], TRUE ) 
   
-
+  
   # Tmin and Gmin should be the same in all cases
   expect_equal( x0$Est[ x0$Value == "Tmin" ],
                 x1$Est[ x1$Value == "Tmin" ],
@@ -1232,9 +1232,9 @@ test_that("Calibrated, test set #3 (exactly 200 estimates; manipulate muB.toward
   calib = MetaUtility::calib_ests(yi = d$yi,
                                   sei = sqrt(d$vyi) )
   expect_equal( mean( calib - log(x0$Est[ x0$Value == "Tmin" ]) > q ), 
-        r ) 
-
-
+                r ) 
+  
+  
 })
 
 
@@ -1259,7 +1259,7 @@ test_that("Calibrated and parametric, test set #4 (exactly 200 estimates); Tmin 
   q = log(0.9)  # q is ABOVE the true mean
   r = .05
   muB = log(1.5)
- 
+  
   
   ##### Calibrated #####
   x0 = confounded_meta(method="calibrated",
@@ -1306,9 +1306,9 @@ test_that("Calibrated and parametric, test set #4 (exactly 200 estimates); Tmin 
   
   # should be exactly equal to r
   expect_equal( pnorm( q = q,
-         mean = yr.corr,
-         sd = sqrt(meta$tau2),
-         lower.tail = FALSE ), r )
+                       mean = yr.corr,
+                       sd = sqrt(meta$tau2),
+                       lower.tail = FALSE ), r )
   
 })
 
@@ -1711,45 +1711,45 @@ test_that( "RDt_bound, test set #2", {
 # ~~~ Bound from RDt_bound should be symmetric after flipping signs of both RDs ----------------------
 
 test_that( "RDt_bound, test set #3", {
-
+  
   # shift each stratum by different amount
   B1 = 1.5 
   B0 = 1.2
   
   # both RDs > 0
   ( x = RDt_bound( p1_1 = .8,
-                 p1_0 = .6,
-                 n1_1 = 20,
-                 n1_0 = 200,
-                 f1 = 0.5,
-                 biasDir_1 = "positive",
-                 maxB_1 = B1,
-                 
-                 p0_1 = .8,
-                 p0_0 = .75,
-                 n0_1 = 30,
-                 n0_0 = 40,
-                 f0 = 0.5,
-                 biasDir_0 = "positive",
-                 maxB_0 = B0 ) )
+                   p1_0 = .6,
+                   n1_1 = 20,
+                   n1_0 = 200,
+                   f1 = 0.5,
+                   biasDir_1 = "positive",
+                   maxB_1 = B1,
+                   
+                   p0_1 = .8,
+                   p0_0 = .75,
+                   n0_1 = 30,
+                   n0_0 = 40,
+                   f0 = 0.5,
+                   biasDir_0 = "positive",
+                   maxB_0 = B0 ) )
   
   # both RDs < 0
   # strata labels reversed so that the interaction contrast itself remains positive
   ( x2 = RDt_bound( p0_1 = .6,
-                 p0_0 = .8,
-                 n0_1 = 200,
-                 n0_0 = 20,
-                 f0 = 0.5,
-                 biasDir_0 = "negative",
-                 maxB_0 = B1,
-                 
-                 p1_1 = .75,
-                 p1_0 = .8,
-                 n1_1 = 40,
-                 n1_0 = 30,
-                 f1 = 0.5,
-                 biasDir_1 = "negative",
-                 maxB_1 = B0 ) )
+                    p0_0 = .8,
+                    n0_1 = 200,
+                    n0_0 = 20,
+                    f0 = 0.5,
+                    biasDir_0 = "negative",
+                    maxB_0 = B1,
+                    
+                    p1_1 = .75,
+                    p1_0 = .8,
+                    n1_1 = 40,
+                    n1_0 = 30,
+                    f1 = 0.5,
+                    biasDir_1 = "negative",
+                    maxB_1 = B0 ) )
   
   # interaction contrast should be exactly the same 
   expect_equal( x[3, 3:6], x2[3, 3:6] )
@@ -1784,16 +1784,160 @@ test_that( "evalues.IC test", {
                    
                    alpha = 0.05 )
   
-    
-    
+  x2 = evalues.IC(  stat = "est",
+                   true = 0.1,
+                   monotonicBias = FALSE,
+                   
+                   p0_1 = .3,
+                   p0_0 = .5,
+                   n0_1 = 20,
+                   n0_0 = 100,
+                   f0 = .6,
+                   
+                   p1_1 = .35,
+                   p1_0 = .4,
+                   n1_1 = 60,
+                   n1_0 = 40,
+                   f1 = .2,
+                   
+                   alpha = 0.05 )
+  
+  expect_equal( x$evalue, x2$evalue, tol = 0.001 )
+  expect_equal( x$biasFactor, x2$biasFactor, tol = 0.001 )
+  
 } )
 
+#bm: stopped here. focusing on symmetry tests. 
 
 
+test_that("evalues.IC should warn if E-value is 1", {
+  
+  # E-value for estimate is 1
+  expect_message( evalues.IC(  stat = "est",
+                               true = .5,
+                               monotonicBias = FALSE,
+                               
+                               p1_1 = .5,
+                               p1_0 = .4,
+                               n1_1 = 100,
+                               n1_0 = 100,
+                               f1 = .5,
+                               
+                               p0_1 = .5,
+                               p0_0 = .42,
+                               n0_1 = 100,
+                               n0_0 = 100,
+                               f0 = .5,
+                               
+                               alpha = 0.05 ) )
+  
+  # E-value for CI is 1
+  # first check the CI limit
+  RDt_bound(    p1_1 = .5,
+                p1_0 = .4,
+                n1_1 = 100,
+                n1_0 = 100,
+                f1 = .5,
+                
+                p0_1 = .5,
+                p0_0 = .42,
+                n0_1 = 100,
+                n0_0 = 100,
+                f0 = .5,
+                
+                # no bias
+                maxB_1 = 1,
+                maxB_0 = 1,
+                biasDir_1 = "positive",
+                biasDir_0 = "positive" )
+  
+  expect_message( evalues.IC(  stat = "CI",
+                               true = .5,
+                               monotonicBias = FALSE,
+                               
+                               p1_1 = .5,
+                               p1_0 = .4,
+                               n1_1 = 100,
+                               n1_0 = 100,
+                               f1 = .5,
+                               
+                               p0_1 = .5,
+                               p0_0 = .42,
+                               n0_1 = 100,
+                               n0_0 = 100,
+                               f0 = .5,
+                               
+                               alpha = 0.05 ) )
+  
+  
+})
 
-# ~~~ E-value from IC_evalue should be the solution to RDt_bound and should agree with theory in paper ----------------------
+test_that("evalues.IC should reject bad input"), {
+  #do me :)
+  
+  #bm: make more of these :)
+  
+  # if monotonicBias is TRUE, must provide monotonicBiasDirection
+  expect_error( evalues.IC(  stat = "est",
+               true = 0,
+               monotonicBias = TRUE,
+               
+               p1_1 = .4,
+               p1_0 = .4,
+               n1_1 = 100,
+               n1_0 = 100,
+               f1 = .5,
+               
+               p0_1 = .5,
+               p0_0 = .42,
+               n0_1 = 100,
+               n0_0 = 100,
+               f0 = .5,
+               
+               alpha = 0.05 ) )
+  
+  # specified monotonicBias = FALSE, so the argument monotonicBiasDirection will be ignored
+  expect_warning( evalues.IC(  stat = "est",
+                             true = 0,
+                             monotonicBias = FALSE,
+                             monotonicBiasDirection = "positive",
+                             
+                             p1_1 = .5,
+                             p1_0 = .4,
+                             n1_1 = 100,
+                             n1_0 = 100,
+                             f1 = .5,
+                             
+                             p0_1 = .5,
+                             p0_0 = .42,
+                             n0_1 = 100,
+                             n0_0 = 100,
+                             f0 = .5,
+                             
+                             alpha = 0.05 ) )
+  
+  evalues.IC(  stat = "est",
+               true = 0,
+               monotonicBias = TRUE,
+               monotonicBiasDirection = "positive",
+               
+               p1_1 = .5,
+               p1_0 = .4,
+               n1_1 = 100,
+               n1_0 = 100,
+               f1 = .5,
+               
+               p0_1 = .5,
+               p0_0 = .42,
+               n0_1 = 100,
+               n0_0 = 100,
+               f0 = .5,
+               
+               alpha = 0.05 )
+  
+} )
 
-test_that( "RDt_bound and evalues.IC, test set #1", {
+test_that( "E-value from evalues.IC should be the solution to RDt_bound and should agree with theory in paper", {
   
   Eadd.est = evalues.IC(  stat = "est",
                           true = 0,
@@ -1922,6 +2066,43 @@ test_that("RDt_bound and evalues.IC, test set #2", {
 
 test_that("evalues.IC, monotonic, test set #1", {
   ( Eadd.est.mono = evalues.IC( stat = "est",
+                                true = 0,
+                                monotonicBias = TRUE,
+                                monotonicBiasDirection = "unknown",
+                                
+                                p1_1 = pw_1,
+                                p1_0 = pw_0,
+                                n1_1 = nw_1,
+                                n1_0 = nw_0,
+                                f1 = fw,
+                                
+                                p0_1 = pm_1,
+                                p0_0 = pm_0,
+                                n0_1 = nm_1,
+                                n0_0 = nm_0,
+                                f0 = fm,
+                                
+                                alpha = 0.05 ) )
+  
+  x = RDt_bound( p1_1 = pw_1,
+                 p1_0 = pw_0,
+                 n1_1 = nw_1,
+                 n1_0 = nw_0,
+                 f1 = fw,
+                 biasDir_1 = "positive",
+                 maxB_1 = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "positive" ],
+                 
+                 p0_1 = pm_1,
+                 p0_0 = pm_0,
+                 n0_1 = nm_1,
+                 n0_0 = nm_0,
+                 f0 = fm,
+                 biasDir_0 = "positive",
+                 maxB_0 = 1 )
+  expect_equal( x$RD[ x$stratum == "1" ], RDm, tol = 0.0001 )
+  
+  # and likewise for CI limit
+  ( Eadd.CI.mono = evalues.IC( stat = "CI",
                                true = 0,
                                monotonicBias = TRUE,
                                monotonicBiasDirection = "unknown",
@@ -1940,13 +2121,13 @@ test_that("evalues.IC, monotonic, test set #1", {
                                
                                alpha = 0.05 ) )
   
-    x = RDt_bound( p1_1 = pw_1,
+  ( x = RDt_bound( p1_1 = pw_1,
                    p1_0 = pw_0,
                    n1_1 = nw_1,
                    n1_0 = nw_0,
                    f1 = fw,
                    biasDir_1 = "positive",
-                   maxB_1 = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "positive" ],
+                   maxB_1 = Eadd.CI.mono$candidates$biasFactor[ Eadd.CI.mono$candidates$biasDir == "positive" ],
                    
                    p0_1 = pm_1,
                    p0_0 = pm_0,
@@ -1954,131 +2135,94 @@ test_that("evalues.IC, monotonic, test set #1", {
                    n0_0 = nm_0,
                    f0 = fm,
                    biasDir_0 = "positive",
-                   maxB_0 = 1 )
-    expect_equal( x$RD[ x$stratum == "1" ], RDm, tol = 0.0001 )
-    
-    # and likewise for CI limit
-    ( Eadd.CI.mono = evalues.IC( stat = "CI",
-                                true = 0,
-                                monotonicBias = TRUE,
-                                monotonicBiasDirection = "unknown",
-                                
-                                p1_1 = pw_1,
-                                p1_0 = pw_0,
-                                n1_1 = nw_1,
-                                n1_0 = nw_0,
-                                f1 = fw,
-                                
-                                p0_1 = pm_1,
-                                p0_0 = pm_0,
-                                n0_1 = nm_1,
-                                n0_0 = nm_0,
-                                f0 = fm,
-                                
-                                alpha = 0.05 ) )
-    
-    ( x = RDt_bound( p1_1 = pw_1,
-                     p1_0 = pw_0,
-                     n1_1 = nw_1,
-                     n1_0 = nw_0,
-                     f1 = fw,
-                     biasDir_1 = "positive",
-                     maxB_1 = Eadd.CI.mono$candidates$biasFactor[ Eadd.CI.mono$candidates$biasDir == "positive" ],
-                     
-                     p0_1 = pm_1,
-                     p0_0 = pm_0,
-                     n0_1 = nm_1,
-                     n0_0 = nm_0,
-                     f0 = fm,
-                     biasDir_0 = "positive",
-                     maxB_0 = 1 ) )
-    expect_equal( x$lo[ x$stratum == "effectMod" ], 0, tol = 0.0001 )
-    
-    # ~~~ Evalue candidate #2 (negative bias) should successfully move RDm up to RDw ----------------------
-    ( x = RDt_bound( p1_1 = pw_1,
-                     p1_0 = pw_0,
-                     n1_1 = nw_1,
-                     n1_0 = nw_0,
-                     f1 = fw,
-                     biasDir_1 = "negative",
-                     maxB_1 = 1,
-                     
-                     p0_1 = pm_1,
-                     p0_0 = pm_0,
-                     n0_1 = nm_1,
-                     n0_0 = nm_0,
-                     f0 = fm,
-                     biasDir_0 = "negative",
-                     maxB_0 = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "negative" ] ) )
-    expect_equal( x$RD[ x$stratum == "0" ], RDw, tol = 0.0001 )
-    
-    # and likewise for CI limit
-    ( x = RDt_bound( p1_1 = pw_1,
-                     p1_0 = pw_0,
-                     n1_1 = nw_1,
-                     n1_0 = nw_0,
-                     f1 = fw,
-                     biasDir_1 = "negative",
-                     maxB_1 = 1,
-                     
-                     p0_1 = pm_1,
-                     p0_0 = pm_0,
-                     n0_1 = nm_1,
-                     n0_0 = nm_0,
-                     f0 = fm,
-                     biasDir_0 = "negative",
-                     maxB_0 = Eadd.CI.mono$candidates$biasFactor[ Eadd.CI.mono$candidates$biasDir == "negative" ] ) )
-    expect_equal( x$lo[ x$stratum == "effectMod" ], 0, tol = 0.0001 )
-    
-    
-    
-    # ~~~ E-values from IC_evalue (grid search) should match closed form in paper ----------------------
-    
-    ### check ??
-    B = 4
-    true = ( pm_1 * B - pm_0 ) * ( fm + (1-fm) / B )
-    
-    # suggestively name terms as in quadratic formula
-    termA = fm * pm_1
-    termB = pm_1 * ( 1 - fm ) - fm * pm_0 - true
-    termC = -pm_0 * (1 - fm)
-    
-    # this is the polynomial that is to be solved for E-value
-    ( mine = termA * B^2 + termB * B + termC )
-    expect_equal( mine, 0, tol = 0.0001 )
-    
-    # check E-value for negatively biased stratum in paper
-    #  this is the one that arises from reversing roles and signs in the existing E-value on 
-    #  Ding Appendix, pg 18
-    
-    
-    ### check E-value for positive bias (shift only stratum W)
-    # check against Ding Appendix, pg 18 (Prop A.11)
-    targetB = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "positive" ]
-    
-    lambda = pw_0 * (1 - fw) - pw_1 * fw
-    term1 = 1 / ( 2 * (fw * pw_0) )
-    term2 = 4 * pw_1 * pw_0 * fw * (1 - fw)
-    true = RDm
-    term3 = true + lambda
-    
-    # bias factor
-    ( myB = term1 * ( sqrt( term3^2 + term2 ) - term3 ) )
-    expect_equal( targetB, myB, tol = 0.001 )
-    
-    ### check E-value for negative bias (shif1 only stratum M)
-    targetB = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "negative" ]
-    
-    lambda = pm_1 * (1 - fm) - pm_0 * fm 
-    term1 = 1 / ( 2 * (fm * pm_1) )
-    term2 = 4 * pm_1 * pm_0 * fm * (1 - fm)
-    true = -RDw
-    term3 = true + lambda
-    
-    # bias factor
-    ( myB = term1 * ( sqrt( term3^2 + term2 ) - term3 ) )
-    expect_equal( targetB, myB, tol = 0.001 )
-    
+                   maxB_0 = 1 ) )
+  expect_equal( x$lo[ x$stratum == "effectMod" ], 0, tol = 0.0001 )
+  
+  # ~~~ Evalue candidate #2 (negative bias) should successfully move RDm up to RDw ----------------------
+  ( x = RDt_bound( p1_1 = pw_1,
+                   p1_0 = pw_0,
+                   n1_1 = nw_1,
+                   n1_0 = nw_0,
+                   f1 = fw,
+                   biasDir_1 = "negative",
+                   maxB_1 = 1,
+                   
+                   p0_1 = pm_1,
+                   p0_0 = pm_0,
+                   n0_1 = nm_1,
+                   n0_0 = nm_0,
+                   f0 = fm,
+                   biasDir_0 = "negative",
+                   maxB_0 = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "negative" ] ) )
+  expect_equal( x$RD[ x$stratum == "0" ], RDw, tol = 0.0001 )
+  
+  # and likewise for CI limit
+  ( x = RDt_bound( p1_1 = pw_1,
+                   p1_0 = pw_0,
+                   n1_1 = nw_1,
+                   n1_0 = nw_0,
+                   f1 = fw,
+                   biasDir_1 = "negative",
+                   maxB_1 = 1,
+                   
+                   p0_1 = pm_1,
+                   p0_0 = pm_0,
+                   n0_1 = nm_1,
+                   n0_0 = nm_0,
+                   f0 = fm,
+                   biasDir_0 = "negative",
+                   maxB_0 = Eadd.CI.mono$candidates$biasFactor[ Eadd.CI.mono$candidates$biasDir == "negative" ] ) )
+  expect_equal( x$lo[ x$stratum == "effectMod" ], 0, tol = 0.0001 )
+  
+  
+  
+  # ~~~ E-values from IC_evalue (grid search) should match closed form in paper ----------------------
+  
+  ### check ??
+  B = 4
+  true = ( pm_1 * B - pm_0 ) * ( fm + (1-fm) / B )
+  
+  # suggestively name terms as in quadratic formula
+  termA = fm * pm_1
+  termB = pm_1 * ( 1 - fm ) - fm * pm_0 - true
+  termC = -pm_0 * (1 - fm)
+  
+  # this is the polynomial that is to be solved for E-value
+  ( mine = termA * B^2 + termB * B + termC )
+  expect_equal( mine, 0, tol = 0.0001 )
+  
+  # check E-value for negatively biased stratum in paper
+  #  this is the one that arises from reversing roles and signs in the existing E-value on 
+  #  Ding Appendix, pg 18
+  
+  
+  ### check E-value for positive bias (shift only stratum W)
+  # check against Ding Appendix, pg 18 (Prop A.11)
+  targetB = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "positive" ]
+  
+  lambda = pw_0 * (1 - fw) - pw_1 * fw
+  term1 = 1 / ( 2 * (fw * pw_0) )
+  term2 = 4 * pw_1 * pw_0 * fw * (1 - fw)
+  true = RDm
+  term3 = true + lambda
+  
+  # bias factor
+  ( myB = term1 * ( sqrt( term3^2 + term2 ) - term3 ) )
+  expect_equal( targetB, myB, tol = 0.001 )
+  
+  ### check E-value for negative bias (shif1 only stratum M)
+  targetB = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "negative" ]
+  
+  lambda = pm_1 * (1 - fm) - pm_0 * fm 
+  term1 = 1 / ( 2 * (fm * pm_1) )
+  term2 = 4 * pm_1 * pm_0 * fm * (1 - fm)
+  true = -RDw
+  term3 = true + lambda
+  
+  # bias factor
+  ( myB = term1 * ( sqrt( term3^2 + term2 ) - term3 ) )
+  expect_equal( targetB, myB, tol = 0.001 )
+  
 })
 
 
