@@ -22,14 +22,12 @@
 #' Variance of a proportion
 #'
 #' An internal function that quickly calculates the variance of a proportion.
-#' @import
 #' @noRd
 var_prop = function(p, n) ( p * (1 - p) ) / n
 
 #' Variance of bias-corrected risk difference
 #'
 #' An internal function that estimates the variance of a bias-corrected risk difference when the bias factor (on the ratio scale) is \code{.maxB}. Users should call \code{evalues.int.contr} instead. Assumes we are considering bias away from the null. Does not make assumptions about sign of risk difference.
-#' @import
 #' @noRd
 RDt_var = function(f, p1, p0, n1, n0, .maxB) {
   
@@ -64,7 +62,6 @@ RDt_var = function(f, p1, p0, n1, n0, .maxB) {
 #' Bounds on risk differences in each stratum and on the interaction contrast
 #'
 #' An internal function that calculates bounds on each stratum and on the interaction contrast given specified bias factors and bias directions in each stratum. The bounds on the risk differences are the same as those produced by \code{evalues.RD()}. This function is essentially only used for calcating E-values for the interaction contrast and is not exported to avoid confusion with \code{evalues.RD()}. Does not make assumptions on sign of the risk differences or interaction contrast because it just shifts each stratum in the specified direction, by the specified max bias factor.
-#' @import
 #' @noRd
 RDt_bound = function( p1_1,
                       p1_0,
@@ -156,7 +153,6 @@ RDt_bound = function( p1_1,
 #' Distance of bias-corrected risk difference for a stratum (or interaction contrast) versus desired true value
 #'
 #' An internal function used for calculating E-values for interaction contrasts. Does not make assumptions about signs of risk differences or interaction contrast, nor whether the confounded estimate is below or above the true value.
-#' @import
 #' @noRd
 
 # stratum: name of stratum as returned by RDt_bound ("1", "0", or "effectMod" for interaction contrast)
@@ -179,7 +175,6 @@ RD_distance = function(stratum,
 #' Inner helper function for calculating E-values for interaction contrasts
 #'
 #' An internal function called by the wrapper function \code{evalues.IC}. The present function does NOT consider monontonic bias in arbitrary direction; for that, the wrapper function will call \code{IC_evalue_inner} once for EACH candidate bias direction and then will compare the results. This function also gives E-values for each stratum separately if wanted (based on \code{varName}), which are the same as those from \code{evalues.RD}. 
-#' @import
 #' @noRd
 
 # see argument structure in evalues.IC, with the following differences
@@ -381,7 +376,6 @@ IC_evalue_inner = function( stratum,
 #' @param f0 The prevalence (or incidence) in stratum Z=0 of exposure X=1
 #' 
 #' @param alpha The alpha-level for the p-value and confidence interval. 
-#' @import
 #' 
 
 #bm
@@ -523,8 +517,6 @@ evalues.IC = function(
                                         isMin = c(cand1$evalues$evalue == winnerCand$evalues$evalue, cand2$evalues$evalue == winnerCand$evalues$evalue) )
     
     return( winnerCand )
-    
-    
     
   }
   
