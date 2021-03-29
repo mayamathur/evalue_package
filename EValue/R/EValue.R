@@ -19,7 +19,7 @@
 #' @param delta The contrast of interest in the exposure
 #' @param sd The standard deviation of the outcome (or residual standard
 #'   deviation); see Details
-#' @param true The true standardized mean difference to which to Shift the
+#' @param true The true standardized mean difference to which to shift the
 #'   observed point estimate. Typically set to 0 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @export
@@ -107,7 +107,7 @@ evalues.OLS = function( est, se = NA, sd, delta = 1, true = 0, ... ) {
 #' confidence interval limit closer to the null.
 #' @param est The point estimate as a standardized difference (i.e., Cohen's d)
 #' @param se The standard error of the point estimate
-#' @param true The true standardized mean difference to which to Shift the
+#' @param true The true standardized mean difference to which to shift the
 #'   observed point estimate. Typically set to 0 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @export
@@ -168,7 +168,7 @@ evalues.MD = function( est, se = NA, true = 0, ... ) {
 #' @param hi The upper limit of the confidence interval
 #' @param rare 1 if outcome is rare (<15 percent at end of follow-up); 0 if
 #'   outcome is not rare (>15 percent at end of follow-up)
-#' @param true The true HR to which to Shift the observed point estimate.
+#' @param true The true HR to which to shift the observed point estimate.
 #'   Typically set to 1 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @export
@@ -212,7 +212,7 @@ evalues.HR = function( est, lo = NA, hi = NA, rare = NA, true = 1, ... ) {
 #' @param hi The upper limit of the confidence interval
 #' @param rare 1 if outcome is rare (<15 percent at end of follow-up); 0 if
 #'   outcome is not rare (>15 percent at end of follow-up)
-#' @param true The true OR to which to Shift the observed point estimate.
+#' @param true The true OR to which to shift the observed point estimate.
 #'   Typically set to 1 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @keywords e-value
@@ -282,7 +282,7 @@ evalues.OR = function( est, lo = NA, hi = NA, rare = NA, true = 1, ... ) {
 #' @param est The point estimate
 #' @param lo The lower limit of the confidence interval
 #' @param hi The upper limit of the confidence interval
-#' @param true The true RR to which to Shift the observed point estimate.
+#' @param true The true RR to which to shift the observed point estimate.
 #'   Typically set to 1 to consider a null true effect.
 #' @param ... Arguments passed to other methods.
 #' @keywords e-value
@@ -414,7 +414,7 @@ twoXtwoRR = function( n11, n10, n01, n00, alpha = 0.05 ){
 #'call the relevant \code{evalues.XX()} function rather than this internal
 #'function.
 #'@param x The risk ratio
-#'@param true The true RR to which to Shift the observed point estimate.
+#'@param true The true RR to which to shift the observed point estimate.
 #'  Typically set to 1 to consider a null true effect.
 #'@export
 #'@keywords internal
@@ -476,7 +476,7 @@ threshold = function( x, true = 1 ) {
 #' @param n10 Number of exposed, non-diseased individuals
 #' @param n01 Number of unexposed, diseased individuals
 #' @param n00 Number of unexposed, non-diseased individuals
-#' @param true True value of risk difference to which to Shift the point
+#' @param true True value of risk difference to which to shift the point
 #'   estimate. Usually set to 0 to consider the null.
 #' @param alpha Alpha level
 #' @param grid Spacing for grid search of E-value
@@ -495,10 +495,10 @@ threshold = function( x, true = 1 ) {
 #' ##Smoker    397            78557
 #' ##Nonsmoker 51             108778
 #'
-#' # E-value to Shift observed risk difference to 0
+#' # E-value to shift observed risk difference to 0
 #' evalues.RD(397, 78557, 51, 108778)
 #'
-#' # E-values to Shift observed risk difference to other null values
+#' # E-values to shift observed risk difference to other null values
 #' evalues.RD(397, 78557, 51, 108778, true = 0.001)
 
 
@@ -690,7 +690,7 @@ evalue.default <- function(est, ...) {
 #'   of class "estimate", assumed to be on the same scale as `est`.
 #' @param hi Optional. Upper bound of the confidence interval. If not an object
 #'   of class "estimate", assumed to be on the same scale as `est`.
-#' @param true A number to which to Shift the observed estimate to. Defaults to
+#' @param true A number to which to shift the observed estimate to. Defaults to
 #'   1 for ratio measures ([RR()], [OR()], [HR()]) and 0 for additive measures
 #'   ([OLS()], [MD()]).
 #' @param se The standard error of the point estimate, for `est` of class "OLS"
