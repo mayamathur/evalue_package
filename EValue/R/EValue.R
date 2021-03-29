@@ -748,10 +748,11 @@ RD_distance = function(stratum,
                        varName,  
                        true,  
                        ...) {
-
+  
   .RDs = RDt_bound(...)
   
-  abs( .RDs[[varName]][ .RDs$stratum == stratum ] - true )
+  return( list( dist = abs( .RDs[[varName]][ .RDs$stratum == stratum ] - true ),
+                RDt = .RDs ) )
 }
 
 
@@ -789,7 +790,7 @@ IC_evalue_inner = function( stratum,
   
   if ( !varName %in% c("RD", "lo") ) stop("Invalid varName")
   
-
+  
   # catch RDc < 0
   # this would break the monotonicBias == FALSE case (see comment below)
   # first calculate RDc (confounded estimate) and its CI limit
@@ -817,7 +818,7 @@ IC_evalue_inner = function( stratum,
     stop( "The confounded interaction contrast (stratum 1 - stratum 0) is negative. Please recode the stratum variable so that the interaction contrast is positive." )
   }
   
- 
+  
   # catch RDc < true already
   # this would also break the monotonicBias == FALSE case (see comment below)
   if ( stratum == "effectMod" &
@@ -848,7 +849,7 @@ IC_evalue_inner = function( stratum,
   # note: we are not catching the case where stratum = "1" or "0" but RDc < true
   #  because the wrapper fn will only ever pass stratum = "effectMod" to the present fn
   
-
+  
   ##### Prepare to pass all arguments to another fn #####
   # https://stackoverflow.com/questions/29327423/use-match-call-to-pass-all-arguments-to-other-function
   # "-1" removes the name of the fn that was called ("IC_evalue")
@@ -892,7 +893,7 @@ IC_evalue_inner = function( stratum,
     }
   }
   
-
+  
   # iteratively increase upper bound of search space
   # because using a too-high value can cause it to not find the sol'n, for some reason
   searchUpper = 4 # upper bound of bias factor search
@@ -900,7 +901,7 @@ IC_evalue_inner = function( stratum,
   while( proximity > 0.001 ) {
     #@test a situation that enter this part
     searchUpper = searchUpper * 1.5
-    opt = optimize( f = dist_from_true,
+    opt = optimize( f = function(x) dist_from_true(x)$dist,
                     interval = c(1, searchUpper),
                     maximum = FALSE )
     # closeness of thee distance to 0
@@ -920,9 +921,13 @@ IC_evalue_inner = function( stratum,
   
   #bm
   
-  return( data.frame( evalue = g(opt$minimum),
-                      biasFactor = opt$minimum,  # not the bias factor, but the regular bias
-                      bound = opt$objective ) )  # should be equal to true
+  return( list( evalues = data.frame( evalue = g(opt$minimum),
+                                      biasFactor = opt$minimum,  # not the bias factor, but the regular bias
+                                      bound = opt$objective ),  # should be equal to true
+                
+                # the strata's RDs and the IC evaluated at the E-value
+                RDt = dist_from_true(opt$minimum)$RDt )
+  )  
   
 }
 
@@ -1040,14 +1045,14 @@ evalues.IC = function(
   # remove args that shouldn't be passed along
   .args = .args[ names(.args) != "stat" ]
   
+  
   ### Case 0: Non-monotonic bias
   if ( monotonicBias == FALSE ) {
     
     res = do.call( IC_evalue_inner, .args )
     
-    return( list( evalue = res$evalue,
-                  biasDir = "non-monotonic",
-                  biasFactor = res$biasFactor ) )
+    res$evalues$biasDir = "non-monotonic"
+    return(res)
   }
   
   ### Cases 1-2: Monotonic bias; known direction
@@ -1056,9 +1061,8 @@ evalues.IC = function(
     
     res = do.call( IC_evalue_inner, .args )
     
-    return( list( evalue = res$evalue,
-                  biasDir = monotonicBiasDirection,
-                  biasFactor = res$biasFactor ) )
+    res$evalues$biasDir = monotonicBiasDirection
+    return(res)
   }
   
   ### Case 3: Unknown bias direction
@@ -1080,25 +1084,26 @@ evalues.IC = function(
     cand2 = do.call( IC_evalue_inner, .args2 )
     
     # Choose candidate E-value that is smaller
-    winner = min(cand1$evalue, cand2$evalue)
+    #browser()
     
-    # .argsWinner = .args1
-    # .argsWinner = .argsWinner[ !names(.argsWinner) %in% c("monotonicBias",
-    #                                                       "monotonicBiasDirection",
-    #                                                       "true",
-    #                                                       "stratum",
-    #                                                       "varName") ]
-    # .argsWinner$maxB_1 = cand1$
+    if ( cand1$evalues$evalue < cand2$evalues$evalue ){
+      winnerCand = cand1
+      winnerDir = "positive"
+    } else{
+      winnerCand = cand2
+      winnerDir = "negative"
+    }
     
-    browser()
+    #@ docs: explain that this is direction for winning bias
+    winnerCand$evalues$biasDir = winnerDir 
     
-    return( list( evalue = winner,
-                  #@ docs: explain that this is direction for winning bias
-                  biasDir = ifelse( winner == cand1$evalue, "positive", "negative"),
-                  candidates = data.frame( biasDir = c("positive", "negative"),
-                                           evalue = c(cand1$evalue, cand2$evalue),
-                                           biasFactor = c(cand1$biasFactor, cand2$biasFactor),
-                                           isMin = c(cand1$evalue == winner, cand2$evalue == winner) ) ) )
+    # also return both candidates
+    winnerCand$candidates = data.frame( biasDir = c("positive", "negative"),
+                             evalue = c(cand1$evalues$evalue, cand2$evalues$evalue),
+                             biasFactor = c(cand1$evalues$biasFactor, cand2$evalues$biasFactor),
+                             isMin = c(cand1$evalues$evalue == winnerCand$evalues$evalue, cand2$evalues$evalue == winnerCand$evalues$evalue) )
+      
+      return( winnerCand )
     
     
     

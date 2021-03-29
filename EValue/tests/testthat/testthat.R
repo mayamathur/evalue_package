@@ -1919,7 +1919,7 @@ test_that("evalues.IC should reject bad input"), {
   evalues.IC(  stat = "est",
                true = 0,
                monotonicBias = TRUE,
-               monotonicBiasDirection = "positive",
+               monotonicBiasDirection = "unknown",
                
                p1_1 = .5,
                p1_0 = .4,
