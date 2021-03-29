@@ -3,18 +3,18 @@
 #  because helper files that start with "helper" automatically 
 #  get sourced first: https://testthat.r-lib.org/reference/test_dir.html
 
-# for local testing:
-library(testthat)
-library(devtools)
-library(dplyr)
-library(ICC)
-library(msm)
-library(MetaUtility)
-library(here())
-setwd(here())
-setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
-setwd("tests")
-source("helper_testthat.R")
+# # for local testing:
+# library(testthat)
+# library(devtools)
+# library(dplyr)
+# library(ICC)
+# library(msm)
+# library(MetaUtility)
+# library(here())
+# setwd(here())
+# setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
+# setwd("tests")
+# source("helper_testthat.R")
 
 
 
@@ -187,10 +187,11 @@ test_that( "Bound from RDt_bound should agree with closed form in paper", {
                  biasDir_0 = "negative",
                  maxB_0 = B )
   expect_equal( x$RD[ x$stratum == "effectMod" ], mine, tol = 0.0001 )
+} )
+
+
+test_that( "E-value for 1 stratum from IC_evalue should match R package", {
   
-  
-  
-  # E-value for 1 stratum from IC_evalue should match R package
   ( evalueEst = IC_evalue_inner( stratum = "1",
                                  varName = "RD",
                                  true = 0,
@@ -208,7 +209,7 @@ test_that( "Bound from RDt_bound should agree with closed form in paper", {
                                  n0_0 = nm_0,
                                  f0 = fm,
                                  
-                                 alpha = 0.05 )$evalues$evalue )
+                                 alpha = 0.05 )$evalues )
   
   
   ( evalueCI = IC_evalue_inner( stratum = "1",
@@ -228,7 +229,7 @@ test_that( "Bound from RDt_bound should agree with closed form in paper", {
                                 n0_0 = nm_0,
                                 f0 = fm,
                                 
-                                alpha = 0.05 )$evalues$evalue )
+                                alpha = 0.05 )$evalues )
   
   
   # now try against package:
@@ -414,7 +415,7 @@ test_that("evalues.IC should warn if E-value is 1", {
 
 
 
-test_that("evalues.IC should reject bad input"), {
+test_that("evalues.IC should reject bad input", {
   
   # if monotonicBias is TRUE, must provide monotonicBiasDirection
   expect_error( evalues.IC(  stat = "est",
@@ -599,13 +600,7 @@ test_that("RDt_bound and evalues.IC, test set #2", {
 
 
 
-
-# ~~ Monotonic confounding ----------------------
-
-# ~~~ Evalue candidate #1 (positive bias) should successfully move RDw down to RDm
-
-
-test_that("evalues.IC, monotonic, test set #1", {
+test_that("Evalue candidate (negative monotonic bias) should successfully move RDm up to RDw", {
   ( Eadd.est.mono = evalues.IC( stat = "est",
                                 true = 0,
                                 monotonicBias = TRUE,
@@ -623,24 +618,25 @@ test_that("evalues.IC, monotonic, test set #1", {
                                 n0_0 = nm_0,
                                 f0 = fm,
                                 
-                                alpha = 0.05 )$evalues )
+                                alpha = 0.05 ) )
   
   x = RDt_bound( p1_1 = pw_1,
                  p1_0 = pw_0,
                  n1_1 = nw_1,
                  n1_0 = nw_0,
                  f1 = fw,
-                 biasDir_1 = "positive",
-                 maxB_1 = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "positive" ],
+                 biasDir_1 = "negative",
+                 maxB_1 = 1,
                  
                  p0_1 = pm_1,
                  p0_0 = pm_0,
                  n0_1 = nm_1,
                  n0_0 = nm_0,
                  f0 = fm,
-                 biasDir_0 = "positive",
-                 maxB_0 = 1 )
-  expect_equal( x$RD[ x$stratum == "1" ], RDm, tol = 0.0001 )
+                 biasDir_0 = "negative",
+                 maxB_0 = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "negative" ] )
+  
+  expect_equal( x$RD[ x$stratum == "0" ], RDw, tol = 0.0001 )
   
   # and likewise for CI limit
   ( Eadd.CI.mono = evalues.IC( stat = "CI",
@@ -660,7 +656,32 @@ test_that("evalues.IC, monotonic, test set #1", {
                                n0_0 = nm_0,
                                f0 = fm,
                                
-                               alpha = 0.05 )$evalues )
+                               alpha = 0.05 ) )
+  
+  x = RDt_bound( p1_1 = pw_1,
+                 p1_0 = pw_0,
+                 n1_1 = nw_1,
+                 n1_0 = nw_0,
+                 f1 = fw,
+                 biasDir_1 = "negative",
+                 maxB_1 = 1,
+                 
+                 p0_1 = pm_1,
+                 p0_0 = pm_0,
+                 n0_1 = nm_1,
+                 n0_0 = nm_0,
+                 f0 = fm,
+                 biasDir_0 = "negative",
+                 maxB_0 = Eadd.CI.mono$candidates$biasFactor[ Eadd.CI.mono$candidates$biasDir == "negative" ] )
+  
+  expect_equal( x$lo[ x$stratum == "effectMod" ], 0, tol = 0.0001 )
+  
+} ) 
+
+
+
+
+test_that( "Evalue candidate (positive monotonic bias) should successfully move RDw down to RDm", {
   
   ( x = RDt_bound( p1_1 = pw_1,
                    p1_0 = pw_0,
@@ -668,7 +689,25 @@ test_that("evalues.IC, monotonic, test set #1", {
                    n1_0 = nw_0,
                    f1 = fw,
                    biasDir_1 = "positive",
-                   maxB_1 = Eadd.CI.mono$candidates$biasFactor[ Eadd.CI.mono$candidates$biasDir == "positive" ],
+                   maxB_1 = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "positive" ],
+                   
+                   p0_1 = pm_1,
+                   p0_0 = pm_0,
+                   n0_1 = nm_1,
+                   n0_0 = nm_0,
+                   f0 = fm,
+                   biasDir_0 = "positive",
+                   maxB_0 = 1 ) )
+  expect_equal( x$RD[ x$stratum == "1" ], RDm, tol = 0.0001 )
+  
+  # and likewise for CI limit
+  ( x = RDt_bound( p1_1 = pw_1,
+                   p1_0 = pw_0,
+                   n1_1 = nw_1,
+                   n1_0 = nw_0,
+                   f1 = fw,
+                   biasDir_1 = "positive",
+                   maxB_1 = Eadd.CI.mono$candidates$biasFactor[ Eadd.CI.mono$candidates$biasDir == "positive" ] ,
                    
                    p0_1 = pm_1,
                    p0_0 = pm_0,
@@ -679,47 +718,12 @@ test_that("evalues.IC, monotonic, test set #1", {
                    maxB_0 = 1 ) )
   expect_equal( x$lo[ x$stratum == "effectMod" ], 0, tol = 0.0001 )
   
-  # ~~~ Evalue candidate #2 (negative bias) should successfully move RDm up to RDw ----------------------
-  ( x = RDt_bound( p1_1 = pw_1,
-                   p1_0 = pw_0,
-                   n1_1 = nw_1,
-                   n1_0 = nw_0,
-                   f1 = fw,
-                   biasDir_1 = "negative",
-                   maxB_1 = 1,
-                   
-                   p0_1 = pm_1,
-                   p0_0 = pm_0,
-                   n0_1 = nm_1,
-                   n0_0 = nm_0,
-                   f0 = fm,
-                   biasDir_0 = "negative",
-                   maxB_0 = Eadd.est.mono$candidates$biasFactor[ Eadd.est.mono$candidates$biasDir == "negative" ] ) )
-  expect_equal( x$RD[ x$stratum == "0" ], RDw, tol = 0.0001 )
-  
-  # and likewise for CI limit
-  ( x = RDt_bound( p1_1 = pw_1,
-                   p1_0 = pw_0,
-                   n1_1 = nw_1,
-                   n1_0 = nw_0,
-                   f1 = fw,
-                   biasDir_1 = "negative",
-                   maxB_1 = 1,
-                   
-                   p0_1 = pm_1,
-                   p0_0 = pm_0,
-                   n0_1 = nm_1,
-                   n0_0 = nm_0,
-                   f0 = fm,
-                   biasDir_0 = "negative",
-                   maxB_0 = Eadd.CI.mono$candidates$biasFactor[ Eadd.CI.mono$candidates$biasDir == "negative" ] ) )
-  expect_equal( x$lo[ x$stratum == "effectMod" ], 0, tol = 0.0001 )
-  
-  
-  
-  # ~~~ E-values from IC_evalue (grid search) should match closed form in paper ----------------------
-  
-  ### check ??
+} )
+
+
+
+test_that( "E-values from IC_evalue (grid search) should match closed form in paper", {
+
   B = 4
   true = ( pm_1 * B - pm_0 ) * ( fm + (1-fm) / B )
   
