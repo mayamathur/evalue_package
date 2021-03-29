@@ -34,7 +34,7 @@ evalues.OR(0.86, 0.75, 0.99, rare = FALSE)
 
 ## Example 2
 ## Hsu and Small (2013 Biometrics) Data
-## sensitivity analysis after log-linear or logistic regression
+## sensitivity analysis af1er log-linear or logistic regression
 
 head(lead)
 

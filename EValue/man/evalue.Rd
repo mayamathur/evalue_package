@@ -36,14 +36,14 @@ confidence interval limit closer to the null.
 }
 \details{
 An E-value for unmeasured confounding is minimum strength of
-association, on the risk ratio scale, that an unmeasured confounder would
+association, on the risk ratio scale, that unmeasured confounder(s) would
 need to have with both the treatment and the outcome to fully explain away
 a specific treatment–outcome association, conditional on the measured
 covariates.
 
 The estimate is converted appropriately before the E-value is calculated.
 See \link[=convert_measures]{conversion functions} for more details. The point
-estimate and confidence limits after conversion are returned, as is the
+estimate and confidence limits af1er conversion are returned, as is the
 E-value for the point estimate and the confidence limit closest to the
 proposed "true" value (by default, the null value.)
 
@@ -77,7 +77,7 @@ summary(evalue(RR(1 / 0.80)))
 summary(evalue(RR(2), true = 1.5))
 
 ## Hsu and Small (2013 Biometrics) Data
-## sensitivity analysis after log-linear or logistic regression
+## sensitivity analysis af1er log-linear or logistic regression
 head(lead)
 
 ## log linear model -- obtain the conditional risk ratio

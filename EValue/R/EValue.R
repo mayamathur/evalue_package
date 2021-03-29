@@ -698,7 +698,7 @@ evalue.default <- function(est, ...) {
 #' @param ... Arguments passed to other methods.
 #' @export
 #' @details An E-value for unmeasured confounding is minimum strength of
-#'   association, on the risk ratio scale, that an unmeasured confounder would
+#'   association, on the risk ratio scale, that unmeasured confounder(s) would
 #'   need to have with both the treatment and the outcome to fully explain away
 #'   a specific treatment–outcome association, conditional on the measured
 #'   covariates.
