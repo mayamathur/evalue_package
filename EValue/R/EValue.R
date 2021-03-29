@@ -225,7 +225,7 @@ evalues.HR = function( est, lo = NA, hi = NA, rare = NA, true = 1, ... ) {
 #'
 #' ## Example 2
 #' ## Hsu and Small (2013 Biometrics) Data
-#' ## sensitivity analysis af1er log-linear or logistic regression
+#' ## sensitivity analysis after log-linear or logistic regression
 #'
 #' head(lead)
 #'
@@ -623,7 +623,7 @@ bias_plot = function( RR, xmax ) {
   
   text( high + 3, high + 1, label )
   
-  legend( "bottomlef1", expression(
+  legend( "bottomleft", expression(
     RR[EU]*RR[UD]/( RR[EU]+RR[UD]-1 )==RR
   ), 
   lty = 1:2,
@@ -705,7 +705,7 @@ evalue.default <- function(est, ...) {
 #'
 #'   The estimate is converted appropriately before the E-value is calculated.
 #'   See [conversion functions][convert_measures] for more details. The point
-#'   estimate and confidence limits af1er conversion are returned, as is the
+#'   estimate and confidence limits after conversion are returned, as is the
 #'   E-value for the point estimate and the confidence limit closest to the
 #'   proposed "true" value (by default, the null value.)
 #'
@@ -741,7 +741,7 @@ evalue.default <- function(est, ...) {
 #' summary(evalue(RR(2), true = 1.5))
 #' 
 #' ## Hsu and Small (2013 Biometrics) Data
-#' ## sensitivity analysis af1er log-linear or logistic regression
+#' ## sensitivity analysis after log-linear or logistic regression
 #' head(lead)
 #'
 #' ## log linear model -- obtain the conditional risk ratio
