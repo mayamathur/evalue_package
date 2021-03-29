@@ -57,7 +57,9 @@ RDt_var = function(f, p1, p0, n1, n0, .maxB) {
 }
 
 
-
+g = function(RR) {
+  RR + sqrt( RR * (RR - 1) )
+}
 
 #' Bounds on risk differences in each stratum and on the interaction contrast
 #'

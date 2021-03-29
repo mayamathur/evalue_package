@@ -3,27 +3,58 @@
 #  because helper files that start with "helper" automatically 
 #  get sourced first: https://testthat.r-lib.org/reference/test_dir.html
 
-# # for local testing:
-# library(testthat)
-# library(devtools)
-# library(dplyr)
-# library(ICC)
-# library(msm)
-# library(MetaUtility)
-# library(here())
-# setwd(here())
-# setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
-# setwd("tests")
-# source("helper_testthat.R")
+# for local testing:
+library(testthat)
+library(devtools)
+library(dplyr)
+library(ICC)
+library(msm)
+library(MetaUtility)
+library(here())
+setwd(here())
+setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
+setwd("tests")
+source("helper_testthat.R")
 
+
+
+# enter example datasets (Letenneur)
+# Y: dementia
+# X: low education
+# n: sample size
+
+# data for women
+nw_1 = 2988
+nw_0 = 364
+dw = data.frame(  Y = c(1, 1, 0, 0),
+                  X = c(1, 0, 1, 0),
+                  n = c( 158, 6, nw_1-158, nw_0-6 ) )
+
+# data for men
+nm_1 = 1790
+nm_0 = 605
+dm = data.frame(  Y = c(1, 1, 0, 0),
+                  X = c(1, 0, 1, 0),
+                  n = c( 64, 17, nm_1-64, nm_0-17 ) )
+
+# P(Y = 1 | X = 1) and P(Y = 1 | X = 0) for women and for men
+( pw_1 = dw$n[ dw$X == 1 & dw$Y == 1 ] / sum(dw$n[ dw$X == 1 ]) )
+( pw_0 = dw$n[ dw$X == 0 & dw$Y == 1 ] / sum(dw$n[ dw$X == 0 ]) )
+( pm_1 = dm$n[ dm$X == 1 & dm$Y == 1 ] / sum(dm$n[ dm$X == 1 ]) )
+( pm_0 = dm$n[ dm$X == 0 & dm$Y == 1 ] / sum(dm$n[ dm$X == 0 ]) )
+
+# prevalence of low education among women and among men
+fw = nw_1 / (nw_1 + nw_0)
+fm = nm_1 / (nm_1 + nm_0)
+
+# confounded estimates
+RDw = pw_1 - pw_0
+RDm = pm_1 - pm_0
 
 
 ###################### EVALUES FOR EFFECT MODIFICATION (INTERACTION CONTRAST) ######################
 
-# ~ RDt_var ----------------------
-# sanity check for symmetry
-
-test_that("RDt_var, test set #1", {
+test_that("RDt_var, symmetry when reversing sign of RD", {
   
   # test for symmetry
   v1 = RDt_var( f = .25,
@@ -44,11 +75,8 @@ test_that("RDt_var, test set #1", {
   expect_equal(v1, v2)
 })
 
-# ~ RDt_bound ----------------------
-# sanity check: symmetry when shif1ing strata in opposite directions
-# RDw and RDm should match here by symmetry
 
-test_that( "RDt_bound, test set #1", {
+test_that( "RDt_bound, symmetry when shifting strata in opposite directions", {
   x1 = RDt_bound( p1_1 = 0.6,
                   p1_0 = 0.4,
                   n1_1 = 100,
@@ -124,44 +152,6 @@ test_that( "RDt_bound, test set #1", {
   expect_equal( x1$pval[1], x1$pval[2] )
   
 })
-
-
-
-
-# ~ Point estimates from RDt_bound with B=1 should match naive RDs ----------------------
-
-# enter example datasets (Letenneur)
-# Y: dementia
-# X: low education
-# n: sample size
-
-# data for women
-nw_1 = 2988
-nw_0 = 364
-dw = data.frame(  Y = c(1, 1, 0, 0),
-                  X = c(1, 0, 1, 0),
-                  n = c( 158, 6, nw_1-158, nw_0-6 ) )
-
-# data for men
-nm_1 = 1790
-nm_0 = 605
-dm = data.frame(  Y = c(1, 1, 0, 0),
-                  X = c(1, 0, 1, 0),
-                  n = c( 64, 17, nm_1-64, nm_0-17 ) )
-
-# P(Y = 1 | X = 1) and P(Y = 1 | X = 0) for women and for men
-( pw_1 = dw$n[ dw$X == 1 & dw$Y == 1 ] / sum(dw$n[ dw$X == 1 ]) )
-( pw_0 = dw$n[ dw$X == 0 & dw$Y == 1 ] / sum(dw$n[ dw$X == 0 ]) )
-( pm_1 = dm$n[ dm$X == 1 & dm$Y == 1 ] / sum(dm$n[ dm$X == 1 ]) )
-( pm_0 = dm$n[ dm$X == 0 & dm$Y == 1 ] / sum(dm$n[ dm$X == 0 ]) )
-
-# prevalence of low education among women and among men
-fw = nw_1 / (nw_1 + nw_0)
-fm = nm_1 / (nm_1 + nm_0)
-
-# confounded estimates
-RDw = pw_1 - pw_0
-RDm = pm_1 - pm_0
 
 
 test_that( "Bound from RDt_bound should agree with closed form in paper", {
@@ -249,9 +239,7 @@ test_that( "E-value for 1 stratum from IC_evalue should match R package", {
 })
 
 
-# ~~~ Bound from RDt_bound should be symmetric after flipping signs of both RDs ----------------------
-
-test_that( "RDt_bound, test set #3", {
+test_that( "Bound from RDt_bound should be symmetric after flipping signs of both RDs", {
   
   # shift each stratum by different amount
   B1 = 1.5 
@@ -305,8 +293,7 @@ test_that( "RDt_bound, test set #3", {
 })
 
 
-# E-value should be the same when flipping strata signs
-test_that( "evalues.IC test", {
+test_that( "E-value should be the same when flipping strata signs", {
   x = evalues.IC(  stat = "est",
                    true = 0.1,
                    monotonicBias = FALSE,
@@ -347,8 +334,6 @@ test_that( "evalues.IC test", {
   expect_equal( x$biasFactor, x2$biasFactor, tol = 0.001 )
   
 } )
-
-#bm: stopped here. focusing on symmetry tests. 
 
 
 test_that("evalues.IC should warn if E-value is 1", {
@@ -533,8 +518,8 @@ test_that( "E-value from evalues.IC should be the solution to RDt_bound and shou
   
 })
 
-# evalues.IC solution for one stratum should agree with existing fn, evalues.RD
-test_that("RDt_bound and evalues.IC, test set #2", {
+
+test_that("evalues.IC solution for one stratum should agree with existing fn, evalues.RD", {
   
   ( resNonMono = evalues.IC( stat = "est",
                              true = 0,
@@ -573,7 +558,7 @@ test_that("RDt_bound and evalues.IC, test set #2", {
   
   
   # stratum 1 only
-  evalueOld2 = EValue::evalues.RD( n11 = 100 * (0.6),
+  evalueOld2 = evalues.RD( n11 = 100 * (0.6),
                                    n10 = 100 * (1-0.6),
                                    n01 = 100 * 0.4,
                                    n00 = 100 * (1-0.4),
@@ -597,8 +582,6 @@ test_that("RDt_bound and evalues.IC, test set #2", {
   # expect_equal( evalueOld2$est.Evalue, resNonMono$evalue, tol = 0.001 )
   
 })
-
-
 
 test_that("Evalue candidate (negative monotonic bias) should successfully move RDm up to RDw", {
   ( Eadd.est.mono = evalues.IC( stat = "est",
@@ -679,8 +662,6 @@ test_that("Evalue candidate (negative monotonic bias) should successfully move R
 } ) 
 
 
-
-
 test_that( "Evalue candidate (positive monotonic bias) should successfully move RDw down to RDm", {
   
   ( x = RDt_bound( p1_1 = pw_1,
@@ -719,7 +700,6 @@ test_that( "Evalue candidate (positive monotonic bias) should successfully move 
   expect_equal( x$lo[ x$stratum == "effectMod" ], 0, tol = 0.0001 )
   
 } )
-
 
 
 test_that( "E-values from IC_evalue (grid search) should match closed form in paper", {
