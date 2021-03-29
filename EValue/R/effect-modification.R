@@ -17,7 +17,6 @@
 # bias-corrected variance for one stratum
 # Ding & VanderWeele, eAppendix 5 (delta method)
 # handles either positive or negative bias
-#@think about the fact that recoding depends on confounding rather than true p1, p0
 
 #' Variance of a proportion
 #'
@@ -87,34 +86,22 @@ RDt_bound = function( p1_1,
     maxB_0 = maxB_1
     message("Assuming the bias factor is the same in each stratum because you didn't provide maxB_0")
   }
-  
-  # ### Catch bad input
-  # #@test this
-  # if ( (p1_1 - p1_0) - (p0_1 - p0_0) < 0 ) {
-  #   stop("Confounded interaction contrast is ")
-  # }
-  
+
   ### Corrected point estimate
   # corrected RD for each stratum - pg 376
   # maxes and mins to avoid RDt > 1 or RDt < -1
-  #@test those
   if ( biasDir_1 == "positive" ) RDt_1 = max( -1, ( p1_1 - p1_0 * maxB_1 ) * ( f1 + ( 1 - f1 ) / maxB_1 ) )
   if ( biasDir_1 == "negative" ) RDt_1 = min( 1, ( p1_1 * maxB_1 - p1_0 ) * ( f1 + ( 1 - f1 ) / maxB_1 ) )
   
   if ( biasDir_0 == "positive" ) RDt_0 = max( -1, ( p0_1 - p0_0 * maxB_0 ) * ( f0 + ( 1 - f0 ) / maxB_0 ) )
   if ( biasDir_0 == "negative" ) RDt_0 = min( 1, ( p0_1 * maxB_0 - p0_0 ) * ( f0 + ( 1 - f0 ) / maxB_0 ) )
   
-  # # old version (agrees numerically with the above)
-  # RDt_1 = ( p1_1 - p1_0 * .maxB ) * ( f1 + ( 1 - f1 ) / .maxB )
-  # # corrected RD for X=0 (men) stratum (Shift downward) - pg 376
-  # RDt_0 = ( p0_1 * .maxB - p0_0 ) * ( f0 + ( 1 - f0 )/.maxB )  # without recoding f
-  
   # calculate interaction contrast
   ICt = RDt_1 - RDt_0
   
   
   ### Corrected confidence interval
-  # calculate var for each stratum (W and M) separately
+  # calculate var for each stratum (1 and 0) separately
   # as in Ding & VanderWeele, eAppendix 5 (delta method)
   VarRDt_1 = RDt_var(f = f1,
                      p1 = p1_1,
@@ -308,14 +295,13 @@ IC_evalue_inner = function( stratum,
       do.call( RD_distance, .args )
     }
   }
-  
+
   
   # iteratively increase upper bound of search space
   # because using a too-high value can cause it to not find the sol'n, for some reason
   searchUpper = 4 # upper bound of bias factor search
   proximity = 99  # initialize to a value that will enter the loop
   while( proximity > 0.001 ) {
-    #@test a situation that enter this part
     searchUpper = searchUpper * 1.5
     opt = optimize( f = function(x) dist_from_true(x)$dist,
                     interval = c(1, searchUpper),
@@ -323,19 +309,9 @@ IC_evalue_inner = function( stratum,
     # closeness of thee distance to 0
     proximity = abs( opt$objective )
     
-    #@give up
-    if( searchUpper >= 200 & proximity > 0.001 ) stop("E-value didn't move estimate close enough to true value; look into optimize() call")
+    # eventually give up
+    if( searchUpper >= 200 & proximity > 0.001 ) stop("Tried bias factors up to 200, but still could not move estimate close enough to desired true value. This could indicate an optimization failure.")
   }
-  
-  # #@ revisit upper bound of search space (500)
-  # opt = optimize( f = dist_from_true,
-  #                 interval = c(0, 500),
-  #                 maximum = FALSE )
-  # 
-  # #@revisit this
-  # if ( abs( opt$objective ) > 0.001 ) 
-  
-  #bm
   
   return( list( evalues = data.frame( evalue = g(opt$minimum),
                                       biasFactor = opt$minimum,  # not the bias factor, but the regular bias
