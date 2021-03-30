@@ -5,7 +5,7 @@
 \title{Compute E-value for a population-standardized risk difference and its
 confidence interval limits}
 \usage{
-evalues.RD(n11, n10, n01, n00, true = 0, alpha = 0.05, grid = 1e-04, ...)
+evalues.RD(n11, n10, n01, n00, true = 0, alpha = 0.05, grid = 0.0001, ...)
 }
 \arguments{
 \item{n11}{Number of exposed, diseased individuals}

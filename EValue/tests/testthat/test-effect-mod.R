@@ -18,27 +18,6 @@
 # load_all()
 # # end part for local testing
 
-#bm
-evalues.IC(  stat = "CI",
-             true = 0.0,
-          monotonicBias = TRUE,
-          monotonicBiasDirection = "unknown",
-             
-             p1_1 = .9,
-             p1_0 = .8,
-             n1_1 = 100,
-             n1_0 = 100,
-             f1 = .9,
-             
-             p0_1 = .5,
-             p0_0 = .42,
-             n0_1 = 100,
-             n0_0 = 100,
-             f0 = .1,
-             
-             alpha = 0.05 )
-
-
 
 # enter example datasets (Letenneur)
 # Y: dementia
