@@ -19,7 +19,7 @@
 # # end part for local testing
 
 #bm
-evalues.IC(  stat = "est",
+evalues.IC(  stat = "CI",
              true = 0.0,
           monotonicBias = TRUE,
           monotonicBiasDirection = "unknown",
@@ -416,7 +416,25 @@ test_that("evalues.IC should warn if E-value is 1", {
                                
                                alpha = 0.05 ) )
   
-  
+  # also when trying both candidates (non-monotonic, unknown)
+  expect_message( evalues.IC(  stat = "CI",
+               true = 0.0,
+               monotonicBias = TRUE,
+               monotonicBiasDirection = "unknown",
+               
+               p1_1 = .9,
+               p1_0 = .8,
+               n1_1 = 100,
+               n1_0 = 100,
+               f1 = .9,
+               
+               p0_1 = .5,
+               p0_0 = .42,
+               n0_1 = 100,
+               n0_0 = 100,
+               f0 = .1,
+               
+               alpha = 0.05 ) )
 })
 
 

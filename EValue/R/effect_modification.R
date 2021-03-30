@@ -204,11 +204,11 @@ IC_evalue_inner = function( stratum,
   if ( stratum == "effectMod" &
        varName == "RD" &
        RDc$RD[ RDc$stratum == "effectMod" ] <= true ) {
-    wrapmessage( "The confounded interaction contrast (stratum 1 - stratum 0) is already less than the true value you specified, so the E-value is 1." )
+    wrapmessage( "The confounded statistic is already less than the true value you specified, so the E-value is 1." )
     
-    return( data.frame( evalue = 1,
-                        biasFactor = 1,
-                        bound = NA ) )
+    return( list( evalues = data.frame( evalue = 1,
+                                        biasFactor = 1,
+                                        bound = NA ) ) )
   }
   
   # catch RDc < true alrseady
@@ -216,11 +216,11 @@ IC_evalue_inner = function( stratum,
   if ( stratum == "effectMod" &
        varName == "lo" &
        RDc$lo[ RDc$stratum == "effectMod" ] <= true ) {
-    wrapmessage( "The confounded interaction contrast (stratum 1 - stratum 0) is already less than the true value you specified, so the E-value is 1." )
+    wrapmessage( "The confounded statistic is already less than the true value you specified, so the E-value is 1." )
     
-    return( data.frame( evalue = 1,
-                        biasFactor = 1,
-                        bound = NA ) )
+    return( list( evalues = data.frame( evalue = 1,
+                                        biasFactor = 1,
+                                        bound = NA ) ) )
   }
   
   
@@ -553,14 +553,16 @@ evalues.IC = function( stat,
     .args1 = .args
     .args1$monotonicBiasDirection = "positive"
     
-    cand1 = do.call( IC_evalue_inner, .args1 )
+    # suppress possible messages about E-value = 1 because we need to 
+    #  try both candidates first
+    cand1 = suppressMessages( do.call( IC_evalue_inner, .args1 ) )
     
     
     # E-value candidate 1: Shift stratum 1 down to match stratum 0
     .args2 = .args
     .args2$monotonicBiasDirection = "negative"
     
-    cand2 = do.call( IC_evalue_inner, .args2 )
+    cand2 = suppressMessages( do.call( IC_evalue_inner, .args2 ) )
     
     # Choose candidate E-value that is smaller
     #browser()
@@ -573,6 +575,11 @@ evalues.IC = function( stat,
       winnerDir = "negative"
     }
     
+    # check for E-value = 1 here, after we have a winner, instead of in IC_inner_evalue
+    if ( winnerCand$evalues$evalue == 1 ) {
+      wrapmessage( "The confounded statistic is already less than the true value you specified, so the E-value is 1." )
+    }
+
     # direction of bias for winner
     winnerCand$evalues$biasDir = winnerDir 
     
