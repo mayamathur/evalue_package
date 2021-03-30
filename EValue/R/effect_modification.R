@@ -370,6 +370,7 @@ IC_evalue_inner = function( stratum,
 #' ## Multiplicative effect modification
 #' For multiplicative measures of effect modification (e.g., the ratio of risk ratios), you can simply use the function \code{evalue}. To allow the bias to be non-monotonic, you would pass the square-root of your multiplicative effect modification estimate on the risk ratio scale to \code{evalue} rather than the estimate itself. To assume monotonic bias, regardless of direction, you would pass the multiplicative effect modification estimate itself to \code{evalue}. See Mathur et al. (2021) for details.
 #' 
+#' @export
 #' @examples
 #' ### Letenneur example data
 #' # as in Mathur et al. (2021)
