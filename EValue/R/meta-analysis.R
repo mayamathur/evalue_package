@@ -1094,21 +1094,6 @@ Phat_causal = function( q,
 
 
 
-#' Transformation from bias factor to confounding strength scale
-#'
-#' An internal function. 
-#' @noRd
-g = Vectorize( function(x) {
-  # define transformation in a way that is monotonic over the effective range of B (>1)
-  # to avoid ggplot errors in sens_plot
-  # helper function for confounded_meta
-  if ( is.na(x) ) return(NA)
-  if (x < 1) return( x / 1e10 )
-  x + sqrt( x^2 - x )
-} )
-
-
-
 #' Minimum common bias factor to reduce proportion of studies with causal effects above or below q t less than r
 #'
 #' An internal function that estimates; users should call \code{confounded_meta} instead.

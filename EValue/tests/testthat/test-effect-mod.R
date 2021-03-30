@@ -11,10 +11,32 @@
 # library(msm)
 # library(MetaUtility)
 # library(here())
+# 
 # setwd(here())
-# setwd("~/Dropbox/Personal computer/Independent studies/R packages/EValue package (git)/evalue_package/EValue")
 # setwd("tests")
 # source("helper_testthat.R")
+# load_all()
+# # end part for local testing
+
+#bm
+evalues.IC(  stat = "est",
+             true = 0.0,
+          monotonicBias = TRUE,
+          monotonicBiasDirection = "unknown",
+             
+             p1_1 = .9,
+             p1_0 = .8,
+             n1_1 = 100,
+             n1_0 = 100,
+             f1 = .9,
+             
+             p0_1 = .5,
+             p0_0 = .42,
+             n0_1 = 100,
+             n0_0 = 100,
+             f0 = .1,
+             
+             alpha = 0.05 )
 
 
 
@@ -441,25 +463,24 @@ test_that("evalues.IC should reject bad input", {
                                alpha = 0.05 ) )
   
   
-  #bm
-  evalues.IC(  stat = "est",
-               true = 0,
-               monotonicBias = FALSE,
-               monotonicBiasDirection = "negative",
-               
-               p1_1 = .5,
-               p1_0 = .4,
-               n1_1 = 100,
-               n1_0 = 100,
-               f1 = .5,
-               
-               p0_1 = .5,
-               p0_0 = .42,
-               n0_1 = 100,
-               n0_0 = 100,
-               f0 = .5,
-               
-               alpha = 0.05 )
+  expect_warning( evalues.IC(  stat = "est",
+                               true = 0,
+                               monotonicBias = FALSE,
+                               monotonicBiasDirection = "negative",
+                               
+                               p1_1 = .5,
+                               p1_0 = .4,
+                               n1_1 = 100,
+                               n1_0 = 100,
+                               f1 = .5,
+                               
+                               p0_1 = .5,
+                               p0_0 = .42,
+                               n0_1 = 100,
+                               n0_0 = 100,
+                               f0 = .5,
+                               
+                               alpha = 0.05 ) )
   
 } )
 
@@ -558,11 +579,11 @@ test_that("evalues.IC solution for one stratum should agree with existing fn, ev
   
   # stratum 1 only
   evalueOld2 = evalues.RD( n11 = 100 * (0.6),
-                                   n10 = 100 * (1-0.6),
-                                   n01 = 100 * 0.4,
-                                   n00 = 100 * (1-0.4),
-                                   true = RDs2$RD[1],
-                                   alpha = 0.05)
+                           n10 = 100 * (1-0.6),
+                           n01 = 100 * 0.4,
+                           n00 = 100 * (1-0.4),
+                           true = RDs2$RD[1],
+                           alpha = 0.05)
   
   expect_equal( evalueOld2$est.Evalue, resNonMono$evalue, tol = 0.001 )
   
@@ -583,24 +604,25 @@ test_that("evalues.IC solution for one stratum should agree with existing fn, ev
 })
 
 test_that("Evalue candidate (negative monotonic bias) should successfully move RDm up to RDw", {
-  ( Eadd.est.mono = evalues.IC( stat = "est",
-                                true = 0,
-                                monotonicBias = TRUE,
-                                monotonicBiasDirection = "unknown",
-                                
-                                p1_1 = pw_1,
-                                p1_0 = pw_0,
-                                n1_1 = nw_1,
-                                n1_0 = nw_0,
-                                f1 = fw,
-                                
-                                p0_1 = pm_1,
-                                p0_0 = pm_0,
-                                n0_1 = nm_1,
-                                n0_0 = nm_0,
-                                f0 = fm,
-                                
-                                alpha = 0.05 ) )
+  # superassign because we'll use for subsequent tests
+  ( Eadd.est.mono <<- evalues.IC( stat = "est",
+                                  true = 0,
+                                  monotonicBias = TRUE,
+                                  monotonicBiasDirection = "unknown",
+                                  
+                                  p1_1 = pw_1,
+                                  p1_0 = pw_0,
+                                  n1_1 = nw_1,
+                                  n1_0 = nw_0,
+                                  f1 = fw,
+                                  
+                                  p0_1 = pm_1,
+                                  p0_0 = pm_0,
+                                  n0_1 = nm_1,
+                                  n0_0 = nm_0,
+                                  f0 = fm,
+                                  
+                                  alpha = 0.05 ) )
   
   x = RDt_bound( p1_1 = pw_1,
                  p1_0 = pw_0,
@@ -621,24 +643,24 @@ test_that("Evalue candidate (negative monotonic bias) should successfully move R
   expect_equal( x$RD[ x$stratum == "0" ], RDw, tol = 0.0001 )
   
   # and likewise for CI limit
-  ( Eadd.CI.mono = evalues.IC( stat = "CI",
-                               true = 0,
-                               monotonicBias = TRUE,
-                               monotonicBiasDirection = "unknown",
-                               
-                               p1_1 = pw_1,
-                               p1_0 = pw_0,
-                               n1_1 = nw_1,
-                               n1_0 = nw_0,
-                               f1 = fw,
-                               
-                               p0_1 = pm_1,
-                               p0_0 = pm_0,
-                               n0_1 = nm_1,
-                               n0_0 = nm_0,
-                               f0 = fm,
-                               
-                               alpha = 0.05 ) )
+  ( Eadd.CI.mono <<- evalues.IC( stat = "CI",
+                                 true = 0,
+                                 monotonicBias = TRUE,
+                                 monotonicBiasDirection = "unknown",
+                                 
+                                 p1_1 = pw_1,
+                                 p1_0 = pw_0,
+                                 n1_1 = nw_1,
+                                 n1_0 = nw_0,
+                                 f1 = fw,
+                                 
+                                 p0_1 = pm_1,
+                                 p0_0 = pm_0,
+                                 n0_1 = nm_1,
+                                 n0_0 = nm_0,
+                                 f0 = fm,
+                                 
+                                 alpha = 0.05 ) )
   
   x = RDt_bound( p1_1 = pw_1,
                  p1_0 = pw_0,
@@ -702,7 +724,7 @@ test_that( "Evalue candidate (positive monotonic bias) should successfully move 
 
 
 test_that( "E-values from IC_evalue (grid search) should match closed form in paper", {
-
+  
   B = 4
   true = ( pm_1 * B - pm_0 ) * ( fm + (1-fm) / B )
   
@@ -719,6 +741,7 @@ test_that( "E-values from IC_evalue (grid search) should match closed form in pa
   #  this is the one that arises from reversing roles and signs in the existing E-value on 
   #  Ding Appendix, pg 18
   
+  #bm
   
   ### check E-value for positive bias (shift only stratum W)
   # check against Ding Appendix, pg 18 (Prop A.11)
@@ -752,29 +775,29 @@ test_that( "E-values from IC_evalue (grid search) should match closed form in pa
 
 test_that( "IC_evalue_inner's grid search should work when needing to increase search space upper bound", {
   
-  # give it a huge IC_c so that it will have to increase the search space (i.e., B will have to be > 4)
+  # give it a huge IC_c so that it will have to increase the search space (i.e., B will have to be > 2)
   
   x = evalues.IC( stat = "est",
-              
-              
-              true = 0,
-              monotonicBias = FALSE,
-              
-              p1_1 = .9,
-              p1_0 = .1,
-              n1_1 = 100,
-              n1_0 = 100,
-              f1 = 0.2,
-              
-              p0_1 = 0.1,
-              p0_0 = 0.4,
-              n0_1 = 100,
-              n0_0 = 100,
-              f0 = 0.3 )
+                  
+                  
+                  true = 0,
+                  monotonicBias = FALSE,
+                  
+                  p1_1 = .9,
+                  p1_0 = .1,
+                  n1_1 = 100,
+                  n1_0 = 100,
+                  f1 = 0.2,
+                  
+                  p0_1 = 0.1,
+                  p0_0 = 0.4,
+                  n0_1 = 100,
+                  n0_0 = 100,
+                  f0 = 0.3 )
   
-  # check that eventual bias factor had to be increased above the default search limit of 4
-  expect_equal( x$evalues$biasFactor > 4, TRUE )
-                              
+  # check that eventual bias factor had to be increased above the default search limit of 2
+  expect_equal( x$evalues$biasFactor > 2, TRUE )
+  
 })
 
 
@@ -783,20 +806,20 @@ test_that( "RDt for each stratum should stay in [-1,1] even if passed an extreme
   # correction should increase stratum 1 to RD=1 and should decrease
   #  stratum 0 to -1
   ( x = RDt_bound( p1_1 = .9,
-             p1_0 = .1,
-             n1_1 = 100,
-             n1_0 = 100,
-             f1 = 0.2,
-             maxB_1 = 50,
-             biasDir_1 = "negative",
-             
-             p0_1 = 0.1,
-             p0_0 = 0.4,
-             n0_1 = 100,
-             n0_0 = 100,
-             f0 = 0.3,
-             maxB_0 = 50,
-             biasDir_0 = "positive" ) )
+                   p1_0 = .1,
+                   n1_1 = 100,
+                   n1_0 = 100,
+                   f1 = 0.2,
+                   maxB_1 = 50,
+                   biasDir_1 = "negative",
+                   
+                   p0_1 = 0.1,
+                   p0_0 = 0.4,
+                   n0_1 = 100,
+                   n0_0 = 100,
+                   f0 = 0.3,
+                   maxB_0 = 50,
+                   biasDir_0 = "positive" ) )
   
   
   expect_equal( x$RD[ x$stratum == "1" ], 1 )

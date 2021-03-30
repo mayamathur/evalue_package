@@ -725,6 +725,11 @@ evalue.default <- function(est, ...) {
 #'   
 #' @keywords e-value
 #' @export
+#' @references 
+#' 1. Ding & VanderWeele (2016). Sensitivity analysis without assumptions. \emph{Epidemiology.} 27(3), 368.
+#' 
+#' 2. VanderWeele & Ding (2017). Sensitivity analysis in observational research: Introducing the E-value. \emph{Annals of Internal Medicine.} 27(3), 368.
+#' 
 #' @examples
 #' # compute E-value for leukemia example in VanderWeele and Ding (2017)
 #' evalue(RR(0.80), 0.71, 0.91)

@@ -27,6 +27,21 @@ bf_func <- function(rr1, rr2) {
   (rr1 * rr2) / (rr1 + rr2 - 1)
 }
 
+
+#' Transformation from bias factor to confounding strength scale
+#'
+#' An internal function. 
+#' @noRd
+g = Vectorize( function(x) {
+  # define transformation in a way that is monotonic over the effective range of B (>1)
+  # to avoid ggplot errors in sens_plot
+  # helper function for confounded_meta
+  if ( is.na(x) ) return(NA)
+  if (x < 1) return( x / 1e10 )
+  x + sqrt( x^2 - x )
+} )
+
+
 #' Nicely wrap a message
 #' @noRd
 wrapmessage <- function(mess, width = 0.9 * getOption("width")) {

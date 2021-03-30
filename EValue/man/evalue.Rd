@@ -123,4 +123,10 @@ evalue(HR(0.56, rare = FALSE), lo = 0.46, hi = 0.69)
 # for a rare outcome
 evalue(HR(0.56, rare = TRUE), lo = 0.46, hi = 0.69)
 }
+\references{
+\enumerate{
+\item Ding & VanderWeele (2016). Sensitivity analysis without assumptions. \emph{Epidemiology.} 27(3), 368.
+\item VanderWeele & Ding (2017). Sensitivity analysis in observational research: Introducing the E-value. \emph{Annals of Internal Medicine.} 27(3), 368.
+}
+}
 \keyword{e-value}
