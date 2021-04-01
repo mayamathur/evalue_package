@@ -74,7 +74,7 @@ navbar:
       - text: Article
         href: https://www.tandfonline.com/doi/full/10.1080/01621459.2018.1529598
       - text: Calculator
-        href: https://mmathur.shinyapps.io/meta_gui_2/
+        href: https://www.evalue-calculator.com/meta
     selection-bias:
       text: Selection bias
       menu: 
