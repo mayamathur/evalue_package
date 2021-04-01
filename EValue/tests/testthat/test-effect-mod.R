@@ -185,7 +185,7 @@ test_that( "E-value for 1 stratum from IC_evalue should match R package", {
   ( evalueEst = IC_evalue_inner( stratum = "1",
                                  varName = "RD",
                                  true = 0,
-                                 monotonicBias = FALSE,
+                                 unidirBias = FALSE,
                                  
                                  p1_1 = pw_1,
                                  p1_0 = pw_0,
@@ -205,7 +205,7 @@ test_that( "E-value for 1 stratum from IC_evalue should match R package", {
   ( evalueCI = IC_evalue_inner( stratum = "1",
                                 varName = "lo",
                                 true = 0,
-                                monotonicBias = FALSE,
+                                unidirBias = FALSE,
                                 
                                 p1_1 = pw_1,
                                 p1_0 = pw_0,
@@ -296,7 +296,7 @@ test_that( "Bound from RDt_bound should be symmetric after flipping signs of bot
 test_that( "E-value should be the same when flipping strata signs", {
   x = evalues.IC(  stat = "est",
                    true = 0.1,
-                   monotonicBias = FALSE,
+                   unidirBias = FALSE,
                    
                    p1_1 = .5,
                    p1_0 = .3,
@@ -314,7 +314,7 @@ test_that( "E-value should be the same when flipping strata signs", {
   
   x2 = evalues.IC(  stat = "est",
                     true = 0.1,
-                    monotonicBias = FALSE,
+                    unidirBias = FALSE,
                     
                     p0_1 = .3,
                     p0_0 = .5,
@@ -341,7 +341,7 @@ test_that("evalues.IC should warn if E-value is 1", {
   # E-value for estimate is 1
   expect_message( evalues.IC(  stat = "est",
                                true = .5,
-                               monotonicBias = FALSE,
+                               unidirBias = FALSE,
                                
                                p1_1 = .5,
                                p1_0 = .4,
@@ -379,7 +379,7 @@ test_that("evalues.IC should warn if E-value is 1", {
   
   expect_message( evalues.IC(  stat = "CI",
                                true = .5,
-                               monotonicBias = FALSE,
+                               unidirBias = FALSE,
                                
                                p1_1 = .5,
                                p1_0 = .4,
@@ -395,11 +395,11 @@ test_that("evalues.IC should warn if E-value is 1", {
                                
                                alpha = 0.05 ) )
   
-  # also when trying both candidates (non-monotonic, unknown)
+  # also when trying both candidates (non-unidir, unknown)
   expect_message( evalues.IC(  stat = "CI",
                true = 0.0,
-               monotonicBias = TRUE,
-               monotonicBiasDirection = "unknown",
+               unidirBias = TRUE,
+               unidirBiasDirection = "unknown",
                
                p1_1 = .9,
                p1_0 = .8,
@@ -420,10 +420,10 @@ test_that("evalues.IC should warn if E-value is 1", {
 
 test_that("evalues.IC should reject bad input", {
   
-  # if monotonicBias is TRUE, must provide monotonicBiasDirection
+  # if unidirBias is TRUE, must provide unidirBiasDirection
   expect_error( evalues.IC(  stat = "est",
                              true = 0,
-                             monotonicBias = TRUE,
+                             unidirBias = TRUE,
                              
                              p1_1 = .4,
                              p1_0 = .4,
@@ -439,11 +439,11 @@ test_that("evalues.IC should reject bad input", {
                              
                              alpha = 0.05 ) )
   
-  # specified monotonicBias = FALSE, so the argument monotonicBiasDirection will be ignored
+  # specified unidirBias = FALSE, so the argument unidirBiasDirection will be ignored
   expect_warning( evalues.IC(  stat = "est",
                                true = 0,
-                               monotonicBias = FALSE,
-                               monotonicBiasDirection = "positive",
+                               unidirBias = FALSE,
+                               unidirBiasDirection = "positive",
                                
                                p1_1 = .5,
                                p1_0 = .4,
@@ -462,8 +462,8 @@ test_that("evalues.IC should reject bad input", {
   
   expect_warning( evalues.IC(  stat = "est",
                                true = 0,
-                               monotonicBias = FALSE,
-                               monotonicBiasDirection = "negative",
+                               unidirBias = FALSE,
+                               unidirBiasDirection = "negative",
                                
                                p1_1 = .5,
                                p1_0 = .4,
@@ -485,7 +485,7 @@ test_that( "E-value from evalues.IC should be the solution to RDt_bound and shou
   
   Eadd.est = evalues.IC(  stat = "est",
                           true = 0,
-                          monotonicBias = FALSE,
+                          unidirBias = FALSE,
                           
                           p1_1 = pw_1,
                           p1_0 = pw_0,
@@ -540,7 +540,7 @@ test_that("evalues.IC solution for one stratum should agree with existing fn, ev
   
   ( resNonMono = evalues.IC( stat = "est",
                              true = 0,
-                             monotonicBias = FALSE,
+                             unidirBias = FALSE,
                              
                              p1_1 = .6,
                              p1_0 = .4,
@@ -600,12 +600,12 @@ test_that("evalues.IC solution for one stratum should agree with existing fn, ev
   
 })
 
-test_that("Evalue candidate (negative monotonic bias) should successfully move RDm up to RDw", {
+test_that("Evalue candidate (negative unidir bias) should successfully move RDm up to RDw", {
   # superassign because we'll use for subsequent tests
   ( Eadd.est.mono <<- evalues.IC( stat = "est",
                                   true = 0,
-                                  monotonicBias = TRUE,
-                                  monotonicBiasDirection = "unknown",
+                                  unidirBias = TRUE,
+                                  unidirBiasDirection = "unknown",
                                   
                                   p1_1 = pw_1,
                                   p1_0 = pw_0,
@@ -642,8 +642,8 @@ test_that("Evalue candidate (negative monotonic bias) should successfully move R
   # and likewise for CI limit
   ( Eadd.CI.mono <<- evalues.IC( stat = "CI",
                                  true = 0,
-                                 monotonicBias = TRUE,
-                                 monotonicBiasDirection = "unknown",
+                                 unidirBias = TRUE,
+                                 unidirBiasDirection = "unknown",
                                  
                                  p1_1 = pw_1,
                                  p1_0 = pw_0,
@@ -680,7 +680,7 @@ test_that("Evalue candidate (negative monotonic bias) should successfully move R
 } ) 
 
 
-test_that( "Evalue candidate (positive monotonic bias) should successfully move RDw down to RDm", {
+test_that( "Evalue candidate (positive unidir bias) should successfully move RDw down to RDm", {
   
   ( x = RDt_bound( p1_1 = pw_1,
                    p1_0 = pw_0,
@@ -778,7 +778,7 @@ test_that( "IC_evalue_inner's grid search should work when needing to increase s
                   
                   
                   true = 0,
-                  monotonicBias = FALSE,
+                  unidirBias = FALSE,
                   
                   p1_1 = .9,
                   p1_0 = .1,

@@ -7,8 +7,8 @@
 evalues.IC(
   stat,
   true = 0,
-  monotonicBias = FALSE,
-  monotonicBiasDirection = NA,
+  unidirBias = FALSE,
+  unidirBiasDirection = NA,
   p1_1,
   p1_0,
   n1_1,
@@ -28,10 +28,10 @@ contrast point estimate or "CI" for its lower confidence interval limit)}
 
 \item{true}{The true (unconfounded) value to which to shift the specified statistic (point estimate or confidence interval limit). Should be smaller than the confounded statistic.}
 
-\item{monotonicBias}{Whether the direction of confounding bias is assumed to be the same
+\item{unidirBias}{Whether the direction of confounding bias is assumed to be the same
 in both strata of Z (TRUE or FALSE); see Details}
 
-\item{monotonicBiasDirection}{If bias is assumed to be monotonic, its assumed direction ("positive", "negative", or "unknown"; see Details). If bias is not assumed to be monotonic, should be NA.}
+\item{unidirBiasDirection}{If bias is assumed to be unidirectional, its assumed direction ("positive", "negative", or "unknown"; see Details). If bias is not assumed to be unidirectional, this argument should be NA.}
 
 \item{p1_1}{The probability of the outcome in stratum Z=1 with treatment X=1}
 
@@ -58,11 +58,11 @@ in both strata of Z (TRUE or FALSE); see Details}
 \value{
 Returns a list containing two dataframes (\code{evalues} and \code{RDt}). The E-value itself can be accessed as \code{evalues$evalue}.
 
-The dataframe \code{evalues} contains the E-value, the corresponding bias factor, the bound on the interaction contrast if confounding were to attain that bias factor (this bound will be close to \code{true}, by construction), and the direction of bias when the bias factor is attained. If you specify non-monotonic, monotonic positive, or monotonic negative bias, the returned direction of bias will simply be what you requested. If you specify monotonic bias of unknown direction, the bias direction will be either positive or negative depending on which direction produces the maximum bias.
+The dataframe \code{evalues} contains the E-value, the corresponding bias factor, the bound on the interaction contrast if confounding were to attain that bias factor (this bound will be close to \code{true}, by construction), and the direction of bias when the bias factor is attained. If you specify that the bias is potentially multidirectional, is unidirectional and positive, or is unidirectional and negative, the returned direction of bias will simply be what you requested. If you specify unidirectional bias of unknown direction, the bias direction will be either positive or negative depending on which direction produces the maximum bias.
 
 The dataframe \code{RDt} contains, for each stratum and for the interaction contrast, bias-corrected estimates (risk differences for the strata and the interaction contrast for \code{stratum = effectMod}), their standard errors, their confidence intervals, and their p-values. These estimates are bias-corrected for the worst-case bias that could arise for confounder(s) whose strength of association are no more severe than the requested E-value for either the estimate or the confidence interval (i.e., the bias factor indicated by \code{evalues$biasFactor}). The bias-corrected risk differences for the two strata (\code{stratum = "1"} and \code{stratum = "0"}) are corrected in the direction(s) indicated by \code{evalues$biasDir}.
 
-If you specify monotonic bias of unknown direction, the E-value is calculated by taking the minimum of the E-value under positive monotonic bias and the E-value under negative monotonic bias. With this specification, a third dataframe (\code{candidates}) will be returned. This is similar to \code{evalues}, but contains the results for positive monotonic bias and negative monotonic bias (the two "candidate" E-values that were considered).
+If you specify unidirectional bias of unknown direction, the E-value is calculated by taking the minimum of the E-value under positive unidirectional bias and the E-value under negative unidirectional bias. With this specification, a third dataframe (\code{candidates}) will be returned. This is similar to \code{evalues}, but contains the results for positive unidirectional bias and negative unidirectional bias (the two "candidate" E-values that were considered).
 }
 \description{
 Computes the E-value for an additive interaction contrast, representing the difference between stratum Z=1 and stratum Z=0
@@ -77,18 +77,18 @@ The interaction contrast is a measure of additive effect modification that repre
 
 To use this function, the strata (Z) should be coded such that the confounded interaction contrast is positive rather than negative.
 
-If, in one or both strata of Z, there are unmeasured confounders of the treatment-outcome association, then the interaction contrast may be biased as well (Mathur et al., 2021). The E-value for the interaction contrast represents the minimum strength of association, on the risk ratio scale, that unmeasured confounder(s) would need to have with both the treatment (X) and the outcome (Y) in both strata of Z to fully explain away the observed interaction contrast, conditional on the measured covariates. This bound is attained when the strata have confounding bias in opposite directions ("non-monotonic bias"). Alternatively, if one assumes that the direction of confounding is the same in each stratum of Z ("monotonic bias"), then the E-value for the interaction contrast is defined as the minimum strength of association, on the risk ratio scale, that unmeasured confounder(s) would need to have with both the treatment (X) and the outcome (Y) in \emph{at least one} stratum of Z to fully explain away the observed interaction contrast, conditional on the measured covariates. This bound under monotonic confounding arises when one stratum is unbiased. See Mathur et al. (2021) for details.
+If, in one or both strata of Z, there are unmeasured confounders of the treatment-outcome association, then the interaction contrast may be biased as well (Mathur et al., 2021). The E-value for the interaction contrast represents the minimum strength of association, on the risk ratio scale, that unmeasured confounder(s) would need to have with both the treatment (X) and the outcome (Y) in both strata of Z to fully explain away the observed interaction contrast, conditional on the measured covariates. This bound is attained when the strata have confounding bias in opposite directions ("potentially multidirectional bias"). Alternatively, if one assumes that the direction of confounding is the same in each stratum of Z ("unidirectional bias"), then the E-value for the interaction contrast is defined as the minimum strength of association, on the risk ratio scale, that unmeasured confounder(s) would need to have with both the treatment (X) and the outcome (Y) in \emph{at least one} stratum of Z to fully explain away the observed interaction contrast, conditional on the measured covariates. This bound under unidirectional confounding arises when one stratum is unbiased. See Mathur et al. (2021) for details.
 
 As for the standard E-value for main effects (Ding & VanderWeele, 2016; VanderWeele & Ding, 2017), the E-value for the interaction contrast can be computed for both the point estimate and the lower confidence interval limit, and it can be also be calculated for shifting the estimate or confidence interval to a non-null value via the argument \code{true}.
 }
 
 \subsection{Specifying the bias direction}{
 
-The argument \code{monotonicBias} indicates whether you are assuming monotonic bias (\code{monotonicBias = TRUE}) or not (\code{monotonicBias = FALSE}). The latter is the default because it is more conservative and requires the fewest assumptions. When setting \code{monotonicBias = FALSE}, there is no need to specify the direction of bias via \code{monotonicBiasDir}. However, when setting \code{monotonicBias = TRUE}, the direction of bias does need to be specified via \code{monotonicBiasDir}, whose options are:
+The argument \code{unidirBias} indicates whether you are assuming unidirectional bias (\code{unidirBias = TRUE}) or not (\code{unidirBias = FALSE}). The latter is the default because it is more conservative and requires the fewest assumptions. When setting \code{unidirBias = FALSE}, there is no need to specify the direction of bias via \code{unidirBiasDir}. However, when setting \code{unidirBias = TRUE}, the direction of bias does need to be specified via \code{unidirBiasDir}, whose options are:
 \itemize{
-\item \code{monotonicBiasDir = "positive"}: Assumes that the risk differences in both strata of Z are positively biased.
-\item \code{monotonicBiasDir = "negative"}: Assumes that the risk differences in both strata of Z are negatively biased.
-\item \code{monotonicBiasDir = "unknown"}: Assumes that the risk differences in both strata of Z are biased in the same direction, but that the direction could be either positive or negative.
+\item \code{unidirBiasDir = "positive"}: Assumes that the risk differences in both strata of Z are positively biased.
+\item \code{unidirBiasDir = "negative"}: Assumes that the risk differences in both strata of Z are negatively biased.
+\item \code{unidirBiasDir = "unknown"}: Assumes that the risk differences in both strata of Z are biased in the same direction, but that the direction could be either positive or negative.
 }
 }
 
@@ -99,7 +99,7 @@ If your estimated interaction contrast has been adjusted for covariates, then yo
 
 \subsection{Multiplicative effect modification}{
 
-For multiplicative measures of effect modification (e.g., the ratio of risk ratios between the two strata of Z), you can simply use the function \code{evalue}. To allow the bias to be non-monotonic, you would pass the square-root of your multiplicative effect modification estimate on the risk ratio scale to \code{evalue} rather than the estimate itself. To assume monotonic bias, regardless of direction, you would pass the multiplicative effect modification estimate itself to \code{evalue}. See Mathur et al. (2021) for details.
+For multiplicative measures of effect modification (e.g., the ratio of risk ratios between the two strata of Z), you can simply use the function \code{evalue}. To allow the bias to be potentially multidirectional, you would pass the square-root of your multiplicative effect modification estimate on the risk ratio scale to \code{evalue} rather than the estimate itself. To assume unidirectional bias, regardless of direction, you would pass the multiplicative effect modification estimate itself to \code{evalue}. See Mathur et al. (2021) for details.
 }
 }
 \examples{
@@ -168,11 +168,11 @@ evalues.IC( stat = "CI",
             n0_0 = nm_0,
             f0 = fm )
 
-### E-values assuming monotonic confounding of unknown direction
+### E-values assuming unidirectonal confounding of unknown direction
 # for interaction contrast point estimate
 evalues.IC( stat = "est",
-            monotonicBias = TRUE,
-            monotonicBiasDirection = "unknown",
+            unidirBias = TRUE,
+            unidirBiasDirection = "unknown",
             
             p1_1 = pw_1,
             p1_0 = pw_0,
@@ -188,8 +188,8 @@ evalues.IC( stat = "est",
 
 # and for its lower CI limit
 evalues.IC( stat = "CI",
-            monotonicBias = TRUE,
-            monotonicBiasDirection = "unknown",
+            unidirBias = TRUE,
+            unidirBiasDirection = "unknown",
             
             p1_1 = pw_1,
             p1_0 = pw_0,
