@@ -128,7 +128,7 @@ These methods perform well only in meta-analyses with at least 10 studies; we do
 
 ##### Using Calibrated Method #####
 d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
-                    ci=cpos, di=cneg, data=metafor::dat.bcg)
+                    ci=cpos, di=cneg, data=metadat::dat.bcg)
 
 # obtaining all three estimators and inference
 # number of bootstrap iterates

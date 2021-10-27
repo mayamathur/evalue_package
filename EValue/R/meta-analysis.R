@@ -115,7 +115,7 @@
 #' 
 #' ##### Using Calibrated Method #####
 #' d = metafor::escalc(measure="RR", ai=tpos, bi=tneg,
-#'                     ci=cpos, di=cneg, data=metafor::dat.bcg)
+#'                     ci=cpos, di=cneg, data=metadat::dat.bcg)
 #' 
 #' # obtaining all three estimators and inference
 #' # number of bootstrap iterates
@@ -691,7 +691,7 @@ confounded_meta = function( method="calibrated",  # for both methods
 #'                     bi=tneg,
 #'                     ci=cpos,
 #'                     di=cneg,
-#'                     data=metafor::dat.bcg)
+#'                     data=metadat::dat.bcg)
 #' 
 #' # without confidence band
 #' sens_plot( method = "calibrated",

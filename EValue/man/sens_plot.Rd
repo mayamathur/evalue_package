@@ -126,7 +126,7 @@ d = metafor::escalc(measure="RR",
                     bi=tneg,
                     ci=cpos,
                     di=cneg,
-                    data=metafor::dat.bcg)
+                    data=metadat::dat.bcg)
 
 # without confidence band
 sens_plot( method = "calibrated",
