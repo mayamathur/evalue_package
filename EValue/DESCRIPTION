@@ -11,7 +11,7 @@ Description: Conducts sensitivity analyses for unmeasured confounding, selection
 LazyData: true
 License: GPL-2
 Imports: stats, graphics, ggplot2 (>= 2.2.1), metafor, metadat, methods, boot, MetaUtility, dplyr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 Suggests: 

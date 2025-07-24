@@ -395,7 +395,7 @@ get_arg_tab <- function() {
 #'   [misclassification()]), each possibly including arguments specifying more
 #'   detail about the bias of interest. Selection and confounding should be
 #'   listed in the order in which they affect the data (see [ordering of the
-#'   biases](../articles/multiple-bias.html#ordering-of-the-biases))
+#'   biases](../doc/multiple-bias.html#ordering-of-the-biases))
 #' @param verbose Logical. If `TRUE`, returns warnings and messages immediately.
 #'   Defaults to `TRUE`.
 #'

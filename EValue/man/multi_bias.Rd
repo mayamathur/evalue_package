@@ -10,7 +10,7 @@ multi_bias(..., verbose = TRUE)
 \item{...}{Biases (\code{\link[=confounding]{confounding()}}, \code{\link[=selection]{selection()}}, and/or
 \code{\link[=misclassification]{misclassification()}}), each possibly including arguments specifying more
 detail about the bias of interest. Selection and confounding should be
-listed in the order in which they affect the data (see \href{../articles/multiple-bias.html#ordering-of-the-biases}{ordering of the biases})}
+listed in the order in which they affect the data (see \href{../doc/multiple-bias.html#ordering-of-the-biases}{ordering of the biases})}
 
 \item{verbose}{Logical. If \code{TRUE}, returns warnings and messages immediately.
 Defaults to \code{TRUE}.}
